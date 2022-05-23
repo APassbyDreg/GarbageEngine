@@ -1,0 +1,9 @@
+# Xmake cache
+.xmake/
+build/
+
+# vscode
+.vscode/
+
+
+
