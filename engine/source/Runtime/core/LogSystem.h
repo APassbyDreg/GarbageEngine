@@ -97,3 +97,23 @@ namespace GE
 #define GE_APP_WARN(...) ::GE::LogSystem::getInstance().LogApplication("warn", __VA_ARGS__)
 #define GE_APP_ERROR(...) ::GE::LogSystem::getInstance().LogApplication("error", __VA_ARGS__)
 #define GE_APP_CRITICAL(...) ::GE::LogSystem::getInstance().LogApplication("critical", __VA_ARGS__)
+
+/* ----------------------------- assert with log ---------------------------- */
+#define GE_CORE_ASSERT(cond, ...) \
+    do \
+    { \
+        if (!(cond)) \
+        { \
+            GE_CORE_CRITICAL(__VA_ARGS__); \
+            __debugbreak(); \
+        } \
+    } while (false)
+#define GE_APP_ASSERT(cond, ...) \
+    do \
+    { \
+        if (!(cond)) \
+        { \
+            GE_APP_CRITICAL(__VA_ARGS__); \
+            __debugbreak(); \
+        } \
+    } while (false)

@@ -5,15 +5,18 @@
 
 namespace GE
 {
-    Application::Application() {}
+    Application::Application() { m_Window = std::unique_ptr<Window>(Window::Create()); }
 
     Application::~Application() {}
 
     void Application::Run()
     {
-        GE_CORE_TRACE("Application::Run()");
+        GE_CORE_TRACE("Starting Application");
 
-        WindowResizeEvent e(1280, 720);
-        GE_CORE_INFO(e.toString());
+        bool running;
+        while (running)
+        {
+            m_Window->OnTick();
+        }
     }
 } // namespace GE

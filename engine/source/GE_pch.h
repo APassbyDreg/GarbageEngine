@@ -10,8 +10,8 @@
 #include <functional>
 #include <iostream>
 #include <map>
-#include <set>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -19,6 +19,8 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include "Runtime/macros/macros.h"
 
 #ifdef GE_PLATFORM_WINDOWS
 #include "Windows.h"

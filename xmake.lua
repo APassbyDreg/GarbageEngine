@@ -8,11 +8,9 @@ includes("engine/3rdparty")
 vk_include = "C:/VulkanSDK/1.3.204.1/Include"
 vk_lib = "C:/VulkanSDK/1.3.204.1/Lib/vulkan-1"
 function GE_link_vulkan()
-    add_includedirs(vk_include_dir)
+    add_includedirs(vk_include)
     add_links(vk_lib)
 end
-
-GE_require_glfw()
 
 -- runtime
 target("runtime")
@@ -60,3 +58,13 @@ target("editor")
 
     -- files
     add_files("engine/source/editor/**.cpp")
+
+    -- after build action
+    after_build(function (target)
+        import("core.project.config")
+        local targetfile = target:targetfile()
+        local buildir = path.directory(targetfile)
+
+        import("engine.3rdparty.after_build", {alias = "after_build"})
+        after_build.glfw(buildir)
+    end)
