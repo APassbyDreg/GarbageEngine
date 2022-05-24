@@ -6,8 +6,5 @@ namespace GE
 
     Editor::~Editor() {}
 
-    Application* CreateApplication()
-    {
-        return new Editor();
-    }
+    Application* CreateApplication() { return new Editor(); }
 } // namespace GE

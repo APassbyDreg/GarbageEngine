@@ -6,10 +6,8 @@ namespace GE
 {
     class Editor : public Application
     {
-    private:
-        /* data */
     public:
-        Editor(/* args */);
+        Editor();
         ~Editor();
     };
 

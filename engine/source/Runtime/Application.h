@@ -1,13 +1,12 @@
 #pragma once
 
+#include "core/LogSystem.h"
 #include "macros/macros.h"
 
 namespace GE
 {
     class GE_API Application
     {
-    private:
-        /* data */
     public:
         void Run();
 

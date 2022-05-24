@@ -1,4 +1,6 @@
 #include "Application.h"
+#include "core/Events/ApplicationEvents.h"
+
 #include <stdio.h>
 
 namespace GE
@@ -9,8 +11,9 @@ namespace GE
 
     void Application::Run()
     {
-        printf("Application::Run()\n");
-        while (true)
-        {}
+        GE_CORE_TRACE("Application::Run()");
+
+        WindowResizeEvent e(1280, 720);
+        GE_CORE_INFO(e.toString());
     }
 } // namespace GE
