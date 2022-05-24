@@ -1,11 +1,9 @@
 #pragma once
 
+#include "GE_pch.h"
+
 #include "../../macros/macros.h"
 #include "../LogSystem.h"
-
-#include <functional>
-#include <sstream>
-#include <string>
 
 namespace GE
 {

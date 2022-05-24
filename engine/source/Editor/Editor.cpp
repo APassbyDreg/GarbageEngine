@@ -1,3 +1,5 @@
+#include "GE_pch.h"
+
 #include "Editor.h"
 
 namespace GE

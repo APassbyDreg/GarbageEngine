@@ -12,19 +12,26 @@ function GE_link_vulkan()
     add_links(vk_lib)
 end
 
-
+GE_require_glfw()
 
 -- runtime
 target("runtime")
     set_kind("shared")
 
+    -- defines
     add_defines("GE_BUILD_RUNTIME")
 
+    -- precompiled header
+    set_pcxxheader("engine/source/GE_pch.h")
+
+    -- linking packages
     GE_link_vulkan()
     GE_link_spdlog()
     GE_link_glm()
-    add_includedirs("engine/source/Runtime")
+    GE_link_glfw()
+    add_includedirs("engine/source", "engine/source/Runtime")
 
+    -- files
     add_files("engine/source/runtime/**.cpp")
 
 
@@ -35,13 +42,21 @@ target("editor")
     is_plat("windows")
         add_defines("GE_PLATFORM_WINDOWS")
 
+    -- defines
     add_defines("GE_BUILD_EDITOR")
 
+    -- dependencies
     add_deps("runtime", { inherit = true})
 
+    -- precompiled header
+    set_pcxxheader("engine/source/GE_pch.h")
+
+    -- linking packages
     GE_link_vulkan()
     GE_link_spdlog()
     GE_link_glm()
+    GE_link_glfw()
     add_includedirs("engine/source", "engine/source/Editor")
 
+    -- files
     add_files("engine/source/editor/**.cpp")

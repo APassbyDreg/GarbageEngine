@@ -1,7 +1,7 @@
+#include "GE_pch.h"
+
 #include "Application.h"
 #include "core/Events/ApplicationEvents.h"
-
-#include <stdio.h>
 
 namespace GE
 {

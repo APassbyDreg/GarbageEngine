@@ -1,3 +1,5 @@
+#include "GE_pch.h"
+
 #include "LogSystem.h"
 
 #include "spdlog/sinks/stdout_color_sinks.h"

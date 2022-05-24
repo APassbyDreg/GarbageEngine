@@ -1,14 +1,11 @@
 #pragma once
 
+#include "GE_pch.h"
+
 #include "../macros/macros.h"
 #include "base/Singleton.h"
 
 #include "spdlog/spdlog.h"
-#include "spdlog/fmt/ostr.h"
-
-#include <map>
-#include <memory.h>
-#include <string>
 
 namespace GE
 {

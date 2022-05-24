@@ -1,4 +1,7 @@
 #pragma once
+
+#include "GE_pch.h"
+
 #include "../Application.h"
 
 #ifdef GE_PLATFORM_WINDOWS
