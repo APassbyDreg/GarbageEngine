@@ -2,8 +2,9 @@
 
 #include "GE_pch.h"
 
-#include "../../macros/macros.h"
-#include "../LogSystem.h"
+#include "function/Log/LogSystem.h"
+
+#include "core/math/math.h"
 
 namespace GE
 {

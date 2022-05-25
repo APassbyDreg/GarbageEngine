@@ -2,10 +2,11 @@
 
 #include "GE_pch.h"
 
-#include "core/Events/EventSystem.h"
 #include "core/Layer/LayerSystem.h"
-#include "core/LogSystem.h"
-#include "core/Window.h"
+
+#include "function/Event/EventSystem.h"
+#include "function/Log/LogSystem.h"
+#include "function/UI/Window.h"
 
 namespace GE
 {

@@ -2,8 +2,6 @@
 
 #include "Event.h"
 
-#include "glm/vec2.hpp"
-
 namespace GE
 {
 
@@ -42,10 +40,11 @@ namespace GE
     public:
         EVENT_IMPLEMENTATION_COMMON(WindowResize, EventCategoryApplication)
 
-        WindowResizeEvent(unsigned int width, unsigned int height) : m_width(width), m_height(height) {}
+        WindowResizeEvent(uint width, uint height) : m_width(width), m_height(height) {}
 
-        unsigned int getWidth() const { return m_width; }
-        unsigned int getHeight() const { return m_height; }
+        inline uint  getWidth() const { return m_width; }
+        inline uint  getHeight() const { return m_height; }
+        inline uint2 getSize() const { return uint2(m_width, m_height); }
 
         std::string toString() const override
         {
@@ -55,7 +54,7 @@ namespace GE
         }
 
     private:
-        unsigned int m_width, m_height;
+        uint m_width, m_height;
     };
 
     class GE_API WindowFocusEvent : public Event

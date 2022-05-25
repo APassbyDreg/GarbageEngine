@@ -55,6 +55,12 @@ function GE_link_imgui()
 end
 
 
+-------------------------------- vma --------------------------------
+function GE_link_vma() 
+   add_includedirs(rel_local_path("VulkanMemoryAllocator-Hpp/include"))
+end
+
+
 -------------------------------- overall --------------------------------
 function GE_link_3rdparty()
     GE_link_vulkan() 
@@ -62,4 +68,5 @@ function GE_link_3rdparty()
     GE_link_glm()
     GE_link_spdlog()
     GE_link_imgui()
+    GE_link_vma()
 end

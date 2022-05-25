@@ -1,5 +1,6 @@
 #include "WindowsWindow.h"
-#include "core/Events/EventSystem.h"
+
+#include "function/Event/EventSystem.h"
 
 namespace GE
 {
@@ -135,5 +136,8 @@ namespace GE
     void WindowsWindow::Shutdown() { glfwDestroyWindow(m_window); }
 
     // implement window creation
-    Window* Window::Create(const WindowProperties& props) { return new WindowsWindow(props); }
+    std::unique_ptr<Window> Window::Create(const WindowProperties& props)
+    {
+        return std::make_unique<WindowsWindow>(props);
+    }
 } // namespace GE

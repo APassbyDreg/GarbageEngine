@@ -2,7 +2,7 @@
 
 #include "GE_pch.h"
 
-#include "../Events/EventSystem.h"
+#include "function/Event/EventSystem.h"
 
 namespace GE
 {

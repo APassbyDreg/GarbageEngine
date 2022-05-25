@@ -4,7 +4,7 @@
 
 namespace GE
 {
-    Editor::Editor(/* args */) {}
+    Editor::Editor() { GE_APP_INFO("Constructing Editor"); }
 
     Editor::~Editor() {}
 

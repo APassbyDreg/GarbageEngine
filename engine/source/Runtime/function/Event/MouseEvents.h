@@ -2,8 +2,6 @@
 
 #include "Event.h"
 
-#include "glm/vec2.hpp"
-
 namespace GE
 {
     class GE_API MouseMovedEvent : public Event
@@ -13,9 +11,9 @@ namespace GE
 
         MouseMovedEvent(float x, float y) : m_xPosition(x), m_yPosition(y) {}
 
-        float     getX() const { return m_xPosition; }
-        float     getY() const { return m_yPosition; }
-        glm::vec2 getPosition() const { return glm::vec2(m_xPosition, m_yPosition); }
+        float  getX() const { return m_xPosition; }
+        float  getY() const { return m_yPosition; }
+        float2 getPosition() const { return float2(m_xPosition, m_yPosition); }
 
         std::string toString() const override
         {
@@ -35,9 +33,9 @@ namespace GE
 
         MouseScrolledEvent(float xOffset, float yOffset) : m_xOffset(xOffset), m_yOffset(yOffset) {}
 
-        float     getXOffset() const { return m_xOffset; }
-        float     getYOffset() const { return m_yOffset; }
-        glm::vec2 getOffset() const { return glm::vec2(m_xOffset, m_yOffset); }
+        float  getXOffset() const { return m_xOffset; }
+        float  getYOffset() const { return m_yOffset; }
+        float2 getOffset() const { return float2(m_xOffset, m_yOffset); }
 
         std::string toString() const override
         {

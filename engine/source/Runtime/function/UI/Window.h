@@ -2,9 +2,8 @@
 
 #include "GE_pch.h"
 
-#include "Events/Event.h"
-
-#include "glm/vec2.hpp"
+#include "core/math/math.h"
+#include "function/Event/EventSystem.h"
 
 namespace GE
 {
@@ -32,9 +31,10 @@ namespace GE
         virtual void OnTick()          = 0;
         virtual uint GetWidth() const  = 0;
         virtual uint GetHeight() const = 0;
+        inline uint2 GetSize() const { return uint2(GetWidth(), GetHeight()); }
 
         virtual void SetEventCallback(const EventCallbackFn& callback) = 0;
 
-        static Window* Create(const WindowProperties& properties = WindowProperties());
+        static std::unique_ptr<Window> Create(const WindowProperties& properties = WindowProperties());
     };
 } // namespace GE

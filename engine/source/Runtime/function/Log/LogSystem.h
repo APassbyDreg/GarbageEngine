@@ -2,8 +2,7 @@
 
 #include "GE_pch.h"
 
-#include "../macros/macros.h"
-#include "base/Singleton.h"
+#include "core/base/Singleton.h"
 
 #include "spdlog/spdlog.h"
 

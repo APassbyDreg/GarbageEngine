@@ -1,6 +1,13 @@
 #pragma once
 
 #include "Runtime/Application.h"
+
+/* ---------------------------------- core ---------------------------------- */
 #include "Runtime/core/Layer/LayerSystem.h"
-#include "Runtime/core/LogSystem.h"
+
+/* -------------------------------- functions ------------------------------- */
+
+#include "Runtime/function/Log/LogSystem.h"
+
+/* ------------------------------- entry point ------------------------------ */
 #include "Runtime/entry/EntryPoint.h"
