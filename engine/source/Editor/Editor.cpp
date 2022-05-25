@@ -8,5 +8,5 @@ namespace GE
 
     Editor::~Editor() {}
 
-    Application* CreateApplication() { return new Editor(); }
+    std::unique_ptr<Application> CreateApplication() { return std::make_unique<Editor>(); }
 } // namespace GE
