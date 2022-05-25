@@ -61,6 +61,12 @@ function GE_link_vma()
 end
 
 
+-------------------------------- json --------------------------------
+function GE_link_json() 
+   add_includedirs(rel_local_path("nlohmann_json/single_include"))
+end
+
+
 -------------------------------- overall --------------------------------
 function GE_link_3rdparty()
     GE_link_vulkan() 
@@ -69,4 +75,5 @@ function GE_link_3rdparty()
     GE_link_spdlog()
     GE_link_imgui()
     GE_link_vma()
+    GE_link_json()
 end
