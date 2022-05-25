@@ -21,8 +21,8 @@ namespace GE
         bool OnWindowClosed(WindowCloseEvent& e);
 
     private:
-        std::unique_ptr<Window> m_Window;
-        bool                    m_Running = true;
+        std::unique_ptr<Window> m_window;
+        bool                    m_running = true;
     };
 
     // Defined in client

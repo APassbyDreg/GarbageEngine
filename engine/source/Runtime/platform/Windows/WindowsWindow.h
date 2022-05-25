@@ -29,7 +29,7 @@ namespace GE
         virtual void InitCallbacks();
 
     private:
-        GLFWwindow* m_Window;
+        GLFWwindow* m_window;
 
         struct WindowData
         {

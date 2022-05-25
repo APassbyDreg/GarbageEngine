@@ -1,41 +1,65 @@
--------------------------------- spdlog --------------------------------
-package("GE_spdlog")
-    add_deps("cmake")
-    set_sourcedir(path.join(os.scriptdir(), "spdlog"))
-    on_install(function (package)
-        local configs = {}
-        table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:debug() and "Debug" or "Release"))
-        table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
-        import("package.tools.cmake").install(package, configs)
-    end)
-    on_test(function (package)
-    end)
-
-function GE_link_spdlog() 
-    add_includedirs("engine/3rdparty/spdlog/include")
+local function rel_local_path(relpath)
+    local dir = os.scriptdir()
+    if not dir:endswith("3rdparty") then 
+        dir = path.join(dir, "engine/3rdparty")
+    end
+    return path.join(dir, relpath)
 end
+
+-------------------------------- spdlog --------------------------------
+function GE_link_spdlog()
+    add_includedirs(rel_local_path("spdlog/include"))
+end
+
 
 -------------------------------- glm --------------------------------
-package("GE_glm")
-    add_deps("cmake")
-    set_sourcedir(path.join(os.scriptdir(), "glm"))
-    on_install(function (package)
-        local configs = {}
-        table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:debug() and "Debug" or "Release"))
-        table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
-        import("package.tools.cmake").install(package, configs)
-    end)
-    on_test(function (package)
-    end)
-
 function GE_link_glm() 
-    add_includedirs("engine/3rdparty/glm")
+    add_includedirs(rel_local_path("glm"))
 end
+
 
 -------------------------------- glfw --------------------------------
 function GE_link_glfw() 
     if is_plat("windows") then 
-        add_includedirs("engine/3rdparty/glfw/Windows/include")
-        add_links("engine/3rdparty/glfw/Windows/glfw3dll")
+        add_includedirs(rel_local_path("glfw/Windows/include"))
+        add_links(rel_local_path("glfw/Windows/glfw3dll"))
     end
+end
+
+
+-------------------------------- vulkan
+--------------------------------
+function GE_link_vulkan() 
+    add_includedirs(rel_local_path("vulkan/include"))
+    if is_plat("windows") then 
+        add_links(rel_local_path("vulkan/lib/Windows/vulkan-1"))
+    end
+end
+
+
+-------------------------------- imgui --------------------------------
+target("GE_imgui")
+    set_kind("static")
+
+    GE_link_vulkan()
+    GE_link_glfw()
+    add_includedirs(rel_local_path("imgui"))
+
+    add_files("imgui/*.cpp")
+    add_files("imgui/backends/imgui_impl_glfw.cpp")
+    add_files("imgui/backends/imgui_impl_vulkan.cpp")
+
+
+function GE_link_imgui() 
+   add_deps("GE_imgui") 
+end
+
+
+-------------------------------- overall --------------------------------
+function GE_link_3rdparty()
+    GE_link_vulkan() 
+    GE_link_glfw()
+    GE_link_glm()
+    GE_link_spdlog()
+    GE_link_imgui()
 end

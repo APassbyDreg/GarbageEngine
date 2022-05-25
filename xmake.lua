@@ -4,14 +4,6 @@ set_project("GarbageEngine")
 
 includes("engine/3rdparty")
 
--- link vulkan libraries and include directories
-vk_include = "C:/VulkanSDK/1.3.204.1/Include"
-vk_lib = "C:/VulkanSDK/1.3.204.1/Lib/vulkan-1"
-function GE_link_vulkan()
-    add_includedirs(vk_include)
-    add_links(vk_lib)
-end
-
 -- runtime
 target("runtime")
     set_kind("shared")
@@ -23,10 +15,7 @@ target("runtime")
     set_pcxxheader("engine/source/GE_pch.h")
 
     -- linking packages
-    GE_link_vulkan()
-    GE_link_spdlog()
-    GE_link_glm()
-    GE_link_glfw()
+    GE_link_3rdparty()
     add_includedirs("engine/source", "engine/source/Runtime")
 
     -- files
@@ -44,16 +33,13 @@ target("editor")
     add_defines("GE_BUILD_EDITOR")
 
     -- dependencies
-    add_deps("runtime", { inherit = true})
+    add_deps("runtime")
 
     -- precompiled header
     set_pcxxheader("engine/source/GE_pch.h")
 
     -- linking packages
-    GE_link_vulkan()
-    GE_link_spdlog()
-    GE_link_glm()
-    GE_link_glfw()
+    GE_link_3rdparty()
     add_includedirs("engine/source", "engine/source/Editor")
 
     -- files

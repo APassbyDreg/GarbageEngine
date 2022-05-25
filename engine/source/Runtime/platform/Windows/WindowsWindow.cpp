@@ -12,7 +12,7 @@ namespace GE
     void WindowsWindow::OnTick()
     {
         glfwPollEvents();
-        glfwSwapBuffers(m_Window);
+        glfwSwapBuffers(m_window);
     }
 
     void WindowsWindow::Init(const WindowProperties& props)
@@ -33,11 +33,11 @@ namespace GE
             s_GLFWInitialized = true;
         }
 
-        m_Window = glfwCreateWindow((int)m_Data.width, (int)m_Data.height, m_Data.title.c_str(), nullptr, nullptr);
-        GE_CORE_ASSERT(m_Window, "Could not create window!");
+        m_window = glfwCreateWindow((int)m_Data.width, (int)m_Data.height, m_Data.title.c_str(), nullptr, nullptr);
+        GE_CORE_ASSERT(m_window, "Could not create window!");
 
-        glfwMakeContextCurrent(m_Window);
-        glfwSetWindowUserPointer(m_Window, &m_Data);
+        glfwMakeContextCurrent(m_window);
+        glfwSetWindowUserPointer(m_window, &m_Data);
 
         // VSync is always on
         glfwSwapInterval(1);
@@ -49,7 +49,7 @@ namespace GE
     void WindowsWindow::InitCallbacks()
     {
         // window callbalcks
-        glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height) {
+        glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
             data.width       = width;
             data.height      = height;
@@ -57,13 +57,13 @@ namespace GE
             WindowResizeEvent event(width, height);
             data.eventCallback(event);
         });
-        glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window) {
+        glfwSetWindowCloseCallback(m_window, [](GLFWwindow* window) {
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
             WindowCloseEvent event;
             data.eventCallback(event);
         });
-        glfwSetWindowFocusCallback(m_Window, [](GLFWwindow* window, int focused) {
+        glfwSetWindowFocusCallback(m_window, [](GLFWwindow* window, int focused) {
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
             if (focused == GLFW_TRUE)
@@ -78,13 +78,13 @@ namespace GE
             }
         });
         // mouse callbacks
-        glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xpos, double ypos) {
+        glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double xpos, double ypos) {
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
             MouseMovedEvent event(xpos, ypos);
             data.eventCallback(event);
         });
-        glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods) {
+        glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods) {
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
             switch (action)
@@ -101,14 +101,14 @@ namespace GE
                 }
             }
         });
-        glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xoffset, double yoffset) {
+        glfwSetScrollCallback(m_window, [](GLFWwindow* window, double xoffset, double yoffset) {
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
             MouseScrolledEvent event(xoffset, yoffset);
             data.eventCallback(event);
         });
         // key callbacks
-        glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+        glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
             switch (action)
@@ -132,7 +132,7 @@ namespace GE
         });
     }
 
-    void WindowsWindow::Shutdown() { glfwDestroyWindow(m_Window); }
+    void WindowsWindow::Shutdown() { glfwDestroyWindow(m_window); }
 
     // implement window creation
     Window* Window::Create(const WindowProperties& props) { return new WindowsWindow(props); }

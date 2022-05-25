@@ -29,10 +29,9 @@ namespace GE
 
         virtual ~Window() = default;
 
-        virtual void         OnTick()          = 0;
-        virtual uint         GetWidth() const  = 0;
-        virtual uint         GetHeight() const = 0;
-        virtual glm::u32vec2 GetSize() const { return glm::u32vec2(GetWidth(), GetHeight()); }
+        virtual void OnTick()          = 0;
+        virtual uint GetWidth() const  = 0;
+        virtual uint GetHeight() const = 0;
 
         virtual void SetEventCallback(const EventCallbackFn& callback) = 0;
 

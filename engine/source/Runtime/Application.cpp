@@ -10,8 +10,8 @@ namespace GE
 {
     Application::Application()
     {
-        m_Window = std::unique_ptr<Window>(Window::Create());
-        m_Window->SetEventCallback(GE_BIND_CLASS_FN(Application::OnEvent));
+        m_window = std::unique_ptr<Window>(Window::Create());
+        m_window->SetEventCallback(GE_BIND_CLASS_FN(Application::OnEvent));
     }
 
     Application::~Application() {}
@@ -20,9 +20,9 @@ namespace GE
     {
         GE_CORE_TRACE("Starting Application");
 
-        while (m_Running)
+        while (m_running)
         {
-            m_Window->OnTick();
+            m_window->OnTick();
         }
     }
 
@@ -36,7 +36,7 @@ namespace GE
 
     bool Application::OnWindowClosed(WindowCloseEvent& e)
     {
-        m_Running = false;
+        m_running = false;
         return true;
     }
 } // namespace GE
