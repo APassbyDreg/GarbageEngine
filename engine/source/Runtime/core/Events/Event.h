@@ -51,13 +51,14 @@ namespace GE
 
         inline bool isInCategory(EventCategory category) { return getCategoryFlags() & category; }
 
-    private:
+    public:
         bool m_handled = false;
     };
 } // namespace GE
 
 // event final class shorthand macro
 #define EVENT_IMPLEMENTATION_COMMON(type, category) \
-    EventType   getEventType() const override { return EventType::type; } \
-    const char* getName() const override { return #type; } \
-    int         getCategoryFlags() const override { return category; }
+    static EventType getStaticType() { return EventType::type; } \
+    EventType        getEventType() const override { return EventType::type; } \
+    const char*      getName() const override { return #type; } \
+    int              getCategoryFlags() const override { return category; }

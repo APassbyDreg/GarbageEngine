@@ -41,5 +41,12 @@ namespace GE
         EVENT_IMPLEMENTATION_COMMON(KeyReleased, EventCategoryKeyboard)
 
         KeyReleasedEvent(int keyCode) : KeyEvent(keyCode) {}
+
+        std::string toString() const override
+        {
+            std::stringstream ss;
+            ss << "KeyReleasedEvent: " << m_keyCode;
+            return ss.str();
+        }
     };
 } // namespace GE

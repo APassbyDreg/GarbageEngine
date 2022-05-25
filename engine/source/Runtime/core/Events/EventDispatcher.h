@@ -17,11 +17,11 @@ namespace GE
         EventDispatcher(Event& event) : m_event(event) {}
 
         template<typename T>
-        bool Dispatch(EventFn<T>& func)
+        bool Dispatch(EventFn<T> func)
         {
             if (m_event.getEventType() == T::getStaticType())
             {
-                m_event.handled = func(static_cast<T&>(m_event));
+                m_event.m_handled = func(static_cast<T&>(m_event));
                 return true;
             }
             return false;

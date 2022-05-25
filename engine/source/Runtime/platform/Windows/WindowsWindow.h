@@ -26,6 +26,8 @@ namespace GE
         virtual void Init(const WindowProperties& props);
         virtual void Shutdown();
 
+        virtual void InitCallbacks();
+
     private:
         GLFWwindow* m_Window;
 
