@@ -16,7 +16,7 @@ namespace GE
         virtual void OnDisable() {}
         virtual void OnAttach() {}
         virtual void OnDetatch() {}
-        virtual void OnTick() {}
+        virtual void OnUpdate() {}
         virtual void OnEvent(Event& event) {}
 
         inline const std::string& GetName() const { return m_layerName; }

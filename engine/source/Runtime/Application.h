@@ -26,7 +26,7 @@ namespace GE
         void PushOverlay(std::shared_ptr<Layer> overlay);
 
     private:
-        std::unique_ptr<Window> m_window;
+        std::shared_ptr<Window> m_window;
         bool                    m_running = true;
         LayerStack              m_layerStack;
     };

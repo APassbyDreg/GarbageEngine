@@ -1,6 +1,7 @@
 #include "GE_pch.h"
 
 #include "Application.h"
+#include "core/VulkanManager/VulkanManager.h"
 
 #include "GLFW/glfw3.h"
 
@@ -10,8 +11,10 @@ namespace GE
 {
     Application::Application()
     {
-        m_window = std::unique_ptr<Window>(Window::Create());
+        m_window = Window::Create();
         m_window->SetEventCallback(GE_BIND_CLASS_FN(Application::OnEvent));
+
+        VulkanManager::GetInstance().Init(m_window->GetNativeWindow());
     }
 
     Application::~Application() {}
@@ -24,10 +27,10 @@ namespace GE
         {
             for (auto&& layer : m_layerStack)
             {
-                layer->OnTick();
+                layer->OnUpdate();
             }
 
-            m_window->OnTick();
+            m_window->OnUpdate();
         }
 
         GE_CORE_TRACE("Ending Application");

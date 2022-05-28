@@ -14,7 +14,7 @@ namespace GE
         WindowsWindow(const WindowProperties& props);
         virtual ~WindowsWindow();
 
-        virtual void OnTick() override;
+        virtual void OnUpdate() override;
 
         virtual uint GetWidth() const override { return m_Data.width; }
         virtual uint GetHeight() const override { return m_Data.height; }
@@ -29,7 +29,6 @@ namespace GE
         virtual void InitCallbacks();
 
     private:
-        GLFWwindow* m_window;
 
         struct WindowData
         {

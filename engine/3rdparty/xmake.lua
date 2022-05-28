@@ -51,19 +51,35 @@ target("GE_imgui")
 
 
 function GE_link_imgui() 
-   add_deps("GE_imgui") 
+    add_includedirs(rel_local_path("imgui"))
+    add_deps("GE_imgui") 
 end
 
 
 -------------------------------- vma --------------------------------
 function GE_link_vma() 
-   add_includedirs(rel_local_path("VulkanMemoryAllocator-Hpp/include"))
+    add_includedirs(rel_local_path("VulkanMemoryAllocator-Hpp/include"))
+end
+
+
+-------------------------------- vkb --------------------------------
+target("GE_vkb")
+    set_kind("static")
+
+    GE_link_vulkan()
+    add_includedirs(rel_local_path("vk-bootstrap/src"))
+
+    add_files(rel_local_path("vk-bootstrap/src/**.cpp"))
+
+function GE_link_vkb() 
+    add_includedirs(rel_local_path("vk-bootstrap/src"))
+    add_deps("GE_vkb")
 end
 
 
 -------------------------------- json --------------------------------
 function GE_link_json() 
-   add_includedirs(rel_local_path("nlohmann_json/single_include"))
+    add_includedirs(rel_local_path("nlohmann_json/single_include"))
 end
 
 
@@ -75,5 +91,10 @@ function GE_link_3rdparty()
     GE_link_spdlog()
     GE_link_imgui()
     GE_link_vma()
+    GE_link_vkb() 
     GE_link_json()
+end
+
+
+function GE_load_3rdparty() 
 end

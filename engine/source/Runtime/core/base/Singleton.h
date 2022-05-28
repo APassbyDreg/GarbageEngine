@@ -11,7 +11,7 @@ namespace GE
         Singleton() = default;
 
     public:
-        static T& getInstance()
+        static T& GetInstance()
         {
             static T instance;
             return instance;

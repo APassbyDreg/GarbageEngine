@@ -3,12 +3,23 @@ add_rules("mode.debug", "mode.release")
 set_project("GarbageEngine")
 
 includes("engine/3rdparty")
+GE_load_3rdparty()
+
+
+function GE_add_predefined_macros() 
+    is_mode("debug")
+        add_defines("GE_DEBUG")
+    
+    is_plat("windows")
+        add_defines("GE_PLATFORM_WINDOWS")
+end
 
 -- runtime
 target("runtime")
     set_kind("shared")
 
     -- defines
+    GE_add_predefined_macros()
     add_defines("GE_BUILD_RUNTIME")
 
     -- precompiled header
@@ -26,10 +37,8 @@ target("runtime")
 target("editor")
     set_kind("binary")
 
-    is_plat("windows")
-        add_defines("GE_PLATFORM_WINDOWS")
-
     -- defines
+    GE_add_predefined_macros()
     add_defines("GE_BUILD_EDITOR")
 
     -- dependencies

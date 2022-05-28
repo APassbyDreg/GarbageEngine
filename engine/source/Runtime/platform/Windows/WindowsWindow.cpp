@@ -10,10 +10,9 @@ namespace GE
 
     WindowsWindow::~WindowsWindow() { Shutdown(); }
 
-    void WindowsWindow::OnTick()
+    void WindowsWindow::OnUpdate()
     {
         glfwPollEvents();
-        glfwSwapBuffers(m_window);
     }
 
     void WindowsWindow::Init(const WindowProperties& props)
@@ -34,14 +33,14 @@ namespace GE
             s_GLFWInitialized = true;
         }
 
+        // set hint
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+        // create window
         m_window = glfwCreateWindow((int)m_Data.width, (int)m_Data.height, m_Data.title.c_str(), nullptr, nullptr);
         GE_CORE_ASSERT(m_window, "Could not create window!");
 
-        glfwMakeContextCurrent(m_window);
         glfwSetWindowUserPointer(m_window, &m_Data);
-
-        // VSync is always on
-        glfwSwapInterval(1);
 
         // setup callbacks
         InitCallbacks();
@@ -136,8 +135,8 @@ namespace GE
     void WindowsWindow::Shutdown() { glfwDestroyWindow(m_window); }
 
     // implement window creation
-    std::unique_ptr<Window> Window::Create(const WindowProperties& props)
+    std::shared_ptr<Window> Window::Create(const WindowProperties& props)
     {
-        return std::make_unique<WindowsWindow>(props);
+        return std::make_shared<WindowsWindow>(props);
     }
 } // namespace GE
