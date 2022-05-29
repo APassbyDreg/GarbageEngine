@@ -29,19 +29,19 @@
 #define VK_CHECK(call) \
     do \
     { \
-        VkResult res = (call); \
-        if (res != VK_SUCCESS) \
+        VkResult __vk_check_res = (call); \
+        if (__vk_check_res != VK_SUCCESS) \
         { \
-            GE_CORE_ERROR(VK_ERROR_MSG(call, res)); \
+            GE_CORE_ERROR(VK_ERROR_MSG(call, __vk_check_res)); \
         } \
     } while (0)
 
 #define VK_CHECK_CRITICAL(call) \
     do \
     { \
-        VkResult res = (call); \
-        if (res != VK_SUCCESS) \
+        VkResult __vk_check_res = (call); \
+        if (__vk_check_res != VK_SUCCESS) \
         { \
-            GE_CORE_CRITICAL(VK_ERROR_MSG(call, res)); \
+            GE_CORE_CRITICAL(VK_ERROR_MSG(call, __vk_check_res)); \
         } \
     } while (0)

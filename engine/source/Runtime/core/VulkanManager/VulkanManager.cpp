@@ -1,6 +1,5 @@
 #include "VulkanManager.h"
 
-
 #include "function/Log/LogSystem.h"
 #include "vk_Utils.h"
 
@@ -68,8 +67,10 @@ namespace GE
             // init instance, surface, device, etc.
             init_vulkan(window);
 
-            // init swapchain & images
-            init_swapchain();
+            // // init swapchain & images
+            // int w, h;
+            // glfwGetFramebufferSize(window, &w, &h);
+            // init_swapchain(int2(w, h));
         }
         m_initialized = true;
     }
@@ -80,7 +81,7 @@ namespace GE
         {
             destroy_vulkan();
 
-            destroy_swapchain();
+            // destroy_swapchain();
         }
     }
 
@@ -127,18 +128,28 @@ namespace GE
 
         // Choose and create device
         {
-            vkb::PhysicalDevice         vkb_physical_device;
+            vkb::PhysicalDevice         m_vkbPhysicalDevice;
             vkb::PhysicalDeviceSelector selector {m_vkbInstance};
             selector.set_minimum_version(1, 3).set_surface(m_surface).require_present().prefer_gpu_device_type(
                 vkb::PreferredDeviceType::discrete);
-            VKB_CHECK_RETURN(selector.select(), vkb_physical_device);
+            VKB_CHECK_RETURN(selector.select(), m_vkbPhysicalDevice);
 
             vkb::Device        m_vkbDevice;
-            vkb::DeviceBuilder builder {vkb_physical_device};
+            vkb::DeviceBuilder builder {m_vkbPhysicalDevice};
             VKB_CHECK_RETURN(builder.build(), m_vkbDevice);
 
-            m_physicalDevice = vkb_physical_device.physical_device;
+            m_physicalDevice = m_vkbPhysicalDevice.physical_device;
             m_device         = m_vkbDevice.device;
+
+            VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::graphics), m_graphicsQueue);
+            VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::present), m_presentQueue);
+            VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute), m_computeQueue);
+            VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::transfer), m_transferQueue);
+
+            VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::graphics), m_graphicsQueueFamilyIndex);
+            VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::present), m_presentQueueFamilyIndex);
+            VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute), m_computeQueueFamilyIndex);
+            VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::transfer), m_transferQueueFamilyIndex);
         }
     }
 
@@ -155,28 +166,30 @@ namespace GE
         vkb::destroy_instance(m_vkbInstance);
     }
 
-    void VulkanManager::init_swapchain()
-    {
-        vkb::Swapchain        swapchain;
-        vkb::SwapchainBuilder builder {m_physicalDevice, m_device, m_surface};
-        builder.set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
-            .set_desired_format({VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
-            .set_desired_extent(1920, 1080);
-        VKB_CHECK_RETURN(builder.build(), swapchain);
+    // void VulkanManager::init_swapchain(int2 size)
+    // {
+    //     vkb::Swapchain        swapchain;
+    //     vkb::SwapchainBuilder builder {m_physicalDevice, m_device, m_surface};
+    //     builder.set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
+    //         .set_desired_format({VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
+    //         .set_desired_extent(size.x, size.y);
+    //     VKB_CHECK_RETURN(builder.build(), swapchain);
 
-        m_swapchain = swapchain.swapchain;
-        VKB_CHECK_RETURN(swapchain.get_images(), m_swapchainImages);
-        VKB_CHECK_RETURN(swapchain.get_image_views(), m_swapchainImageViews);
-    }
+    //     m_swapchain       = swapchain.swapchain;
+    //     m_swapchainExtent = swapchain.extent;
+    //     m_swapchainFormat = swapchain.image_format;
+    //     VKB_CHECK_RETURN(swapchain.get_images(), m_swapchainImages);
+    //     VKB_CHECK_RETURN(swapchain.get_image_views(), m_swapchainImageViews);
+    // }
 
-    void VulkanManager::destroy_swapchain()
-    {
-        for (auto& imageView : m_swapchainImageViews)
-        {
-            vkDestroyImageView(m_device, imageView, nullptr);
-        }
+    // void VulkanManager::destroy_swapchain()
+    // {
+    //     for (auto& imageView : m_swapchainImageViews)
+    //     {
+    //         vkDestroyImageView(m_device, imageView, nullptr);
+    //     }
 
-        vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-    }
+    //     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+    // }
 
 } // namespace GE

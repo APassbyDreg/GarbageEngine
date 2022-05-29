@@ -5,6 +5,9 @@
 #include "function/UI/Window.h"
 
 #include "GLFW/glfw3.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
 
 namespace GE
 {
@@ -14,22 +17,27 @@ namespace GE
         WindowsWindow(const WindowProperties& props);
         virtual ~WindowsWindow();
 
-        virtual void OnUpdate() override;
+        void OnUpdate() override;
 
-        virtual uint GetWidth() const override { return m_Data.width; }
-        virtual uint GetHeight() const override { return m_Data.height; }
+        uint GetWidth() const override { return m_Data.width; }
+        uint GetHeight() const override { return m_Data.height; }
 
         // Window attributes
-        virtual void SetEventCallback(const EventCallbackFn& callback) override { m_Data.eventCallback = callback; }
+        void SetEventCallback(const EventCallbackFn& callback) override { m_Data.eventCallback = callback; }
 
     private:
-        virtual void Init(const WindowProperties& props);
-        virtual void Shutdown();
+        void Init(const WindowProperties& props);
+        void Shutdown();
 
-        virtual void InitCallbacks();
 
     private:
+        /* ------------------------- private helpers ------------------------ */
 
+        void init_glfw();
+        void init_glfw_callbacks();
+        void init_imgui(int2 size);
+
+    private:
         struct WindowData
         {
             std::string  title;
@@ -41,5 +49,7 @@ namespace GE
         WindowData m_Data;
 
         static bool s_GLFWInitialized;
+
+        static ImGui_ImplVulkanH_Window s_imguiWindow;
     };
 } // namespace GE

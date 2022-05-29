@@ -52,6 +52,7 @@ target("GE_imgui")
 
 function GE_link_imgui() 
     add_includedirs(rel_local_path("imgui"))
+    add_includedirs(rel_local_path("imgui/backends"))
     add_deps("GE_imgui") 
 end
 

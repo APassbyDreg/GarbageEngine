@@ -2,35 +2,35 @@
 
 #include "function/Event/EventSystem.h"
 
+#include "core/VulkanManager/VulkanManager.h"
+
 namespace GE
 {
-    bool WindowsWindow::s_GLFWInitialized = false;
+    bool                     WindowsWindow::s_GLFWInitialized = false;
+    ImGui_ImplVulkanH_Window WindowsWindow::s_imguiWindow;
 
     WindowsWindow::WindowsWindow(const WindowProperties& props) { Init(props); }
 
     WindowsWindow::~WindowsWindow() { Shutdown(); }
 
-    void WindowsWindow::OnUpdate()
-    {
-        glfwPollEvents();
-    }
+    void WindowsWindow::OnUpdate() { glfwPollEvents(); }
 
-    void WindowsWindow::Init(const WindowProperties& props)
+    void WindowsWindow::init_glfw()
     {
-        m_Data.title  = props.title;
-        m_Data.width  = props.width;
-        m_Data.height = props.height;
-
         if (!s_GLFWInitialized)
         {
-            // TODO: glfwTerminate on system shutdown
-            int success = glfwInit();
-            GE_CORE_ASSERT(success, "Could not initialize GLFW!");
+            if (!glfwVulkanSupported())
+            {
+                GE_CORE_CRITICAL("GLFW: Vulkan not supported!");
+            }
 
             // TODO: move to dedicated function
             glfwSetErrorCallback(
                 [](int error, const char* description) { GE_CORE_ERROR("GLFW Error ({0}): {1}", error, description); });
             s_GLFWInitialized = true;
+
+            // TODO: glfwTerminate on system shutdown
+            GE_CORE_ASSERT(glfwInit(), "Could not initialize GLFW!");
         }
 
         // set hint
@@ -41,12 +41,9 @@ namespace GE
         GE_CORE_ASSERT(m_window, "Could not create window!");
 
         glfwSetWindowUserPointer(m_window, &m_Data);
-
-        // setup callbacks
-        InitCallbacks();
     }
 
-    void WindowsWindow::InitCallbacks()
+    void WindowsWindow::init_glfw_callbacks()
     {
         // window callbalcks
         glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
@@ -130,6 +127,78 @@ namespace GE
                 }
             }
         });
+    }
+
+    void WindowsWindow::init_imgui(int2 size)
+    {
+        s_imguiWindow.Surface = VulkanManager::GetInstance().GetVkSurface();
+
+        // Check for WSI support
+        {
+            VkBool32 res;
+            VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(VulkanManager::GetInstance().GetVkPhysicalDevice(),
+                                                          VulkanManager::GetInstance().GetVkGraphicsQueueFamilyIndex(),
+                                                          s_imguiWindow.Surface,
+                                                          &res));
+            GE_CORE_ASSERT(res == VK_TRUE, "WSI not supported Error no WSI support on selected physical device!");
+        }
+
+        // Select Surface Format
+        {
+            const VkFormat requestSurfaceImageFormat[] = {
+                VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM};
+            const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+
+            s_imguiWindow.SurfaceFormat =
+                ImGui_ImplVulkanH_SelectSurfaceFormat(VulkanManager::GetInstance().GetVkPhysicalDevice(),
+                                                      s_imguiWindow.Surface,
+                                                      requestSurfaceImageFormat,
+                                                      (size_t)IM_ARRAYSIZE(requestSurfaceImageFormat),
+                                                      requestSurfaceColorSpace);
+        }
+
+        // Select Present Mode
+        {
+            VkPresentModeKHR present_modes[] = {
+                VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR};
+            s_imguiWindow.PresentMode =
+                ImGui_ImplVulkanH_SelectPresentMode(VulkanManager::GetInstance().GetVkPhysicalDevice(),
+                                                    s_imguiWindow.Surface,
+                                                    &present_modes[0],
+                                                    IM_ARRAYSIZE(present_modes));
+        }
+
+        // Create SwapChain, RenderPass, Framebuffer, etc.
+        {
+            ImGui_ImplVulkanH_CreateOrResizeWindow(VulkanManager::GetInstance().GetVkInstance(),
+                                                   VulkanManager::GetInstance().GetVkPhysicalDevice(),
+                                                   VulkanManager::GetInstance().GetVkDevice(),
+                                                   &s_imguiWindow,
+                                                   VulkanManager::GetInstance().GetVkGraphicsQueueFamilyIndex(),
+                                                   nullptr,
+                                                   size.x,
+                                                   size.y,
+                                                   2);
+        }
+    }
+
+    void WindowsWindow::Init(const WindowProperties& props)
+    {
+        m_Data.title  = props.title;
+        m_Data.width  = props.width;
+        m_Data.height = props.height;
+
+        // setup glfw
+        init_glfw();
+
+        // setup callbacks
+        init_glfw_callbacks();
+
+        // setup vulkan
+        VulkanManager::GetInstance().Init(m_window);
+
+        // setup imgui
+        init_imgui(int2(props.width, props.height));
     }
 
     void WindowsWindow::Shutdown() { glfwDestroyWindow(m_window); }
