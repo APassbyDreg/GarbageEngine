@@ -29,13 +29,15 @@ namespace GE
         void Init(const WindowProperties& props);
         void Shutdown();
 
-
     private:
         /* ------------------------- private helpers ------------------------ */
 
         void init_glfw();
         void init_glfw_callbacks();
         void init_imgui(int2 size);
+
+        void cleanup_glfw();
+        void cleanup_imgui();
 
     private:
         struct WindowData
@@ -48,7 +50,7 @@ namespace GE
 
         WindowData m_Data;
 
-        static bool s_GLFWInitialized;
+        static bool s_glfwInitialized;
 
         static ImGui_ImplVulkanH_Window s_imguiWindow;
     };

@@ -60,6 +60,6 @@ target("editor")
         local targetfile = target:targetfile()
         local buildir = path.directory(targetfile)
 
-        import("engine.3rdparty.after_build", {alias = "after_build"})
-        after_build.glfw(buildir)
+        import("engine.3rdparty.after_build", {alias = "ab"})
+        ab.after_build(buildir)
     end)

@@ -20,9 +20,9 @@ end
 
 -------------------------------- glfw --------------------------------
 function GE_link_glfw() 
-    if is_plat("windows") then 
-        add_includedirs(rel_local_path("glfw/Windows/include"))
-        add_links(rel_local_path("glfw/Windows/glfw3dll"))
+    add_includedirs(rel_local_path("glfw/include"))
+    if is_plat("windows") then
+        add_links(rel_local_path("glfw/lib/Windows/lib-vc2022/glfw3dll"))
     end
 end
 

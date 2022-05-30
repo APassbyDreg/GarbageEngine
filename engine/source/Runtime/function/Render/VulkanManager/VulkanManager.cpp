@@ -1,6 +1,7 @@
 #include "VulkanManager.h"
 
-#include "function/Log/LogSystem.h"
+
+#include "function/Log/LogSystem.h" // TODO: rethink layering
 #include "vk_Utils.h"
 
 #define VKB_CHECK_RETURN(src, dest) \

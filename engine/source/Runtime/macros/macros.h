@@ -25,23 +25,3 @@
 #else
 #define VK_ERROR_MSG(call, res) "Vulkan call [{0}] failed with code {1}\n", #call, res
 #endif
-
-#define VK_CHECK(call) \
-    do \
-    { \
-        VkResult __vk_check_res = (call); \
-        if (__vk_check_res != VK_SUCCESS) \
-        { \
-            GE_CORE_ERROR(VK_ERROR_MSG(call, __vk_check_res)); \
-        } \
-    } while (0)
-
-#define VK_CHECK_CRITICAL(call) \
-    do \
-    { \
-        VkResult __vk_check_res = (call); \
-        if (__vk_check_res != VK_SUCCESS) \
-        { \
-            GE_CORE_CRITICAL(VK_ERROR_MSG(call, __vk_check_res)); \
-        } \
-    } while (0)
