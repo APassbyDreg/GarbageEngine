@@ -33,11 +33,15 @@ namespace GE
         /* ------------------------- private helpers ------------------------ */
 
         void init_glfw();
-        void init_glfw_callbacks();
         void init_imgui(int2 size);
 
         void cleanup_glfw();
         void cleanup_imgui();
+
+        void __init_glfw_callbacks();
+        void __imgui_render_frame(ImDrawData* draw_data);
+        void __imgui_present_frame();
+        void __imgui_rebuild_swapchain();
 
     private:
         struct WindowData
@@ -52,6 +56,16 @@ namespace GE
 
         static bool s_glfwInitialized;
 
+        /* --------------------------- imgui stuff -------------------------- */
+        ImGuiIO m_imguiIO;
+
         static ImGui_ImplVulkanH_Window s_imguiWindow;
+
+        // TODO: move to unified management
+        static VkPipelineCache  s_imguiPipelineCache;
+        static VkDescriptorPool s_imguiDescriptorPool;
+
+        // TODO: rethink where this should be placed
+        static bool s_needRebuildSwapChain;
     };
 } // namespace GE

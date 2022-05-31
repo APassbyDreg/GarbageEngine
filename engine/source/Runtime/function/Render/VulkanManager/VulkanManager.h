@@ -4,9 +4,9 @@
 
 #include "VkCommon.h"
 
+#include "GLFW/glfw3.h" // GLFW must be included after Vulkan
 #include "VkBootstrap.h"
-// GLFW must be included after Vulkan
-#include "GLFW/glfw3.h"
+#include "vk_mem_alloc.h"
 
 #include "core/base/Singleton.h"
 #include "core/math/math.h"
@@ -43,6 +43,9 @@ namespace GE
         void init_vulkan(GLFWwindow* window);
         void destroy_vulkan();
 
+        void init_vma();
+        void destroy_vma();
+
     private:
         bool m_initialized = false;
 
@@ -70,5 +73,8 @@ namespace GE
         vkb::PhysicalDevice m_vkbPhysicalDevice;
         vkb::Device         m_vkbDevice;
         vkb::Swapchain      m_vkbSwapchain;
+
+        /* -------------------------- vma allocator ------------------------- */
+        VmaAllocator m_allocator;
     };
 } // namespace GE

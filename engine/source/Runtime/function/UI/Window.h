@@ -14,7 +14,7 @@ namespace GE
         std::string title;
         uint        width, height;
 
-        WindowProperties(const std::string& title = "GE Engine", uint width = 1280, uint height = 720) :
+        WindowProperties(const std::string& title = "GE Engine", uint width = 1920, uint height = 1080) :
             title(title), width(width), height(height)
         {}
     };
@@ -30,7 +30,7 @@ namespace GE
 
         virtual ~Window() = default;
 
-        inline GLFWwindow* GetNativeWindow() const { return m_window; }
+        inline GLFWwindow* GetNativeWindow() const { return m_glfwWindow; }
 
         virtual void OnUpdate()        = 0;
         virtual uint GetWidth() const  = 0;
@@ -43,6 +43,6 @@ namespace GE
         static std::shared_ptr<Window> Create(const WindowProperties& properties = WindowProperties());
 
     protected:
-        GLFWwindow* m_window;
+        GLFWwindow* m_glfwWindow;
     };
 } // namespace GE

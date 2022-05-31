@@ -1,6 +1,5 @@
 #include "VulkanManager.h"
 
-
 #include "function/Log/LogSystem.h" // TODO: rethink layering
 #include "vk_Utils.h"
 
@@ -124,7 +123,7 @@ namespace GE
 
         // Create Surface
         {
-            VK_CHECK_CRITICAL(glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface));
+            VK_CHECK(glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface));
         }
 
         // Choose and create device
@@ -166,6 +165,25 @@ namespace GE
 
         vkb::destroy_instance(m_vkbInstance);
     }
+
+    void VulkanManager::init_vma()
+    {
+        VmaVulkanFunctions vulkanFunctions    = {};
+        vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+        vulkanFunctions.vkGetDeviceProcAddr   = &vkGetDeviceProcAddr;
+
+        VmaAllocatorCreateInfo allocatorCreateInfo = {};
+        allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_2;
+        allocatorCreateInfo.physicalDevice         = m_physicalDevice;
+        allocatorCreateInfo.device                 = m_device;
+        allocatorCreateInfo.instance               = m_instance;
+        allocatorCreateInfo.pVulkanFunctions       = &vulkanFunctions;
+
+        VmaAllocator allocator;
+        vmaCreateAllocator(&allocatorCreateInfo, &m_allocator);
+    }
+
+    void VulkanManager::destroy_vma() { vmaDestroyAllocator(m_allocator); }
 
     // void VulkanManager::init_swapchain(int2 size)
     // {

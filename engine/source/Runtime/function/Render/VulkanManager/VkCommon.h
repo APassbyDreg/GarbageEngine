@@ -26,14 +26,14 @@ namespace GE
     do \
     { \
         VkResult __vk_check_res = (call); \
-        __vk_check_fn_noexit(__vk_check_res); \
+        __vk_check_fn(__vk_check_res); \
     } while (0)
 
-#define VK_CHECK_CRITICAL(call) \
+#define VK_CHECK_NOEXIT(call) \
     do \
     { \
         VkResult __vk_check_res = (call); \
-        __vk_check_fn(__vk_check_res); \
+        __vk_check_fn_noexit(__vk_check_res); \
     } while (0)
 
 } // namespace GE

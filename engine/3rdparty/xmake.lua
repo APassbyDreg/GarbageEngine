@@ -59,7 +59,7 @@ end
 
 -------------------------------- vma --------------------------------
 function GE_link_vma() 
-    add_includedirs(rel_local_path("VulkanMemoryAllocator-Hpp/include"))
+    add_includedirs(rel_local_path("VulkanMemoryAllocator/include"))
 end
 
 
