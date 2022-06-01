@@ -70,8 +70,7 @@ namespace GE
         template<typename... TARGS>
         void criticalCallback(TARGS&&... args)
         {
-            const std::string format_str = fmt::format(std::forward<TARGS>(args)...);
-            throw std::runtime_error(format_str);
+            throw std::runtime_error("critical error occurs");
         }
 
         static std::map<std::string, Level> s_string2level;

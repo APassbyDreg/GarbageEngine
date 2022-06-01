@@ -8,6 +8,7 @@ end
 
 -------------------------------- spdlog --------------------------------
 function GE_link_spdlog()
+    add_defines("SPDLOG_USE_STD_FORMAT") -- this must be added to avoid compile error in c++20
     add_includedirs(rel_local_path("spdlog/include"))
 end
 
@@ -84,6 +85,12 @@ function GE_link_json()
 end
 
 
+-------------------------------- entt --------------------------------
+function GE_link_entt() 
+    add_includedirs(rel_local_path("entt/single_include"))
+end
+
+
 -------------------------------- overall --------------------------------
 function GE_link_3rdparty()
     GE_link_vulkan() 
@@ -94,6 +101,7 @@ function GE_link_3rdparty()
     GE_link_vma()
     GE_link_vkb() 
     GE_link_json()
+    GE_link_entt() 
 end
 
 

@@ -2,14 +2,12 @@
 
 #include "GE_pch.h"
 
+#include "MsgTypes.h"
+
 #include "core/base/Singleton.h"
 
 namespace GE
 {
-    struct MsgResultBase
-    {
-        bool success = true;
-    };
 
     /**
      * @brief
@@ -18,16 +16,16 @@ namespace GE
      * @tparam MsgResult a subclass of MsgResultBase
      */
     template<typename MsgBody, typename MsgResult>
-    class MessageDispatcher : public Singleton<MessageDispatcher>
+    class GE_API MessageDispatcher : public Singleton<MessageDispatcher<MsgBody, MsgResult>>
     {
     public:
         using ListenerFn = std::function<std::shared_ptr<MsgResult>(MsgBody)>;
         // using MsgCallback = std::function<void(std::vector<std::shared_ptr<MsgResult>>)>;
 
-        MessageDispatcher();
-        ~MessageDispatcher();
+        MessageDispatcher() {};
+        ~MessageDispatcher() {};
 
-        inline std::vector<std::shared_ptr<MsgResultBase>> SendMessage(MsgBody data)
+        inline std::vector<std::shared_ptr<MsgResultBase>> Dispatch(MsgBody data)
         {
             std::vector<std::future<std::shared_ptr<MsgResultBase>>> rets;
             for (auto& cb : m_listeners)
@@ -42,10 +40,17 @@ namespace GE
             return res;
         }
 
-        inline void RegisterListener(ListenerFn listener_fn) { m_listeners.push_back(listener_fn); }
+        inline void RegisterListener(ListenerFn listener_fn, int priority = 0)
+        {
+            uint offset = std::lower_bound(m_priorities.begin(), m_priorities.end(), priority) - m_priorities.begin();
+
+            m_listeners.insert(m_listeners.begin() + offset, listener_fn);
+            m_priorities.insert(m_priorities.begin() + offset, priority);
+        }
 
     private:
         std::vector<ListenerFn> m_listeners;
+        std::vector<int>        m_priorities;
 
         // TODO: add async messaging
     };

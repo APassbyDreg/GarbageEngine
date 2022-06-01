@@ -12,10 +12,13 @@ function GE_add_predefined_macros()
     
     is_plat("windows")
         add_defines("GE_PLATFORM_WINDOWS")
+
+    add_defines("GE_ENABLE_TESTING")
 end
 
 -- runtime
 target("runtime")
+    set_languages("c++20")
     set_kind("shared")
 
     -- defines
@@ -35,6 +38,7 @@ target("runtime")
 
 -- editor
 target("editor")
+    set_languages("c++20")
     set_kind("binary")
 
     -- defines

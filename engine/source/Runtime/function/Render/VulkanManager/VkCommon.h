@@ -11,14 +11,14 @@ namespace GE
     {
         if (res != VK_SUCCESS)
         {
-            GE_CORE_CRITICAL("Vulkan call failed with code {0}", res);
+            GE_CORE_CRITICAL("Vulkan call failed with code {0}", (int)res);
         }
     }
     inline void __vk_check_fn_noexit(VkResult res)
     {
         if (res != VK_SUCCESS)
         {
-            GE_CORE_ERROR("Vulkan call failed with code {0}", res);
+            GE_CORE_ERROR("Vulkan call failed with code {0}", (int)res);
         }
     }
 

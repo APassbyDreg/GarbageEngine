@@ -2,6 +2,8 @@
 
 #include "function/Event/EventSystem.h"
 
+#include "function/Message/MessageSystem.h"
+
 #include "function/Render/VulkanManager/VulkanManager.h"
 
 namespace GE
@@ -223,32 +225,48 @@ namespace GE
     void WindowsWindow::__init_glfw_callbacks()
     {
         // window callbalcks
-        glfwSetWindowSizeCallback(m_glfwWindow, [](GLFWwindow* window, int width, int height) {
-            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-            data.width       = width;
-            data.height      = height;
+        // glfwSetWindowSizeCallback(m_glfwWindow, [](GLFWwindow* window, int width, int height) {
+        //     WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+        //     data.width       = width;
+        //     data.height      = height;
 
-            WindowResizeEvent event(width, height);
-            data.eventCallback(event);
+        //     WindowResizeEvent event(width, height);
+        //     data.eventCallback(event);
+        // });
+        // glfwSetWindowCloseCallback(m_glfwWindow, [](GLFWwindow* window) {
+        //     WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+        //     WindowCloseEvent event;
+        //     data.eventCallback(event);
+        // });
+        // glfwSetWindowFocusCallback(m_glfwWindow, [](GLFWwindow* window, int focused) {
+        //     WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+        //     if (focused == GLFW_TRUE)
+        //     {
+        //         WindowFocusEvent event;
+        //         data.eventCallback(event);
+        //     }
+        //     else if (focused == GLFW_FALSE)
+        //     {
+        //         WindowLostFocusEvent event;
+        //         data.eventCallback(event);
+        //     }
+        // });
+        glfwSetWindowSizeCallback(m_glfwWindow, [](GLFWwindow* window, int width, int height) {
+            MessageDispatcher<WindowResizeMsg, MsgResultBase>::GetInstance().Dispatch(WindowResizeMsg(width, height));
         });
         glfwSetWindowCloseCallback(m_glfwWindow, [](GLFWwindow* window) {
-            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-
-            WindowCloseEvent event;
-            data.eventCallback(event);
+            MessageDispatcher<WindowCloseMsg, MsgResultBase>::GetInstance().Dispatch(WindowCloseMsg());
         });
         glfwSetWindowFocusCallback(m_glfwWindow, [](GLFWwindow* window, int focused) {
-            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-
             if (focused == GLFW_TRUE)
             {
-                WindowFocusEvent event;
-                data.eventCallback(event);
+                MessageDispatcher<WindowFocusMsg, MsgResultBase>::GetInstance().Dispatch(WindowFocusMsg());
             }
             else if (focused == GLFW_FALSE)
             {
-                WindowLostFocusEvent event;
-                data.eventCallback(event);
+                MessageDispatcher<WindowLostFocusMsg, MsgResultBase>::GetInstance().Dispatch(WindowLostFocusMsg());
             }
         });
         // mouse callbacks

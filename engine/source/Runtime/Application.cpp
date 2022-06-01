@@ -1,6 +1,7 @@
 #include "GE_pch.h"
 
 #include "Application.h"
+#include "function/Message/MessageSystem.h"
 #include "function/Render/VulkanManager/VulkanManager.h"
 
 #include "GLFW/glfw3.h"
@@ -15,6 +16,9 @@ namespace GE
         m_window->SetEventCallback(GE_BIND_CLASS_FN(Application::OnEvent));
 
         VulkanManager::GetInstance().Init(m_window->GetNativeWindow());
+
+        MessageDispatcher<WindowCloseMsg, MsgResultBase>::GetInstance().RegisterListener(
+            GE_BIND_CLASS_FN(Application::__handle_window_close), 0);
     }
 
     Application::~Application() {}
@@ -50,15 +54,12 @@ namespace GE
             it--;
             (*it)->OnEvent(e);
         }
-
-        EventDispatcher dispatcher(e);
-        dispatcher.Dispatch<WindowCloseEvent>(GE_BIND_CLASS_FN(Application::OnWindowClosed));
     }
 
-    bool Application::OnWindowClosed(WindowCloseEvent& e)
+    std::shared_ptr<MsgResultBase> Application::__handle_window_close(WindowCloseMsg msg)
     {
         m_running = false;
-        return true;
+        return MsgResultBase::Success();
     }
 
     void Application::PushLayer(std::shared_ptr<Layer> layer)

@@ -2,10 +2,10 @@
 
 #include "GE_pch.h"
 
-#include "function/Layer/LayerSystem.h"
-
 #include "function/Event/EventSystem.h"
+#include "function/Layer/LayerSystem.h"
 #include "function/Log/LogSystem.h"
+#include "function/Message/MessageSystem.h"
 #include "function/UI/Window.h"
 
 namespace GE
@@ -20,8 +20,6 @@ namespace GE
 
         void OnEvent(Event& e);
 
-        bool OnWindowClosed(WindowCloseEvent& e);
-
         void PushLayer(std::shared_ptr<Layer> layer);
         void PushOverlay(std::shared_ptr<Layer> overlay);
 
@@ -29,6 +27,8 @@ namespace GE
         std::shared_ptr<Window> m_window;
         bool                    m_running = true;
         LayerStack              m_layerStack;
+
+        std::shared_ptr<MsgResultBase> __handle_window_close(WindowCloseMsg msg);
     };
 
     // Defined in client
