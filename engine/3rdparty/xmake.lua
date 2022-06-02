@@ -91,19 +91,45 @@ function GE_link_entt()
 end
 
 
+-------------------------------- shaderc --------------------------------
+function GE_link_shaderc() 
+    add_includedirs(rel_local_path("shaderc/include"))
+    add_links(rel_local_path("shaderc/lib/shaderc_combined"))
+end
+
+
+-------------------------------- miniz --------------------------------
+target("GE_miniz")
+    set_kind("static")
+
+    add_includedirs(rel_local_path("miniz"))
+
+    add_files(rel_local_path("miniz/**.cpp"))
+
+function GE_link_miniz() 
+    add_includedirs(rel_local_path("miniz"))
+    add_deps("GE_miniz")
+end
+
+
 -------------------------------- overall --------------------------------
 function GE_link_3rdparty()
-    GE_link_vulkan() 
+    GE_link_vulkan()
     GE_link_glfw()
     GE_link_glm()
     GE_link_spdlog()
     GE_link_imgui()
     GE_link_vma()
-    GE_link_vkb() 
+    GE_link_vkb()
     GE_link_json()
-    GE_link_entt() 
+    GE_link_entt()
+    GE_link_shaderc()
+    GE_link_miniz()
+
+    add_packages("openssl")
 end
 
 
-function GE_load_3rdparty() 
+function GE_load_3rdparty()
+    add_requires("openssl")
 end

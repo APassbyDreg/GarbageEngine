@@ -1,0 +1,15 @@
+#pragma once
+
+#include "GE_pch.h"
+
+${define GE_ASSET_DIR}
+${define GE_SHADER_DIR}
+
+namespace GE
+{
+    namespace Config 
+    {
+        const std::string asset_dir  = GE_ASSET_DIR;
+        const std::string shader_dir = GE_SHADER_DIR;
+    }
+}

@@ -7,7 +7,9 @@
 #pragma once
 
 #include <algorithm>
+#include <filesystem>
 #include <format>
+#include <fstream>
 #include <functional>
 #include <future>
 #include <iostream>
@@ -15,6 +17,7 @@
 #include <memory>
 #include <set>
 #include <sstream>
+#include <streambuf>
 #include <string>
 #include <thread>
 #include <type_traits>
@@ -23,8 +26,11 @@
 #include <utility>
 #include <vector>
 
-
 #include "Runtime/macros/macros.h"
+
+#include "Runtime/config/config.h"
+
+namespace fs = std::filesystem;
 
 #ifdef GE_PLATFORM_WINDOWS
 #include "Windows.h"

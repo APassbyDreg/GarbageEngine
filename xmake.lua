@@ -34,6 +34,13 @@ target("runtime")
 
     -- files
     add_files("engine/source/runtime/**.cpp")
+    add_headerfiles("engine/source/runtime/**.h")
+
+    set_configvar("GE_ASSET_DIR", path.join(os.scriptdir(), "engine/assets"), {escape = true})
+    set_configvar("GE_SHADER_DIR", path.join(os.scriptdir(), "engine/shaders"), {escape = true})
+    set_configvar("SOME_VAR", 1)
+    set_configdir(path.join(os.scriptdir(), "engine/source/Runtime/config"))
+    add_configfiles("engine/source/runtime/**.in")
 
 
 -- editor
@@ -57,6 +64,7 @@ target("editor")
 
     -- files
     add_files("engine/source/editor/**.cpp")
+    add_headerfiles("engine/source/editor/**.h")
 
     -- after build action
     after_build(function (target)
