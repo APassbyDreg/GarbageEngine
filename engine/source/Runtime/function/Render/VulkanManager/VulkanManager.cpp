@@ -134,6 +134,8 @@ namespace GE
                 vkb::PreferredDeviceType::discrete);
             VKB_CHECK_RETURN(selector.select(), m_vkbPhysicalDevice);
 
+            // REVIEW: is multiple queue needed?
+
             vkb::Device        m_vkbDevice;
             vkb::DeviceBuilder builder {m_vkbPhysicalDevice};
             VKB_CHECK_RETURN(builder.build(), m_vkbDevice);

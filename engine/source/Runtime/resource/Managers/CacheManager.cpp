@@ -8,7 +8,7 @@ namespace GE
     void __compress(uchar* content, uint64 size, uchar** compressed, uint64& cmp_size)
     {
         uLong expected_size = compressBound(size);
-        *compressed         = new uchar[cmp_size];
+        *compressed         = new uchar[expected_size];
         compress(*compressed, &expected_size, (const uchar*)content, size);
         cmp_size = expected_size;
     }
@@ -52,7 +52,7 @@ namespace GE
 
         sha = sha256((const char*)cmp_data, cmp_size);
 
-        __decompress((uchar *)cmp_data, cmp_size, (uchar**)content, size);
+        __decompress((uchar*)cmp_data, cmp_size, (uchar**)content, size);
 
         file.close();
 
@@ -82,8 +82,10 @@ namespace GE
             return false;
         }
         // check specifier
-        if (cache_map[desc.name]["specifier"] != desc.specifier)
+        if (cache_map[desc.name]["specifier"] != desc.specifier || cache_map[desc.name]["type"] != desc.type)
         {
+            cache_map.erase(desc.name);
+            UpdateCacheDesc();
             return false;
         }
         // try load
@@ -92,7 +94,13 @@ namespace GE
         {
             std::string cmp_content_hash;
             __load_cache(cache_path.string(), content, size, cmp_content_hash);
-            return cmp_content_hash == cache_map[desc.name]["content_hash"];
+            if (cmp_content_hash != cache_map[desc.name]["content_hash"])
+            {
+                cache_map.erase(desc.name);
+                UpdateCacheDesc();
+                return false;
+            }
+            return true;
         }
 
         return false;
@@ -102,6 +110,7 @@ namespace GE
     {
         json block = {
             {"specifier", desc.specifier},
+            {"type", desc.type},
             {"name_hash", sha256(desc.name)},
         };
 
@@ -122,5 +131,25 @@ namespace GE
     {
         std::ofstream file(cache_desc);
         file << cache_map;
+    }
+
+    uint CacheManager::Invalidate(InvalidateFn fn)
+    {
+        std::vector<std::string> rm_keys = {};
+        for (auto& [name, block] : cache_map.items())
+        {
+            if (fn(name, block["type"], block["specifier"]))
+            {
+                fs::path cache_path = cache_dir / (sha256(name) + ".cache");
+                fs::remove(cache_path);
+                rm_keys.push_back(name);
+            }
+        }
+        for (auto& key : rm_keys)
+        {
+            cache_map.erase(key);
+        }
+        UpdateCacheDesc();
+        return rm_keys.size();
     }
 } // namespace GE

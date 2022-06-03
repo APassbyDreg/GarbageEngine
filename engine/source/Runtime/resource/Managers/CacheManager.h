@@ -14,6 +14,7 @@ namespace GE
         CacheDescriptor(std::string _name, std::string _specifier) : name(_name), specifier(_specifier) {}
 
         std::string name;
+        std::string type;      // additional info for cache
         std::string specifier; // user provided string to validate the cache
     };
 
@@ -26,6 +27,9 @@ namespace GE
         bool Load(CacheDescriptor desc, char** content, uint64& size);
 
         bool Save(CacheDescriptor desc, const char* content, uint64& size);
+
+        using InvalidateFn = std::function<bool(std::string, std::string, std::string)>;
+        uint Invalidate(InvalidateFn fn);
 
     private:
         void UpdateCacheDesc();
