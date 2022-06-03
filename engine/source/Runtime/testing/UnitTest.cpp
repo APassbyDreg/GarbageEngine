@@ -1,7 +1,7 @@
 #include "UnitTest.h"
 
 #include "function/Log/LogSystem.h"
-#include "resource.h"
+#include "resource/resource.h"
 
 #define GE_CHECK_TESTCASE(Testcase) \
     do \

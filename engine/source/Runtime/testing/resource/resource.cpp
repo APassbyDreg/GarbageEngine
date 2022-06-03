@@ -6,14 +6,14 @@ namespace GE
 {
     void CacheManagerTestCase::run()
     {
-        CacheManager::GetInstance().Save({"test1", "test1"}, "test1", 5);
-        CacheManager::GetInstance().Save({"test2", "test2"}, "test2", 5);
-        CacheManager::GetInstance().Save({"test3", "test3"}, "test3", 5);
+        CacheManager::GetInstance().Save({"test1", "test1"}, "test1", 6);
+        CacheManager::GetInstance().Save({"test2", "test2"}, "test2", 6);
+        CacheManager::GetInstance().Save({"test3", "test3"}, "test3", 6);
 
         char*    res;
         uint64_t size;
         GE_CORE_ASSERT(CacheManager::GetInstance().Load({"test1", "test1"}, &res, size), "Failed to load test1");
-        GE_CORE_ASSERT(size == 5 && strcmp(res, "test1") == 0, "content error");
+        GE_CORE_ASSERT(size == 6 && strcmp(res, "test1") == 0, "content error");
         GE_CORE_ASSERT(!CacheManager::GetInstance().Load({"test?", "test?"}, &res, size), "Wrong content loaded");
 
         CacheManager::GetInstance().Invalidate([](std::string name, std::string type, std::string specifier) {

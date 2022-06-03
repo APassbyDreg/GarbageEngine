@@ -1,6 +1,7 @@
 #include "ShaderManager.h"
 
 #include "function/Log/LogSystem.h"
+#include "function/Render/VulkanManager/VulkanManager.h"
 
 #include "core/Hash.h"
 
@@ -18,9 +19,17 @@ namespace GE
         return "";
     }
 
-    ShaderIncluder::ShaderIncluder(std::string _shader_path) : m_shaderPath(_shader_path)
+    std::vector<fs::path> ShaderIncluder::s_globalIncludePaths = {Config::shader_dir};
+
+    ShaderIncluder::ShaderIncluder(std::string _shader_path) : m_shaderPath(_shader_path) {}
+
+    ShaderIncluder::ShaderIncluder(std::string _shader_path, std::vector<std::string> additional_include_dirs) :
+        m_shaderPath(_shader_path)
     {
-        m_includePaths.push_back(Config::shader_dir);
+        for (auto&& d : additional_include_dirs)
+        {
+            m_localIncludePaths.push_back(d);
+        }
     }
 
     std::string ShaderIncluder::__resolve_path(std::string basepath, bool relative)
@@ -37,7 +46,16 @@ namespace GE
                 resolved_path = path;
             }
         }
-        for (auto&& include_dir : m_includePaths)
+        for (auto&& include_dir : m_localIncludePaths)
+        {
+            path = include_dir / basepath;
+            if (fs::exists(path))
+            {
+                match += 1;
+                resolved_path = path;
+            }
+        }
+        for (auto&& include_dir : s_globalIncludePaths)
         {
             path = include_dir / basepath;
             if (fs::exists(path))
@@ -91,7 +109,7 @@ namespace GE
         delete data;
     };
 
-    shaderc_shader_kind __shader_kind_from_ext(std::string filepath)
+    shaderc_shader_kind ShaderManager::__shader_kind_from_ext(std::string filepath)
     {
         const std::map<std::string, shaderc_shader_kind> ext2kind = {
             {".vert", shaderc_vertex_shader},
@@ -100,14 +118,14 @@ namespace GE
             {".geom", shaderc_geometry_shader},
             {".frag", shaderc_fragment_shader},
             {".comp", shaderc_compute_shader},
+            {".mesh", shaderc_mesh_shader},
+            {".task", shaderc_task_shader},
             {".rgen", shaderc_raygen_shader},
-            {".rins", shaderc_intersection_shader},
+            {".rint", shaderc_intersection_shader},
             {".rahit", shaderc_anyhit_shader},
             {".rchit", shaderc_closesthit_shader},
             {".rmiss", shaderc_miss_shader},
             {".rcall", shaderc_callable_shader},
-            {".mesh", shaderc_mesh_shader},
-            {".task", shaderc_task_shader},
         };
         std::string ext = fs::path(filepath).extension().string();
         auto        it  = ext2kind.find(ext);
@@ -167,5 +185,17 @@ namespace GE
         uint cnt = CacheManager::GetInstance().Invalidate(
             [](std::string key, std::string type, std::string specifier) { return type.starts_with("shader"); });
         GE_CORE_TRACE("Cleared {} shader cache items", cnt);
+    }
+
+    ShaderModule::ShaderModule(std::string _source, std::vector<std::string> additional_include_dirs) :
+        m_source(_source)
+    {}
+
+    ShaderModule::~ShaderModule()
+    {
+        if (m_compiled)
+        {
+            vkDestroyShaderModule(VulkanManager::GetInstance().GetVkDevice(), m_module, nullptr);
+        }
     }
 } // namespace GE
