@@ -21,7 +21,7 @@ namespace GE
         assert(true_size == decmp_size);
     }
 
-    void __save_cache(std::string path, const char* content, uint64& size, std::string& sha)
+    void __save_cache(std::string path, const char* content, uint64 size, std::string& sha)
     {
         uint64 cmp_size;
         uchar* cmp_data;
@@ -106,7 +106,7 @@ namespace GE
         return false;
     }
 
-    bool CacheManager::Save(CacheDescriptor desc, const char* content, uint64& size)
+    bool CacheManager::Save(CacheDescriptor desc, const char* content, uint64 size)
     {
         json block = {
             {"specifier", desc.specifier},

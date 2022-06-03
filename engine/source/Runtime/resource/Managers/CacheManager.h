@@ -11,7 +11,9 @@ namespace GE
 
     struct CacheDescriptor
     {
-        CacheDescriptor(std::string _name, std::string _specifier) : name(_name), specifier(_specifier) {}
+        CacheDescriptor(std::string _name, std::string _specifier, std::string _type = "") :
+            name(_name), specifier(_specifier), type(_type)
+        {}
 
         std::string name;
         std::string type;      // additional info for cache
@@ -26,7 +28,7 @@ namespace GE
 
         bool Load(CacheDescriptor desc, char** content, uint64& size);
 
-        bool Save(CacheDescriptor desc, const char* content, uint64& size);
+        bool Save(CacheDescriptor desc, const char* content, uint64 size);
 
         using InvalidateFn = std::function<bool(std::string, std::string, std::string)>;
         uint Invalidate(InvalidateFn fn);

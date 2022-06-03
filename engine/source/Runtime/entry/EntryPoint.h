@@ -3,7 +3,7 @@
 #include "GE_pch.h"
 
 #include "../Application.h"
-#include "../testing.h"
+#include "../testing/UnitTest.h"
 
 #ifdef GE_PLATFORM_WINDOWS
 extern std::unique_ptr<GE::Application> GE::CreateApplication();
@@ -11,7 +11,7 @@ extern std::unique_ptr<GE::Application> GE::CreateApplication();
 int main(int argc, char const* argv[])
 {
 #ifdef GE_ENABLE_TESTING
-    GE::Testing::test();
+    GE::TestCase::RunAll();
 #endif
 
     std::unique_ptr<GE::Application> app = GE::CreateApplication();

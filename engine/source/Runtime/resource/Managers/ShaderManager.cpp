@@ -121,7 +121,7 @@ namespace GE
         }
     }
 
-    std::vector<uint32_t> ShaderManager::GetCompiledSpv(std::string path, shaderc::CompileOptions opt, bool use_cache)
+    std::vector<uint32_t> ShaderManager::GetCompiledSpv(std::string path, shaderc::CompileOptions opt, bool& use_cache)
     {
         shaderc_shader_kind shader_kind     = __shader_kind_from_ext(path);
         std::string         shader_filename = fs::path(path).filename().string();
@@ -136,10 +136,12 @@ namespace GE
         desc.type = "shader";
         if (use_cache)
         {
+            use_cache = false;
             uint32_t* spv_data;
             uint64_t  spv_size;
             if (CacheManager::GetInstance().Load(desc, (char**)&spv_data, spv_size))
             {
+                use_cache = true;
                 GE_CORE_TRACE("Loaded shader from cache: {}", path);
                 std::vector<uint32_t> spv = std::vector<uint32_t>(spv_data, spv_data + spv_size);
                 delete[] spv_data;

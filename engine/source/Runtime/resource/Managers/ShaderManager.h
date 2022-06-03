@@ -35,7 +35,7 @@ namespace GE
     class ShaderManager : public Singleton<ShaderManager>
     {
     public:
-        std::vector<uint32_t> GetCompiledSpv(std::string path, shaderc::CompileOptions opt, bool use_cache = false);
+        std::vector<uint32_t> GetCompiledSpv(std::string path, shaderc::CompileOptions opt, bool& use_cache);
 
         void ClearShaderCache();
 
