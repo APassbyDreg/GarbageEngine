@@ -19,6 +19,8 @@ namespace GE
         return "";
     }
 
+    /* --------------------------- ShaderIncluder --------------------------- */
+
     std::vector<fs::path> ShaderIncluder::s_globalIncludePaths = {Config::shader_dir};
 
     ShaderIncluder::ShaderIncluder(std::string _shader_path) : m_shaderPath(_shader_path) {}
@@ -109,6 +111,28 @@ namespace GE
         delete data;
     };
 
+    /* ---------------------------- ShaderModule ---------------------------- */
+
+    ShaderModule::ShaderModule(std::vector<uint32_t> spv)
+    {
+        VkShaderModuleCreateInfo create_info = {};
+        create_info.sType                    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        create_info.codeSize                 = spv.size() * sizeof(uint32_t);
+        create_info.pCode                    = spv.data();
+
+        VK_CHECK(vkCreateShaderModule(VulkanManager::GetInstance().GetVkDevice(), &create_info, nullptr, &m_module));
+    }
+
+    ShaderModule::~ShaderModule()
+    {
+        if (m_compiled)
+        {
+            vkDestroyShaderModule(VulkanManager::GetInstance().GetVkDevice(), m_module, nullptr);
+        }
+    }
+
+    /* ------------------------------ ShaderManager ----------------------------- */
+
     shaderc_shader_kind ShaderManager::__shader_kind_from_ext(std::string filepath)
     {
         const std::map<std::string, shaderc_shader_kind> ext2kind = {
@@ -137,6 +161,20 @@ namespace GE
         {
             return shaderc_glsl_infer_from_source;
         }
+    }
+
+    ShaderModule ShaderManager::GetCompiledModule(std::string              path,
+                                                  std::vector<std::string> additional_include_dirs,
+                                                  bool&                    use_cache)
+    {
+        shaderc::CompileOptions options;
+        options.SetIncluder(std::make_unique<ShaderIncluder>(path, additional_include_dirs));
+        options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+        options.SetGenerateDebugInfo();
+        options.SetOptimizationLevel(shaderc_optimization_level_performance);
+
+        std::vector<uint32_t> spv = GetCompiledSpv(path, options, use_cache);
+        return ShaderModule(spv);
     }
 
     std::vector<uint32_t> ShaderManager::GetCompiledSpv(std::string path, shaderc::CompileOptions opt, bool& use_cache)
@@ -185,17 +223,5 @@ namespace GE
         uint cnt = CacheManager::GetInstance().Invalidate(
             [](std::string key, std::string type, std::string specifier) { return type.starts_with("shader"); });
         GE_CORE_TRACE("Cleared {} shader cache items", cnt);
-    }
-
-    ShaderModule::ShaderModule(std::string _source, std::vector<std::string> additional_include_dirs) :
-        m_source(_source)
-    {}
-
-    ShaderModule::~ShaderModule()
-    {
-        if (m_compiled)
-        {
-            vkDestroyShaderModule(VulkanManager::GetInstance().GetVkDevice(), m_module, nullptr);
-        }
     }
 } // namespace GE

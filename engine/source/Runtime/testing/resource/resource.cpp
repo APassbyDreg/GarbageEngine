@@ -37,13 +37,13 @@ namespace GE
 
         // load cache
         use_cache = true;
-        ShaderManager::GetInstance().GetCompiledSpv(vpath.string(), options, use_cache);
+        ShaderManager::GetInstance().GetCompiledModule(vpath.string(), {}, use_cache);
         GE_CORE_ASSERT(use_cache, "Failed to load cached spv");
 
         // clear cache
         ShaderManager::GetInstance().ClearShaderCache();
         use_cache = true;
-        ShaderManager::GetInstance().GetCompiledSpv(vpath.string(), options, use_cache);
+        ShaderManager::GetInstance().GetCompiledModule(vpath.string(), {}, use_cache);
         GE_CORE_ASSERT(!use_cache, "Failed to clear shader cache");
     }
 } // namespace GE

@@ -8,8 +8,9 @@
 
 #include "resource/Managers/CacheManager.h"
 
+#include "VulkanCommon.h"
+
 #include "shaderc/shaderc.hpp"
-#include "vulkan/vulkan.h"
 
 namespace GE
 {
@@ -18,6 +19,7 @@ namespace GE
     public:
         ShaderIncluder(std::string _shader_path);
         ShaderIncluder(std::string _shader_path, std::vector<std::string> additional_include_dirs);
+        virtual ~ShaderIncluder() = default;
 
         void AddIncludePath(std::string path) { m_localIncludePaths.push_back(path); };
 
@@ -36,28 +38,33 @@ namespace GE
         static std::vector<fs::path> s_globalIncludePaths;
     };
 
+    class ShaderModule
+    {
+    public:
+        ShaderModule(std::vector<uint32_t> spv);
+        ~ShaderModule();
+
+        void Compile(shaderc::Compiler&& compiler);
+
+        inline VkShaderModule GetShaderModule() { return m_compiled ? m_module : VK_NULL_HANDLE; }
+
+    private:
+        bool           m_compiled = false;
+        VkShaderModule m_module;
+    };
+
     class ShaderManager : public Singleton<ShaderManager>
     {
     public:
+        ShaderModule
+        GetCompiledModule(std::string path, std::vector<std::string> additional_include_dirs, bool& use_cache);
         std::vector<uint32_t> GetCompiledSpv(std::string path, shaderc::CompileOptions opt, bool& use_cache);
-
-        void ClearShaderCache();
+        void                  ClearShaderCache();
 
     private:
         shaderc_shader_kind __shader_kind_from_ext(std::string filepath);
 
-        shaderc::Compiler m_compiler;
-    };
-
-    class ShaderModule
-    {
-    public:
-        ShaderModule(std::string _source, std::vector<std::string> additional_include_dirs);
-        ~ShaderModule();
-
     private:
-        bool           m_compiled = false;
-        std::string    m_source;
-        VkShaderModule m_module;
+        shaderc::Compiler m_compiler;
     };
 } // namespace GE

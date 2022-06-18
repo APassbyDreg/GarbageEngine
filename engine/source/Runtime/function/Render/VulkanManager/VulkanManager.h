@@ -2,7 +2,7 @@
 
 #include "GE_pch.h"
 
-#include "VkCommon.h"
+#include "VulkanCommon.h"
 
 #include "GLFW/glfw3.h" // GLFW must be included after Vulkan
 #include "VkBootstrap.h"
