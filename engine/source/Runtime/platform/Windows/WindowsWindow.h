@@ -57,15 +57,15 @@ namespace GE
         static bool s_glfwInitialized;
 
         /* --------------------------- imgui stuff -------------------------- */
-        ImGuiIO m_imguiIO;
-
-        static ImGui_ImplVulkanH_Window s_imguiWindow;
+        ImGuiIO                  m_imguiIO;
+        ImGui_ImplVulkanH_Window m_imguiWindow;
 
         // TODO: move to unified management
-        static VkPipelineCache  s_imguiPipelineCache;
-        static VkDescriptorPool s_imguiDescriptorPool;
+        VkPipelineCache  m_imguiPipelineCache  = VK_NULL_HANDLE;
+        VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
         // TODO: rethink where this should be placed
-        static bool s_needRebuildSwapChain;
+        float m_Time                 = 0.0f;
+        bool  m_needRebuildSwapChain = false;
     };
 } // namespace GE

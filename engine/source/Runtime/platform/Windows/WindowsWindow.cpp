@@ -1,5 +1,7 @@
 #include "WindowsWindow.h"
 
+#include "Application.h"
+
 #include "function/Event/EventSystem.h"
 
 #include "function/Message/MessageSystem.h"
@@ -8,11 +10,7 @@
 
 namespace GE
 {
-    bool                     WindowsWindow::s_glfwInitialized      = false;
-    bool                     WindowsWindow::s_needRebuildSwapChain = false;
-    ImGui_ImplVulkanH_Window WindowsWindow::s_imguiWindow;
-    VkPipelineCache          WindowsWindow::s_imguiPipelineCache  = VK_NULL_HANDLE;
-    VkDescriptorPool         WindowsWindow::s_imguiDescriptorPool = VK_NULL_HANDLE;
+    bool WindowsWindow::s_glfwInitialized = false;
 
     WindowsWindow::WindowsWindow(const WindowProperties& props) { Init(props); }
 
@@ -22,7 +20,7 @@ namespace GE
     {
         glfwPollEvents();
 
-        if (s_needRebuildSwapChain)
+        if (m_needRebuildSwapChain)
         {
             __imgui_rebuild_swapchain();
         }
@@ -31,6 +29,11 @@ namespace GE
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        // track time
+        float time          = static_cast<float>(glfwGetTime());
+        m_imguiIO.DeltaTime = time - m_Time;
+        m_Time              = time;
 
         // debug
         ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -41,10 +44,10 @@ namespace GE
         ImGui::Render();
         ImDrawData* main_draw_data   = ImGui::GetDrawData();
         const bool main_is_minimized = (main_draw_data->DisplaySize.x <= 0.0f || main_draw_data->DisplaySize.y <= 0.0f);
-        s_imguiWindow.ClearValue.color.float32[0] = clear_color.x * clear_color.w;
-        s_imguiWindow.ClearValue.color.float32[1] = clear_color.y * clear_color.w;
-        s_imguiWindow.ClearValue.color.float32[2] = clear_color.z * clear_color.w;
-        s_imguiWindow.ClearValue.color.float32[3] = clear_color.w;
+        m_imguiWindow.ClearValue.color.float32[0] = clear_color.x * clear_color.w;
+        m_imguiWindow.ClearValue.color.float32[1] = clear_color.y * clear_color.w;
+        m_imguiWindow.ClearValue.color.float32[2] = clear_color.z * clear_color.w;
+        m_imguiWindow.ClearValue.color.float32[3] = clear_color.w;
         if (!main_is_minimized)
             __imgui_render_frame(main_draw_data);
 
@@ -66,23 +69,23 @@ namespace GE
         VkQueue  vk_graphics_queue = VulkanManager::GetInstance().GetVkGraphicsQueue();
 
         VkSemaphore image_acquired_semaphore =
-            s_imguiWindow.FrameSemaphores[s_imguiWindow.SemaphoreIndex].ImageAcquiredSemaphore;
+            m_imguiWindow.FrameSemaphores[m_imguiWindow.SemaphoreIndex].ImageAcquiredSemaphore;
         VkSemaphore render_complete_semaphore =
-            s_imguiWindow.FrameSemaphores[s_imguiWindow.SemaphoreIndex].RenderCompleteSemaphore;
+            m_imguiWindow.FrameSemaphores[m_imguiWindow.SemaphoreIndex].RenderCompleteSemaphore;
         VkResult res = vkAcquireNextImageKHR(vk_device,
-                                             s_imguiWindow.Swapchain,
+                                             m_imguiWindow.Swapchain,
                                              UINT64_MAX,
                                              image_acquired_semaphore,
                                              VK_NULL_HANDLE,
-                                             &s_imguiWindow.FrameIndex);
+                                             &m_imguiWindow.FrameIndex);
         if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
         {
-            s_needRebuildSwapChain = true;
+            m_needRebuildSwapChain = true;
             return;
         }
         VK_CHECK(res);
 
-        ImGui_ImplVulkanH_Frame* fd = &s_imguiWindow.Frames[s_imguiWindow.FrameIndex];
+        ImGui_ImplVulkanH_Frame* fd = &m_imguiWindow.Frames[m_imguiWindow.FrameIndex];
         {
             VK_CHECK(vkWaitForFences(vk_device, 1, &fd->Fence, VK_TRUE, UINT64_MAX));
 
@@ -98,12 +101,12 @@ namespace GE
         {
             VkRenderPassBeginInfo info    = {};
             info.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            info.renderPass               = s_imguiWindow.RenderPass;
+            info.renderPass               = m_imguiWindow.RenderPass;
             info.framebuffer              = fd->Framebuffer;
-            info.renderArea.extent.width  = s_imguiWindow.Width;
-            info.renderArea.extent.height = s_imguiWindow.Height;
+            info.renderArea.extent.width  = m_imguiWindow.Width;
+            info.renderArea.extent.height = m_imguiWindow.Height;
             info.clearValueCount          = 1;
-            info.pClearValues             = &s_imguiWindow.ClearValue;
+            info.pClearValues             = &m_imguiWindow.ClearValue;
             vkCmdBeginRenderPass(fd->CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
         }
 
@@ -131,7 +134,7 @@ namespace GE
 
     void WindowsWindow::__imgui_present_frame()
     {
-        if (s_needRebuildSwapChain)
+        if (m_needRebuildSwapChain)
         {
             return;
         }
@@ -140,25 +143,25 @@ namespace GE
         VkQueue  vk_graphics_queue = VulkanManager::GetInstance().GetVkGraphicsQueue();
 
         VkSemaphore render_complete_semaphore =
-            s_imguiWindow.FrameSemaphores[s_imguiWindow.SemaphoreIndex].RenderCompleteSemaphore;
+            m_imguiWindow.FrameSemaphores[m_imguiWindow.SemaphoreIndex].RenderCompleteSemaphore;
         VkPresentInfoKHR info   = {};
         info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         info.waitSemaphoreCount = 1;
         info.pWaitSemaphores    = &render_complete_semaphore;
         info.swapchainCount     = 1;
-        info.pSwapchains        = &s_imguiWindow.Swapchain;
-        info.pImageIndices      = &s_imguiWindow.FrameIndex;
+        info.pSwapchains        = &m_imguiWindow.Swapchain;
+        info.pImageIndices      = &m_imguiWindow.FrameIndex;
 
         VkResult res = vkQueuePresentKHR(vk_graphics_queue, &info);
         if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
         {
-            s_needRebuildSwapChain = true;
+            m_needRebuildSwapChain = true;
             return;
         }
         VK_CHECK(res);
 
-        s_imguiWindow.SemaphoreIndex =
-            (s_imguiWindow.SemaphoreIndex + 1) % s_imguiWindow.ImageCount; // Now we can use the next set of semaphores
+        m_imguiWindow.SemaphoreIndex =
+            (m_imguiWindow.SemaphoreIndex + 1) % m_imguiWindow.ImageCount; // Now we can use the next set of semaphores
     }
 
     void WindowsWindow::__imgui_rebuild_swapchain()
@@ -177,14 +180,14 @@ namespace GE
             ImGui_ImplVulkanH_CreateOrResizeWindow(vk_instance,
                                                    vk_physical_device,
                                                    vk_device,
-                                                   &s_imguiWindow,
+                                                   &m_imguiWindow,
                                                    vk_graphics_queue_index,
                                                    nullptr,
                                                    width,
                                                    height,
                                                    2);
-            s_imguiWindow.FrameIndex = 0;
-            s_needRebuildSwapChain   = false;
+            m_imguiWindow.FrameIndex = 0;
+            m_needRebuildSwapChain   = false;
         }
     }
 
@@ -225,48 +228,32 @@ namespace GE
     void WindowsWindow::__init_glfw_callbacks()
     {
         // window callbalcks
-        // glfwSetWindowSizeCallback(m_glfwWindow, [](GLFWwindow* window, int width, int height) {
-        //     WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-        //     data.width       = width;
-        //     data.height      = height;
-
-        //     WindowResizeEvent event(width, height);
-        //     data.eventCallback(event);
-        // });
-        // glfwSetWindowCloseCallback(m_glfwWindow, [](GLFWwindow* window) {
-        //     WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-
-        //     WindowCloseEvent event;
-        //     data.eventCallback(event);
-        // });
-        // glfwSetWindowFocusCallback(m_glfwWindow, [](GLFWwindow* window, int focused) {
-        //     WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-
-        //     if (focused == GLFW_TRUE)
-        //     {
-        //         WindowFocusEvent event;
-        //         data.eventCallback(event);
-        //     }
-        //     else if (focused == GLFW_FALSE)
-        //     {
-        //         WindowLostFocusEvent event;
-        //         data.eventCallback(event);
-        //     }
-        // });
         glfwSetWindowSizeCallback(m_glfwWindow, [](GLFWwindow* window, int width, int height) {
-            MessageDispatcher<WindowResizeMsg, MsgResultBase>::GetInstance().Dispatch(WindowResizeMsg(width, height));
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+            data.width       = width;
+            data.height      = height;
+
+            WindowResizeEvent event(width, height);
+            data.eventCallback(event);
         });
         glfwSetWindowCloseCallback(m_glfwWindow, [](GLFWwindow* window) {
-            MessageDispatcher<WindowCloseMsg, MsgResultBase>::GetInstance().Dispatch(WindowCloseMsg());
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+            WindowCloseEvent event;
+            data.eventCallback(event);
         });
         glfwSetWindowFocusCallback(m_glfwWindow, [](GLFWwindow* window, int focused) {
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
             if (focused == GLFW_TRUE)
             {
-                MessageDispatcher<WindowFocusMsg, MsgResultBase>::GetInstance().Dispatch(WindowFocusMsg());
+                WindowFocusEvent event;
+                data.eventCallback(event);
             }
             else if (focused == GLFW_FALSE)
             {
-                MessageDispatcher<WindowLostFocusMsg, MsgResultBase>::GetInstance().Dispatch(WindowLostFocusMsg());
+                WindowLostFocusEvent event;
+                data.eventCallback(event);
             }
         });
         // mouse callbacks
@@ -333,13 +320,13 @@ namespace GE
         VkQueue          vk_graphics_queue       = VulkanManager::GetInstance().GetVkGraphicsQueue();
         uint32_t         vk_graphics_queue_index = VulkanManager::GetInstance().GetVkGraphicsQueueFamilyIndex();
 
-        s_imguiWindow.Surface = vk_surface;
+        m_imguiWindow.Surface = vk_surface;
 
         // Check for WSI support
         {
             VkBool32 res;
             VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(
-                vk_physical_device, vk_graphics_queue_index, s_imguiWindow.Surface, &res));
+                vk_physical_device, vk_graphics_queue_index, m_imguiWindow.Surface, &res));
             GE_CORE_ASSERT(res == VK_TRUE, "WSI not supported Error no WSI support on selected physical device!");
         }
 
@@ -349,7 +336,7 @@ namespace GE
                 VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM};
             const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 
-            s_imguiWindow.SurfaceFormat =
+            m_imguiWindow.SurfaceFormat =
                 ImGui_ImplVulkanH_SelectSurfaceFormat(vk_physical_device,
                                                       vk_surface,
                                                       requestSurfaceImageFormat,
@@ -361,8 +348,8 @@ namespace GE
         {
             VkPresentModeKHR present_modes[] = {
                 VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR};
-            s_imguiWindow.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(
-                vk_physical_device, s_imguiWindow.Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
+            m_imguiWindow.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(
+                vk_physical_device, m_imguiWindow.Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
         }
 
         // Create SwapChain, RenderPass, Framebuffer, etc.
@@ -370,7 +357,7 @@ namespace GE
             ImGui_ImplVulkanH_CreateOrResizeWindow(vk_instance,
                                                    vk_physical_device,
                                                    vk_device,
-                                                   &s_imguiWindow,
+                                                   &m_imguiWindow,
                                                    vk_graphics_queue_index,
                                                    nullptr,
                                                    size.x,
@@ -422,7 +409,7 @@ namespace GE
             pool_info.maxSets                       = 1000 * IM_ARRAYSIZE(pool_sizes);
             pool_info.poolSizeCount                 = (uint32_t)IM_ARRAYSIZE(pool_sizes);
             pool_info.pPoolSizes                    = pool_sizes;
-            VK_CHECK(vkCreateDescriptorPool(vk_device, &pool_info, nullptr, &s_imguiDescriptorPool));
+            VK_CHECK(vkCreateDescriptorPool(vk_device, &pool_info, nullptr, &m_imguiDescriptorPool));
         }
 
         // Setup Platform/Renderer backends
@@ -434,22 +421,22 @@ namespace GE
             init_info.Device                    = vk_device;
             init_info.QueueFamily               = vk_graphics_queue_index;
             init_info.Queue                     = vk_graphics_queue;
-            init_info.PipelineCache             = s_imguiPipelineCache;
-            init_info.DescriptorPool            = s_imguiDescriptorPool;
+            init_info.PipelineCache             = m_imguiPipelineCache;
+            init_info.DescriptorPool            = m_imguiDescriptorPool;
             init_info.Subpass                   = 0;
             init_info.MinImageCount             = 2;
-            init_info.ImageCount                = s_imguiWindow.ImageCount;
+            init_info.ImageCount                = m_imguiWindow.ImageCount;
             init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
             init_info.Allocator                 = nullptr;
             init_info.CheckVkResultFn           = __vk_check_fn;
-            ImGui_ImplVulkan_Init(&init_info, s_imguiWindow.RenderPass);
+            ImGui_ImplVulkan_Init(&init_info, m_imguiWindow.RenderPass);
         }
 
         // Upload Fonts
         {
             // Use any command queue
-            VkCommandPool   command_pool   = s_imguiWindow.Frames[s_imguiWindow.FrameIndex].CommandPool;
-            VkCommandBuffer command_buffer = s_imguiWindow.Frames[s_imguiWindow.FrameIndex].CommandBuffer;
+            VkCommandPool   command_pool   = m_imguiWindow.Frames[m_imguiWindow.FrameIndex].CommandPool;
+            VkCommandBuffer command_buffer = m_imguiWindow.Frames[m_imguiWindow.FrameIndex].CommandBuffer;
 
             VK_CHECK(vkResetCommandPool(vk_device, command_pool, 0));
             VkCommandBufferBeginInfo begin_info = {};
@@ -477,7 +464,7 @@ namespace GE
     {
         ImGui_ImplVulkanH_DestroyWindow(VulkanManager::GetInstance().GetVkInstance(),
                                         VulkanManager::GetInstance().GetVkDevice(),
-                                        &s_imguiWindow,
+                                        &m_imguiWindow,
                                         nullptr);
     }
 

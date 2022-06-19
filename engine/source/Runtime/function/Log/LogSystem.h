@@ -8,7 +8,7 @@
 
 namespace GE
 {
-    static std::string bytes2string(unsigned char* bytes, unsigned int size)
+    static std::string bytes2string(const unsigned char* bytes, const unsigned int size)
     {
         std::stringstream ss;
         ss << "b[";

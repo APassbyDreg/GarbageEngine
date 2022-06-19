@@ -11,6 +11,15 @@ namespace GE
         *compressed         = new uchar[expected_size];
         compress(*compressed, &expected_size, (const uchar*)content, size);
         cmp_size = expected_size;
+
+        if (cmp_size > size)
+        {
+            // use uncompressed format
+            delete[] * compressed;
+            *compressed = new uchar[size];
+            memcpy(*compressed, content, size);
+            cmp_size = size;
+        }
     }
 
     void __decompress(uchar* content, uint64 size, uchar** decompressed, uint64& decmp_size)
@@ -52,7 +61,15 @@ namespace GE
 
         sha = sha256((const char*)cmp_data, cmp_size);
 
-        __decompress((uchar*)cmp_data, cmp_size, (uchar**)content, size);
+        if (size > cmp_size)
+        {
+            __decompress((uchar*)cmp_data, cmp_size, (uchar**)content, size);
+        }
+        else
+        {
+            memcpy(*content, cmp_data, cmp_size);
+            size = cmp_size;
+        }
 
         file.close();
 

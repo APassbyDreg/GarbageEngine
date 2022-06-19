@@ -10,15 +10,17 @@
 
 namespace GE
 {
+    Application* Application::s_instance = nullptr;
+
     Application::Application()
     {
+        GE_CORE_ASSERT(s_instance == nullptr, "Application already exists!");
+        s_instance = this;
+
         m_window = Window::Create();
         m_window->SetEventCallback(GE_BIND_CLASS_FN(Application::OnEvent));
 
         VulkanManager::GetInstance().Init(m_window->GetNativeWindow());
-
-        MessageDispatcher<WindowCloseMsg, MsgResultBase>::GetInstance().RegisterListener(
-            GE_BIND_CLASS_FN(Application::__handle_window_close), 0);
     }
 
     Application::~Application() {}
@@ -42,9 +44,15 @@ namespace GE
 
     void Application::OnEvent(Event& e)
     {
-        // GE_CORE_TRACE(e.toString());
         auto it   = m_layerStack.end();
         bool done = false;
+
+        // firstly, handle window events
+        if (e.getEventType() == EventType::WindowClose)
+        {
+            m_running = false;
+        }
+
         while (!e.m_handled)
         {
             if (it == m_layerStack.begin())
