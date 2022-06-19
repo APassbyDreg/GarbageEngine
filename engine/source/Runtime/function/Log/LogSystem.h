@@ -8,6 +8,18 @@
 
 namespace GE
 {
+    static std::string bytes2string(unsigned char* bytes, unsigned int size)
+    {
+        std::stringstream ss;
+        ss << "b[";
+        for (int i = 0; i < size; i++)
+        {
+            ss << std::hex << std::setfill('0') << std::setw(2) << (int)bytes[i];
+        }
+        ss << "]";
+        return ss.str();
+    }
+
     class GE_API LogSystem final : public Singleton<LogSystem>
     {
     public:

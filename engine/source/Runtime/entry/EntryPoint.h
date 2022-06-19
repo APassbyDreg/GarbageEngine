@@ -10,11 +10,12 @@ extern std::unique_ptr<GE::Application> GE::CreateApplication();
 
 int main(int argc, char const* argv[])
 {
+    std::unique_ptr<GE::Application> app = GE::CreateApplication();
+
 #ifdef GE_ENABLE_TESTING
     GE::TestCase::RunAll();
 #endif
 
-    std::unique_ptr<GE::Application> app = GE::CreateApplication();
     app->Run();
     return 0;
 }

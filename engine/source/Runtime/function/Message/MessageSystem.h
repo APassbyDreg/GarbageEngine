@@ -27,17 +27,23 @@ namespace GE
 
         inline std::vector<std::shared_ptr<MsgResultBase>> Dispatch(MsgBody data)
         {
-            std::vector<std::future<std::shared_ptr<MsgResultBase>>> rets;
-            for (auto& cb : m_listeners)
-            {
-                rets.push_back(std::async(cb, data));
-            }
-            std::vector<std::shared_ptr<MsgResultBase>> res;
+            auto                                        rets = DispatchNoRetrun(data);
+            std::vector<std::shared_ptr<MsgResultBase>> res  = {};
             for (auto& ret : rets)
             {
                 res.push_back(ret.get());
             }
             return res;
+        }
+
+        inline std::vector<std::future<std::shared_ptr<MsgResultBase>>> DispatchNoRetrun(MsgBody data)
+        {
+            std::vector<std::future<std::shared_ptr<MsgResultBase>>> rets;
+            for (auto& cb : m_listeners)
+            {
+                rets.push_back(std::async(cb, data));
+            }
+            return rets;
         }
 
         inline void RegisterListener(ListenerFn listener_fn, int priority = 0)
@@ -51,7 +57,5 @@ namespace GE
     private:
         std::vector<ListenerFn> m_listeners;
         std::vector<int>        m_priorities;
-
-        // TODO: add async messaging
     };
 } // namespace GE

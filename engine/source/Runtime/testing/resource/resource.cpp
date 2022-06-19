@@ -13,7 +13,8 @@ namespace GE
         char*    res;
         uint64_t size;
         GE_CORE_ASSERT(CacheManager::GetInstance().Load({"test1", "test1"}, &res, size), "Failed to load test1");
-        GE_CORE_ASSERT(size == 6 && strcmp(res, "test1") == 0, "content error");
+        GE_CORE_ASSERT(
+            size == 6 && strcmp(res, "test1") == 0, "content error, expected test1, got {}, size = {}", res, size);
         GE_CORE_ASSERT(!CacheManager::GetInstance().Load({"test?", "test?"}, &res, size), "Wrong content loaded");
 
         CacheManager::GetInstance().Invalidate([](std::string name, std::string type, std::string specifier) {
@@ -27,6 +28,9 @@ namespace GE
     {
         fs::path fpath = fs::path(Config::shader_dir) / "passes/__test01_simple_triangle/test.frag";
         fs::path vpath = fs::path(Config::shader_dir) / "passes/__test01_simple_triangle/test.vert";
+
+        // clear cache
+        ShaderManager::GetInstance().ClearShaderCache();
 
         bool                    use_cache;
         shaderc::CompileOptions options;

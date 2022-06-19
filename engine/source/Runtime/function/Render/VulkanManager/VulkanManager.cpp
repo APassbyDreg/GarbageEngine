@@ -65,11 +65,6 @@ namespace GE
         {
             // init instance, surface, device, etc.
             init_vulkan(window);
-
-            // // init swapchain & images
-            // int w, h;
-            // glfwGetFramebufferSize(window, &w, &h);
-            // init_swapchain(int2(w, h));
         }
         m_initialized = true;
     }
@@ -79,8 +74,6 @@ namespace GE
         if (m_initialized)
         {
             destroy_vulkan();
-
-            // destroy_swapchain();
         }
     }
 

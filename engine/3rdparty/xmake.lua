@@ -58,12 +58,6 @@ function GE_link_imgui()
 end
 
 
--------------------------------- vma --------------------------------
-function GE_link_vma() 
-    add_includedirs(rel_local_path("VulkanMemoryAllocator/include"))
-end
-
-
 -------------------------------- vkb --------------------------------
 target("GE_vkb")
     set_kind("static")
@@ -119,7 +113,6 @@ function GE_link_3rdparty()
     GE_link_glm()
     GE_link_spdlog()
     GE_link_imgui()
-    GE_link_vma()
     GE_link_vkb()
     GE_link_json()
     GE_link_entt()

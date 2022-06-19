@@ -199,7 +199,7 @@ namespace GE
             {
                 use_cache = true;
                 GE_CORE_TRACE("Loaded shader from cache: {}", path);
-                std::vector<uint32_t> spv = std::vector<uint32_t>(spv_data, spv_data + spv_size);
+                std::vector<uint32_t> spv = std::vector<uint32_t>(spv_data, spv_data + spv_size / sizeof(uint32_t));
                 delete[] spv_data;
                 return spv;
             }
