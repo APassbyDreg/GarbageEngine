@@ -14,6 +14,7 @@ namespace GE
     {
     public:
         void Run();
+        void Shutdown();
 
         Application(/* args */);
         virtual ~Application();
@@ -29,8 +30,6 @@ namespace GE
         std::shared_ptr<Window> m_window;
         bool                    m_running = true;
         LayerStack              m_layerStack;
-
-        std::shared_ptr<MsgResultBase> __handle_window_close(WindowCloseMsg msg);
 
         static Application* s_instance;
     };

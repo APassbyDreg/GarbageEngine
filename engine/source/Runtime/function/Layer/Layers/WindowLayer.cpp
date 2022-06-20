@@ -1,22 +1,30 @@
-#include "WindowsWindow.h"
+#include "WindowLayer.h"
 
 #include "Application.h"
 
 #include "function/Event/EventSystem.h"
-
 #include "function/Message/MessageSystem.h"
-
 #include "function/Render/VulkanManager/VulkanManager.h"
 
 namespace GE
 {
-    bool WindowsWindow::s_glfwInitialized = false;
+    bool WindowLayer::s_glfwInitialized = false;
 
-    WindowsWindow::WindowsWindow(const WindowProperties& props) { Init(props); }
+    WindowLayer::WindowLayer(const WindowProperties& props) : Layer("Window Layer") { __init(props); }
 
-    WindowsWindow::~WindowsWindow() { Shutdown(); }
+    WindowLayer::~WindowLayer() { __shutdown(); }
 
-    void WindowsWindow::OnUpdate()
+    void WindowLayer::OnEnable() {}
+
+    void WindowLayer::OnDisable() {}
+
+    void WindowLayer::OnAttach() {}
+
+    void WindowLayer::OnDetatch() {}
+
+    void WindowLayer::OnEvent(Event& event) {}
+
+    void WindowLayer::OnUpdate()
     {
         glfwPollEvents();
 
@@ -63,7 +71,7 @@ namespace GE
             __imgui_present_frame();
     }
 
-    void WindowsWindow::__imgui_render_frame(ImDrawData* draw_data)
+    void WindowLayer::__imgui_render_frame(ImDrawData* draw_data)
     {
         VkDevice vk_device         = VulkanManager::GetInstance().GetVkDevice();
         VkQueue  vk_graphics_queue = VulkanManager::GetInstance().GetVkGraphicsQueue();
@@ -132,7 +140,7 @@ namespace GE
         }
     }
 
-    void WindowsWindow::__imgui_present_frame()
+    void WindowLayer::__imgui_present_frame()
     {
         if (m_needRebuildSwapChain)
         {
@@ -164,7 +172,7 @@ namespace GE
             (m_imguiWindow.SemaphoreIndex + 1) % m_imguiWindow.ImageCount; // Now we can use the next set of semaphores
     }
 
-    void WindowsWindow::__imgui_rebuild_swapchain()
+    void WindowLayer::__imgui_rebuild_swapchain()
     {
         VkInstance       vk_instance             = VulkanManager::GetInstance().GetVkInstance();
         VkPhysicalDevice vk_physical_device      = VulkanManager::GetInstance().GetVkPhysicalDevice();
@@ -191,7 +199,7 @@ namespace GE
         }
     }
 
-    void WindowsWindow::init_glfw()
+    void WindowLayer::__init_glfw()
     {
         if (!s_glfwInitialized)
         {
@@ -214,7 +222,7 @@ namespace GE
         glfwSetWindowUserPointer(m_glfwWindow, &m_Data);
     }
 
-    void WindowsWindow::cleanup_glfw()
+    void WindowLayer::__cleanup_glfw()
     {
         if (s_glfwInitialized)
         {
@@ -225,7 +233,7 @@ namespace GE
         glfwTerminate(); // REVIEW: is this necessary?
     }
 
-    void WindowsWindow::__init_glfw_callbacks()
+    void WindowLayer::__init_glfw_callbacks()
     {
         // window callbalcks
         glfwSetWindowSizeCallback(m_glfwWindow, [](GLFWwindow* window, int width, int height) {
@@ -311,7 +319,7 @@ namespace GE
         });
     }
 
-    void WindowsWindow::init_imgui(int2 size)
+    void WindowLayer::__init_imgui(int2 size)
     {
         VkInstance       vk_instance             = VulkanManager::GetInstance().GetVkInstance();
         VkSurfaceKHR     vk_surface              = VulkanManager::GetInstance().GetVkSurface();
@@ -460,7 +468,7 @@ namespace GE
         }
     }
 
-    void WindowsWindow::cleanup_imgui()
+    void WindowLayer::__cleanup_imgui()
     {
         ImGui_ImplVulkanH_DestroyWindow(VulkanManager::GetInstance().GetVkInstance(),
                                         VulkanManager::GetInstance().GetVkDevice(),
@@ -468,14 +476,15 @@ namespace GE
                                         nullptr);
     }
 
-    void WindowsWindow::Init(const WindowProperties& props)
+    void WindowLayer::__init(const WindowProperties& props)
     {
-        m_Data.title  = props.title;
-        m_Data.width  = props.width;
-        m_Data.height = props.height;
+        m_Data.title         = props.title;
+        m_Data.width         = props.width;
+        m_Data.height        = props.height;
+        m_Data.eventCallback = props.eventCallback;
 
         // setup glfw
-        init_glfw();
+        __init_glfw();
 
         // setup callbacks
         __init_glfw_callbacks();
@@ -484,18 +493,12 @@ namespace GE
         VulkanManager::GetInstance().Init(m_glfwWindow);
 
         // setup imgui
-        init_imgui(int2(props.width, props.height));
+        __init_imgui(int2(props.width, props.height));
     }
 
-    void WindowsWindow::Shutdown()
+    void WindowLayer::__shutdown()
     {
-        cleanup_imgui();
-        cleanup_glfw();
-    }
-
-    // implement window creation
-    std::shared_ptr<Window> Window::Create(const WindowProperties& props)
-    {
-        return std::make_shared<WindowsWindow>(props);
+        __cleanup_imgui();
+        __cleanup_glfw();
     }
 } // namespace GE

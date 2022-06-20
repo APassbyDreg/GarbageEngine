@@ -4,6 +4,8 @@
 #include "function/Message/MessageSystem.h"
 #include "function/Render/VulkanManager/VulkanManager.h"
 
+#include "function/Layer/Layers/WindowLayer.h"
+
 #include "GLFW/glfw3.h"
 
 #define GE_BIND_CLASS_FN(fn) std::bind(&fn, this, std::placeholders::_1)
@@ -17,10 +19,13 @@ namespace GE
         GE_CORE_ASSERT(s_instance == nullptr, "Application already exists!");
         s_instance = this;
 
-        m_window = Window::Create();
-        m_window->SetEventCallback(GE_BIND_CLASS_FN(Application::OnEvent));
+        // register layers
+        WindowProperties             main_window_props("GE Engine", 1920, 1080, GE_BIND_CLASS_FN(Application::OnEvent));
+        std::shared_ptr<WindowLayer> main_window_layer = std::make_shared<WindowLayer>(main_window_props);
+        PushOverlay(main_window_layer);
 
-        VulkanManager::GetInstance().Init(m_window->GetNativeWindow());
+        // init subsystems
+        VulkanManager::GetInstance().Init(main_window_layer->GetNativeWindow());
     }
 
     Application::~Application() {}
@@ -35,24 +40,25 @@ namespace GE
             {
                 layer->OnUpdate();
             }
-
-            m_window->OnUpdate();
         }
 
         GE_CORE_TRACE("Ending Application");
     }
+
+    void Application::Shutdown() { m_running = false; }
 
     void Application::OnEvent(Event& e)
     {
         auto it   = m_layerStack.end();
         bool done = false;
 
-        // firstly, handle window events
+        // handle application level events
         if (e.getEventType() == EventType::WindowClose)
         {
             m_running = false;
         }
 
+        // propagate event to layers
         while (!e.m_handled)
         {
             if (it == m_layerStack.begin())
@@ -62,12 +68,6 @@ namespace GE
             it--;
             (*it)->OnEvent(e);
         }
-    }
-
-    std::shared_ptr<MsgResultBase> Application::__handle_window_close(WindowCloseMsg msg)
-    {
-        m_running = false;
-        return MsgResultBase::Success();
     }
 
     void Application::PushLayer(std::shared_ptr<Layer> layer)

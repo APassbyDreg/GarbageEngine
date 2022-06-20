@@ -5,3 +5,8 @@
 #include "EventDispatcher.h"
 #include "KeyEvents.h"
 #include "MouseEvents.h"
+
+namespace GE
+{
+    typedef std::function<void(Event&)> EventCallbackFn;
+}

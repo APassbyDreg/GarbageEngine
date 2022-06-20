@@ -11,11 +11,16 @@ namespace GE
 {
     struct WindowProperties
     {
-        std::string title;
-        uint        width, height;
+        std::string     title;
+        uint            width, height;
+        EventCallbackFn eventCallback;
 
-        WindowProperties(const std::string& title = "GE Engine", uint width = 1920, uint height = 1080) :
-            title(title), width(width), height(height)
+        WindowProperties(const std::string& title         = "GE Engine",
+                         uint               width         = 1920,
+                         uint               height        = 1080,
+                         EventCallbackFn    eventCallback = nullptr) :
+            title(title),
+            width(width), height(height), eventCallback(eventCallback)
         {}
     };
 
@@ -26,8 +31,6 @@ namespace GE
     class GE_API Window
     {
     public:
-        using EventCallbackFn = std::function<void(Event&)>;
-
         virtual ~Window() = default;
 
         inline GLFWwindow* GetNativeWindow() const { return m_glfwWindow; }
