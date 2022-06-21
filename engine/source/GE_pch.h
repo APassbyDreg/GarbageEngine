@@ -31,7 +31,3 @@
 #include "Runtime/config/config.h"
 
 namespace fs = std::filesystem;
-
-#ifdef GE_PLATFORM_WINDOWS
-#include "Windows.h"
-#endif

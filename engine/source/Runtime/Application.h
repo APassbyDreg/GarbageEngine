@@ -6,7 +6,8 @@
 #include "function/Layer/LayerSystem.h"
 #include "function/Log/LogSystem.h"
 #include "function/Message/MessageSystem.h"
-#include "function/UI/Window.h"
+
+#include "function/Layer/Layers/WindowLayer.h"
 
 namespace GE
 {
@@ -24,14 +25,19 @@ namespace GE
         void PushLayer(std::shared_ptr<Layer> layer);
         void PushOverlay(std::shared_ptr<Layer> overlay);
 
-        static Application& GetInstance() { return *s_instance; }
+        inline static Application&          GetInstance() { return *s_instance; }
+        inline std::shared_ptr<WindowLayer> GetActiveWindowLayer() { return m_activeWindowLayer; }
 
     private:
-        std::shared_ptr<Window> m_window;
-        bool                    m_running = true;
-        LayerStack              m_layerStack;
+        bool OnWindowClose(WindowCloseEvent& e);
+
+    private:
+        bool       m_running = true;
+        LayerStack m_layerStack;
 
         static Application* s_instance;
+
+        std::shared_ptr<WindowLayer> m_activeWindowLayer;
     };
 
     // Defined in client

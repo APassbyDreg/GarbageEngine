@@ -4,8 +4,6 @@
 #include "function/Message/MessageSystem.h"
 #include "function/Render/VulkanManager/VulkanManager.h"
 
-#include "function/Layer/Layers/WindowLayer.h"
-
 #include "GLFW/glfw3.h"
 
 #define GE_BIND_CLASS_FN(fn) std::bind(&fn, this, std::placeholders::_1)
@@ -22,6 +20,7 @@ namespace GE
         // register layers
         WindowProperties             main_window_props("GE Engine", 1920, 1080, GE_BIND_CLASS_FN(Application::OnEvent));
         std::shared_ptr<WindowLayer> main_window_layer = std::make_shared<WindowLayer>(main_window_props);
+        m_activeWindowLayer = main_window_layer;
         PushOverlay(main_window_layer);
 
         // init subsystems
@@ -53,10 +52,8 @@ namespace GE
         bool done = false;
 
         // handle application level events
-        if (e.getEventType() == EventType::WindowClose)
-        {
-            m_running = false;
-        }
+        EventDispatcher dispatcher(e);
+        dispatcher.Dispatch<WindowCloseEvent>(GE_BIND_CLASS_FN(Application::OnWindowClose));
 
         // propagate event to layers
         while (!e.m_handled)
@@ -80,5 +77,11 @@ namespace GE
     {
         m_layerStack.PushOverlay(overlay);
         overlay->OnAttach();
+    }
+
+    bool Application::OnWindowClose(WindowCloseEvent& e)
+    {
+        m_running = false;
+        return false;
     }
 } // namespace GE

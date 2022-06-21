@@ -11,10 +11,23 @@
 #include "function/Event/EventSystem.h"
 #include "function/Layer/LayerSystem.h"
 
-#include "function/UI/Window.h"
-
 namespace GE
 {
+    struct WindowProperties
+    {
+        std::string     title;
+        uint            width, height;
+        EventCallbackFn eventCallback;
+
+        WindowProperties(const std::string& title         = "GE Engine",
+                         uint               width         = 1920,
+                         uint               height        = 1080,
+                         EventCallbackFn    eventCallback = nullptr) :
+            title(title),
+            width(width), height(height), eventCallback(eventCallback)
+        {}
+    };
+
     struct WindowData
     {
         std::string  title;
@@ -66,7 +79,6 @@ namespace GE
         void __imgui_rebuild_swapchain();
 
     protected:
-
         /* --------------------------- glfw stuff --------------------------- */
 
         static bool s_glfwInitialized;
