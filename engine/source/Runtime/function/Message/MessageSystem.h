@@ -4,7 +4,7 @@
 
 #include "MsgTypes.h"
 
-#include "core/base/Singleton.h"
+#include "Runtime/core/base/Singleton.h"
 
 namespace GE
 {

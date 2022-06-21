@@ -7,9 +7,9 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
-#include "core/math/math.h"
-#include "function/Event/EventSystem.h"
-#include "function/Layer/LayerSystem.h"
+#include "Runtime/core/math/math.h"
+#include "Runtime/function/Event/EventSystem.h"
+#include "Runtime/function/Layer/LayerSystem.h"
 
 namespace GE
 {

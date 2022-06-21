@@ -2,8 +2,8 @@
 
 #include "GE_pch.h"
 
-#include "../Application.h"
-#include "../testing/UnitTest.h"
+#include "Runtime/Application.h"
+#include "Runtime/testing/UnitTest.h"
 
 #ifdef GE_PLATFORM_WINDOWS
 extern std::unique_ptr<GE::Application> GE::CreateApplication();

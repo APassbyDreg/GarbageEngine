@@ -2,12 +2,12 @@
 
 #include "GE_pch.h"
 
-#include "function/Event/EventSystem.h"
-#include "function/Layer/LayerSystem.h"
-#include "function/Log/LogSystem.h"
-#include "function/Message/MessageSystem.h"
+#include "Runtime/function/Event/EventSystem.h"
+#include "Runtime/function/Layer/LayerSystem.h"
+#include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/function/Message/MessageSystem.h"
 
-#include "function/Layer/Layers/WindowLayer.h"
+#include "Runtime/function/Layer/Layers/WindowLayer.h"
 
 namespace GE
 {

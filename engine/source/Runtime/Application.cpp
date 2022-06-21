@@ -1,8 +1,8 @@
 #include "GE_pch.h"
 
 #include "Application.h"
-#include "function/Message/MessageSystem.h"
-#include "function/Render/VulkanManager/VulkanManager.h"
+#include "Runtime/function/Message/MessageSystem.h"
+#include "Runtime/function/Render/VulkanManager/VulkanManager.h"
 
 #include "GLFW/glfw3.h"
 
@@ -20,7 +20,7 @@ namespace GE
         // register layers
         WindowProperties             main_window_props("GE Engine", 1920, 1080, GE_BIND_CLASS_FN(Application::OnEvent));
         std::shared_ptr<WindowLayer> main_window_layer = std::make_shared<WindowLayer>(main_window_props);
-        m_activeWindowLayer = main_window_layer;
+        m_activeWindowLayer                            = main_window_layer;
         PushOverlay(main_window_layer);
 
         // init subsystems

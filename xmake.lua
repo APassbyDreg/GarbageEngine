@@ -25,12 +25,12 @@ target("runtime")
     GE_add_predefined_macros()
     add_defines("GE_BUILD_RUNTIME")
 
-    -- precompiled header
-    set_pcxxheader("engine/source/GE_pch.h")
+    -- -- precompiled header
+    -- set_pcxxheader("engine/source/GE_pch.h")
 
     -- linking packages
     GE_link_3rdparty()
-    add_includedirs("engine/source", "engine/source/Runtime")
+    add_includedirs("engine/source")
 
     -- files
     add_files("engine/source/runtime/**.cpp")
@@ -55,8 +55,8 @@ target("editor")
     -- dependencies
     add_deps("runtime")
 
-    -- precompiled header
-    set_pcxxheader("engine/source/GE_pch.h")
+    -- -- precompiled header
+    -- set_pcxxheader("engine/source/GE_pch.h")
 
     -- linking packages
     GE_link_3rdparty()

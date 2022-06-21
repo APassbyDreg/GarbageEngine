@@ -2,7 +2,8 @@
 
 #include "GE_pch.h"
 
-#include "core/base/Singleton.h"
+#include "Runtime/core/base/Singleton.h"
+#include "Runtime/core/math/math.h"
 
 #include "spdlog/spdlog.h"
 
@@ -90,7 +91,6 @@ namespace GE
         static std::shared_ptr<spdlog::logger> s_core_logger;
         static std::shared_ptr<spdlog::logger> s_client_logger;
     };
-} // namespace GE
 
 /* --------------------------- core logging macros -------------------------- */
 #define GE_CORE_TRACE(...) ::GE::LogSystem::GetInstance().LogCore("trace", __VA_ARGS__)
@@ -127,3 +127,5 @@ namespace GE
             __debugbreak(); \
         } \
     } while (false)
+
+} // namespace GE

@@ -2,7 +2,7 @@
 
 #include "GE_pch.h"
 
-#include "function/Log/LogSystem.h" // TODO: rethink layering
+#include "Runtime/function/Log/LogSystem.h" // TODO: rethink layering
 #include "vulkan/vulkan.h"
 
 namespace GE

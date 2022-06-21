@@ -3,8 +3,8 @@
 #include "GE_pch.h"
 
 #include "../UnitTest.h"
-#include "resource/Managers/CacheManager.h"
-#include "function/Render/VulkanManager/ShaderManager.h"
+#include "Runtime/function/Render/VulkanManager/ShaderManager.h"
+#include "Runtime/resource/Managers/CacheManager.h"
 
 namespace GE
 {

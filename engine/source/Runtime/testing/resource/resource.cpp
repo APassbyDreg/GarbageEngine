@@ -1,6 +1,6 @@
 #include "resource.h"
 
-#include "function/Log/LogSystem.h"
+#include "Runtime/function/Log/LogSystem.h"
 
 namespace GE
 {

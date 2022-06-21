@@ -1,9 +1,9 @@
 #include "ShaderManager.h"
 
-#include "function/Log/LogSystem.h"
-#include "function/Render/VulkanManager/VulkanManager.h"
+#include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/function/Render/VulkanManager/VulkanManager.h"
 
-#include "core/Hash.h"
+#include "Runtime/core/Hash.h"
 
 namespace GE
 {

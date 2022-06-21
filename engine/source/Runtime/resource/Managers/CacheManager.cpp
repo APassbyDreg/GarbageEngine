@@ -1,6 +1,6 @@
 #include "CacheManager.h"
 
-#include "core/Hash.h"
+#include "Runtime/core/Hash.h"
 #include "miniz.h"
 
 namespace GE
