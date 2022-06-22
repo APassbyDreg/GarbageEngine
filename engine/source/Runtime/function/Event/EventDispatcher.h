@@ -19,7 +19,7 @@ namespace GE
         template<typename T>
         bool Dispatch(EventFn<T> func)
         {
-            if (m_event.getEventType() == T::getStaticType())
+            if (m_event.GetEventType() == T::GetStaticType())
             {
                 m_event.m_handled = func(static_cast<T&>(m_event));
                 return true;

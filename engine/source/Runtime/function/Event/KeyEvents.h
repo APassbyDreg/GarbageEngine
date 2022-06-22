@@ -24,7 +24,7 @@ namespace GE
 
         int getRepeatCount() const { return m_repeatCount; }
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "KeyPressedEvent: " << m_keyCode << " (" << m_repeatCount << " repeats)";
@@ -42,7 +42,7 @@ namespace GE
 
         KeyReleasedEvent(int keyCode) : KeyEvent(keyCode) {}
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "KeyReleasedEvent: " << m_keyCode;

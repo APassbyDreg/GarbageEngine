@@ -43,21 +43,38 @@ namespace GE
     class GE_API Event
     {
     public:
-        virtual EventType   getEventType() const     = 0;
-        virtual const char* getName() const          = 0;
-        virtual int         getCategoryFlags() const = 0;
-        virtual std::string toString() const { return ""; }
+        virtual EventType   GetEventType() const     = 0;
+        virtual const char* GetName() const          = 0;
+        virtual int         GetCategoryFlags() const = 0;
+        virtual std::string ToString() const { return ""; }
 
-        inline bool isInCategory(EventCategory category) { return getCategoryFlags() & category; }
+        inline bool isInCategory(EventCategory category) { return GetCategoryFlags() & category; }
+
+        template<typename OStream>
+        friend OStream& operator<<(OStream& os, const Event& c)
+        {
+            return os << ToString();
+        }
 
     public:
         bool m_handled = false;
     };
-} // namespace GE
+
+    template<std::derived_from<Event> EventT, typename CharT>
+    struct std::formatter<EventT, CharT> : std::formatter<std::string>
+    {
+        template<typename FormatContext>
+        auto format(EventT& e, FormatContext& ctx) const
+        {
+            std::string name = e.ToString();
+            return std::formatter<std::string>::format(name, ctx);
+        }
+    };
 
 // event final class shorthand macro
 #define EVENT_IMPLEMENTATION_COMMON(type, category) \
-    static EventType getStaticType() { return EventType::type; } \
-    EventType        getEventType() const override { return EventType::type; } \
-    const char*      getName() const override { return #type; } \
-    int              getCategoryFlags() const override { return category; }
+    static EventType GetStaticType() { return EventType::type; } \
+    EventType        GetEventType() const override { return EventType::type; } \
+    const char*      GetName() const override { return #type; } \
+    int              GetCategoryFlags() const override { return category; }
+} // namespace GE

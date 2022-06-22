@@ -15,7 +15,7 @@ namespace GE
         float  getY() const { return m_yPosition; }
         float2 getPosition() const { return float2(m_xPosition, m_yPosition); }
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "MouseMovedEvent: " << m_xPosition << ", " << m_yPosition;
@@ -37,7 +37,7 @@ namespace GE
         float  getYOffset() const { return m_yOffset; }
         float2 getOffset() const { return float2(m_xOffset, m_yOffset); }
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "MouseScrolledEvent: " << m_xOffset << ", " << m_yOffset;
@@ -65,7 +65,7 @@ namespace GE
 
         MouseButtonPressedEvent(int button) : MouseButtonEvent(button) {}
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "MouseButtonPressedEvent: " << m_button;
@@ -80,7 +80,7 @@ namespace GE
 
         MouseButtonReleasedEvent(int button) : MouseButtonEvent(button) {}
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "MouseButtonReleasedEvent: " << m_button;

@@ -3,6 +3,7 @@
 #include "GE_pch.h"
 
 #include "glm/glm.hpp"
+#include "glm/gtx/string_cast.hpp"
 
 namespace GE
 {
@@ -45,5 +46,16 @@ namespace GE
     typedef short     int16;
     typedef int       int32;
     typedef long long int64;
+
+    template<template<typename, glm::precision> class matType, typename T, glm::precision P, typename CharT>
+    struct std::formatter<matType<T, P>, CharT> : std::formatter<std::string>
+    {
+        // parse is inherited from formatter<string>.
+        template<typename FormatContext>
+        auto format(matType<T, P> v, FormatContext& ctx) const
+        {
+            return std::formatter<std::string>::format(glm::to_string(v), ctx);
+        }
+    };
 
 } // namespace GE

@@ -12,7 +12,7 @@ namespace GE
 
         AppTickEvent() {}
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "AppTickEvent";
@@ -27,7 +27,7 @@ namespace GE
 
         WindowCloseEvent() {}
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "WindowCloseEvent";
@@ -46,7 +46,7 @@ namespace GE
         inline uint  getHeight() const { return m_height; }
         inline uint2 getSize() const { return uint2(m_width, m_height); }
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "WindowResizeEvent: " << m_width << ", " << m_height;
@@ -64,7 +64,7 @@ namespace GE
 
         WindowFocusEvent() {}
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "WindowFocusEvent";
@@ -79,7 +79,7 @@ namespace GE
 
         WindowLostFocusEvent() {}
 
-        std::string toString() const override
+        std::string ToString() const override
         {
             std::stringstream ss;
             ss << "WindowLostFocusEvent";
