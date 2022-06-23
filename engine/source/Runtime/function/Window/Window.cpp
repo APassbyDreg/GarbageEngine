@@ -1,4 +1,4 @@
-#include "WindowLayer.h"
+#include "Window.h"
 
 #include "Runtime/Application.h"
 
@@ -8,23 +8,13 @@
 
 namespace GE
 {
-    bool WindowLayer::s_glfwInitialized = false;
+    bool Window::s_glfwInitialized = false;
 
-    WindowLayer::WindowLayer(const WindowProperties& props) : Layer("Window Layer") { __init(props); }
+    Window::Window(const WindowProperties& props) { __init(props); }
 
-    WindowLayer::~WindowLayer() { __shutdown(); }
+    Window::~Window() { __shutdown(); }
 
-    void WindowLayer::OnEnable() {}
-
-    void WindowLayer::OnDisable() {}
-
-    void WindowLayer::OnAttach() {}
-
-    void WindowLayer::OnDetatch() {}
-
-    void WindowLayer::OnEvent(Event& event) {}
-
-    void WindowLayer::OnUpdate()
+    void Window::BeginWindowRender()
     {
         glfwPollEvents();
 
@@ -37,19 +27,13 @@ namespace GE
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+    }
 
-        // track time
-        float time          = static_cast<float>(glfwGetTime());
-        m_imguiIO.DeltaTime = time - m_Time;
-        m_Time              = time;
-
-        // debug
-        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-        bool   show        = true;
-        ImGui::ShowDemoWindow(&show);
-
+    void Window::EndWindowRender()
+    {
         // Rendering
         ImGui::Render();
+        ImVec4      clear_color      = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
         ImDrawData* main_draw_data   = ImGui::GetDrawData();
         const bool main_is_minimized = (main_draw_data->DisplaySize.x <= 0.0f || main_draw_data->DisplaySize.y <= 0.0f);
         m_imguiWindow.ClearValue.color.float32[0] = clear_color.x * clear_color.w;
@@ -71,7 +55,7 @@ namespace GE
             __imgui_present_frame();
     }
 
-    void WindowLayer::__imgui_render_frame(ImDrawData* draw_data)
+    void Window::__imgui_render_frame(ImDrawData* draw_data)
     {
         VkDevice vk_device         = VulkanManager::GetInstance().GetVkDevice();
         VkQueue  vk_graphics_queue = VulkanManager::GetInstance().GetVkGraphicsQueue();
@@ -140,7 +124,7 @@ namespace GE
         }
     }
 
-    void WindowLayer::__imgui_present_frame()
+    void Window::__imgui_present_frame()
     {
         if (m_needRebuildSwapChain)
         {
@@ -172,7 +156,7 @@ namespace GE
             (m_imguiWindow.SemaphoreIndex + 1) % m_imguiWindow.ImageCount; // Now we can use the next set of semaphores
     }
 
-    void WindowLayer::__imgui_rebuild_swapchain()
+    void Window::__imgui_rebuild_swapchain()
     {
         VkInstance       vk_instance             = VulkanManager::GetInstance().GetVkInstance();
         VkPhysicalDevice vk_physical_device      = VulkanManager::GetInstance().GetVkPhysicalDevice();
@@ -199,7 +183,7 @@ namespace GE
         }
     }
 
-    void WindowLayer::__init_glfw()
+    void Window::__init_glfw()
     {
         if (!s_glfwInitialized)
         {
@@ -222,7 +206,7 @@ namespace GE
         glfwSetWindowUserPointer(m_glfwWindow, &m_Data);
     }
 
-    void WindowLayer::__cleanup_glfw()
+    void Window::__cleanup_glfw()
     {
         if (s_glfwInitialized)
         {
@@ -233,7 +217,7 @@ namespace GE
         glfwTerminate(); // REVIEW: is this necessary?
     }
 
-    void WindowLayer::__init_glfw_callbacks()
+    void Window::__init_glfw_callbacks()
     {
         // window callbalcks
         glfwSetWindowSizeCallback(m_glfwWindow, [](GLFWwindow* window, int width, int height) {
@@ -319,7 +303,7 @@ namespace GE
         });
     }
 
-    void WindowLayer::__init_imgui(int2 size)
+    void Window::__init_imgui(int2 size)
     {
         VkInstance       vk_instance             = VulkanManager::GetInstance().GetVkInstance();
         VkSurfaceKHR     vk_surface              = VulkanManager::GetInstance().GetVkSurface();
@@ -382,11 +366,10 @@ namespace GE
             m_imguiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
             m_imguiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
             m_imguiIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
-            // io.ConfigViewportsNoAutoMerge = true;
-            // io.ConfigViewportsNoTaskBarIcon = true;
 
             // Setup Dear ImGui style
-            ImGui::StyleColorsDark();
+            // ImGui::StyleColorsDark();
+            ImGui::StyleColorsClassic();
 
             // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to
             // regular ones.
@@ -468,7 +451,7 @@ namespace GE
         }
     }
 
-    void WindowLayer::__cleanup_imgui()
+    void Window::__cleanup_imgui()
     {
         ImGui_ImplVulkanH_DestroyWindow(VulkanManager::GetInstance().GetVkInstance(),
                                         VulkanManager::GetInstance().GetVkDevice(),
@@ -476,7 +459,7 @@ namespace GE
                                         nullptr);
     }
 
-    void WindowLayer::__init(const WindowProperties& props)
+    void Window::__init(const WindowProperties& props)
     {
         m_Data.title         = props.title;
         m_Data.width         = props.width;
@@ -496,9 +479,15 @@ namespace GE
         __init_imgui(int2(props.width, props.height));
     }
 
-    void WindowLayer::__shutdown()
+    void Window::__shutdown()
     {
         __cleanup_imgui();
         __cleanup_glfw();
+    }
+
+    void Window::SetTitle(const std::string& title)
+    {
+        m_Data.title = title;
+        glfwSetWindowTitle(m_glfwWindow, title.c_str());
     }
 } // namespace GE

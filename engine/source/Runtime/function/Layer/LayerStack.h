@@ -22,6 +22,6 @@ namespace GE
 
     private:
         std::vector<std::shared_ptr<Layer>>           m_layers;
-        std::vector<std::shared_ptr<Layer>>::iterator m_layerInsert;
+        uint m_layerInsertIndex = 0;
     };
 } // namespace GE

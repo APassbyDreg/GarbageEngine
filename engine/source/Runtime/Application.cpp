@@ -18,10 +18,9 @@ namespace GE
         s_instance = this;
 
         // register layers
-        WindowProperties             main_window_props("GE Engine", 1920, 1080, GE_BIND_CLASS_FN(Application::OnEvent));
-        std::shared_ptr<WindowLayer> main_window_layer = std::make_shared<WindowLayer>(main_window_props);
-        m_activeWindowLayer                            = main_window_layer;
-        PushOverlay(main_window_layer);
+        WindowProperties        main_window_props("GE Engine", 1920, 1080, GE_BIND_CLASS_FN(Application::OnEvent));
+        std::shared_ptr<Window> main_window_layer = std::make_shared<Window>(main_window_props);
+        m_activeWindow                            = main_window_layer;
 
         // init subsystems
         VulkanManager::GetInstance().Init(main_window_layer->GetNativeWindow());
@@ -33,12 +32,44 @@ namespace GE
     {
         GE_CORE_TRACE("Starting Application");
 
+        float  fps = -1.0f;
+        double t0, t1, last_update = 0.0;
         while (m_running)
         {
+            /* ------------------------- begin frame ------------------------ */
+            t0 = glfwGetTime();
+
+            /* ------------------------ update layers ----------------------- */
             for (auto&& layer : m_layerStack)
             {
                 layer->OnUpdate();
             }
+
+            /* ------------------------ do rendering ------------------------ */
+
+            /* ---------------------- show imgui window --------------------- */
+            m_activeWindow->BeginWindowRender();
+
+            // show fps
+            if (t0 - last_update > 0.5)
+            {
+                last_update = t0;
+                m_activeWindow->SetTitle("fps: " + std::to_string(fps));
+            }
+            // debug
+            bool _show_demo_window = true;
+            ImGui::ShowDemoWindow(&_show_demo_window);
+            // show layers
+            for (auto&& layer : m_layerStack)
+            {
+                layer->OnImGuiRender();
+            }
+
+            m_activeWindow->EndWindowRender();
+
+            /* ----------------------- finalize frame ----------------------- */
+            t1  = glfwGetTime();
+            fps = fps * 0.9 + 0.1 * 1.0f / (t1 - t0);
         }
 
         GE_CORE_TRACE("Ending Application");

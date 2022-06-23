@@ -9,7 +9,6 @@
 
 #include "Runtime/core/math/math.h"
 #include "Runtime/function/Event/EventSystem.h"
-#include "Runtime/function/Layer/LayerSystem.h"
 
 namespace GE
 {
@@ -36,13 +35,13 @@ namespace GE
         EventCallbackFn eventCallback;
     };
 
-    class GE_API WindowLayer : public Layer
+    class GE_API Window
     {
     public:
         using EventCallbackFn = std::function<void(Event&)>;
 
-        WindowLayer(const WindowProperties& props);
-        virtual ~WindowLayer();
+        Window(const WindowProperties& props);
+        virtual ~Window();
 
         inline GLFWwindow* GetNativeWindow() const { return m_glfwWindow; }
 
@@ -51,14 +50,10 @@ namespace GE
         virtual uint GetHeight() const { return m_Data.height; }
         inline uint2 GetSize() const { return uint2(GetWidth(), GetHeight()); }
 
-        /* ---------------------- override layer stuff ---------------------- */
+        void BeginWindowRender();
+        void EndWindowRender();
 
-        virtual void OnEnable() override;
-        virtual void OnDisable() override;
-        virtual void OnAttach() override;
-        virtual void OnDetatch() override;
-        virtual void OnUpdate() override;
-        virtual void OnEvent(Event& event) override;
+        void SetTitle(const std::string& title);
 
     private:
         /* ------------------------- private helpers ------------------------ */

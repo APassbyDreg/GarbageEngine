@@ -2,14 +2,14 @@
 
 namespace GE
 {
-    LayerStack::LayerStack() { m_layerInsert = m_layers.begin(); }
+    LayerStack::LayerStack() {}
 
     LayerStack::~LayerStack() {}
 
     void LayerStack::PushLayer(std::shared_ptr<Layer> layer)
     {
-        m_layers.emplace(m_layerInsert, layer);
-        m_layerInsert++;
+        m_layers.emplace(m_layers.begin() + m_layerInsertIndex, layer);
+        m_layerInsertIndex++;
     }
 
     void LayerStack::PushOverlay(std::shared_ptr<Layer> overlay) { m_layers.emplace_back(overlay); }
@@ -20,7 +20,7 @@ namespace GE
         if (it != m_layers.end())
         {
             m_layers.erase(it);
-            m_layerInsert--;
+            m_layerInsertIndex--;
         }
     }
 
