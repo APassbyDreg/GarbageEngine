@@ -27,6 +27,8 @@ namespace GE
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        m_imguiContext = ImGui::GetCurrentContext();
     }
 
     void Window::EndWindowRender()

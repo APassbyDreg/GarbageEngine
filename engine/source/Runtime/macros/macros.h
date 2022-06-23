@@ -1,7 +1,5 @@
 #pragma once
 
-// TODO: move things into dedicate files
-
 /* ----------------------------------- API ---------------------------------- */
 #if defined(_WIN32)
 #ifdef GE_BUILD_RUNTIME

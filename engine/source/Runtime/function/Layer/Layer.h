@@ -4,6 +4,8 @@
 
 #include "Runtime/function/Event/EventSystem.h"
 
+#include "imgui.h"
+
 namespace GE
 {
     class GE_API Layer
@@ -18,7 +20,7 @@ namespace GE
         virtual void OnDetatch() {}
         virtual void OnUpdate() {}
         virtual void OnEvent(Event& event) {}
-        virtual void OnImGuiRender() {}
+        virtual void OnImGuiRender(ImGuiContext* ctx) {}
 
         inline const std::string& GetName() const { return m_layerName; }
 

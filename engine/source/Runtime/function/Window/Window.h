@@ -43,17 +43,17 @@ namespace GE
         Window(const WindowProperties& props);
         virtual ~Window();
 
-        inline GLFWwindow* GetNativeWindow() const { return m_glfwWindow; }
-
         virtual void SetEventCallback(const EventCallbackFn& callback) { m_Data.eventCallback = callback; };
         virtual uint GetWidth() const { return m_Data.width; }
         virtual uint GetHeight() const { return m_Data.height; }
         inline uint2 GetSize() const { return uint2(GetWidth(), GetHeight()); }
 
-        void BeginWindowRender();
-        void EndWindowRender();
+        void                 BeginWindowRender();
+        void                 EndWindowRender();
+        inline ImGuiContext* GetImGuiContext() { return m_imguiContext; }
 
-        void SetTitle(const std::string& title);
+        void               SetTitle(const std::string& title);
+        inline GLFWwindow* GetNativeWindow() const { return m_glfwWindow; }
 
     private:
         /* ------------------------- private helpers ------------------------ */
@@ -83,6 +83,7 @@ namespace GE
         /* --------------------------- imgui stuff -------------------------- */
         ImGuiIO                  m_imguiIO;
         ImGui_ImplVulkanH_Window m_imguiWindow;
+        ImGuiContext*            m_imguiContext;
 
         // TODO: move to unified management
         VkPipelineCache  m_imguiPipelineCache  = VK_NULL_HANDLE;

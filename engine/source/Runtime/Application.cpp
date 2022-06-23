@@ -60,9 +60,10 @@ namespace GE
             bool _show_demo_window = true;
             ImGui::ShowDemoWindow(&_show_demo_window);
             // show layers
+            ImGuiContext* ctx = m_activeWindow->GetImGuiContext();
             for (auto&& layer : m_layerStack)
             {
-                layer->OnImGuiRender();
+                layer->OnImGuiRender(ctx);
             }
 
             m_activeWindow->EndWindowRender();
