@@ -1,9 +1,11 @@
 #include "ShaderManager.h"
 
 #include "Runtime/function/Log/LogSystem.h"
-#include "Runtime/function/Render/VulkanManager/VulkanManager.h"
 
 #include "Runtime/core/Hash.h"
+
+#include "VulkanCore.h"
+#include "VulkanCreateInfoBuilder.h"
 
 namespace GE
 {
@@ -17,6 +19,64 @@ namespace GE
             return buffer.str();
         }
         return "";
+    }
+
+    inline ShaderType __ext2type(std::string ext)
+    {
+        const std::map<std::string, ShaderType> ext2type = {
+            {".vert", ShaderType::VERTEX},
+            {".tesc", ShaderType::TESSELLATION_CONTROL},
+            {".tese", ShaderType::TESSELLATION_EVALUATION},
+            {".geom", ShaderType::GEOMETRY},
+            {".frag", ShaderType::FRAGMENT},
+            {".comp", ShaderType::COMPUTE},
+            {".mesh", ShaderType::MESH},
+            {".task", ShaderType::TASK},
+            {".rgen", ShaderType::RAY_GENERATION},
+            {".rint", ShaderType::RAY_INTERSECTION},
+            {".rahit", ShaderType::RAY_ANYHIT},
+            {".rchit", ShaderType::RAY_CLOSESTHIT},
+            {".rmiss", ShaderType::RAY_MISS},
+            {".rcall", ShaderType::RAY_CALLABLE},
+        };
+        auto it = ext2type.find(ext);
+        if (it != ext2type.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            return ShaderType::ALL;
+        }
+    }
+
+    inline shaderc_shader_kind __ext2kind(std::string ext)
+    {
+        const std::map<std::string, shaderc_shader_kind> ext2kind = {
+            {".vert", shaderc_vertex_shader},
+            {".tesc", shaderc_tess_control_shader},
+            {".tese", shaderc_tess_evaluation_shader},
+            {".geom", shaderc_geometry_shader},
+            {".frag", shaderc_fragment_shader},
+            {".comp", shaderc_compute_shader},
+            {".mesh", shaderc_mesh_shader},
+            {".task", shaderc_task_shader},
+            {".rgen", shaderc_raygen_shader},
+            {".rint", shaderc_intersection_shader},
+            {".rahit", shaderc_anyhit_shader},
+            {".rchit", shaderc_closesthit_shader},
+            {".rmiss", shaderc_miss_shader},
+            {".rcall", shaderc_callable_shader},
+        };
+        auto it = ext2kind.find(ext);
+        if (it != ext2kind.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            return shaderc_glsl_infer_from_source;
+        }
     }
 
     /* --------------------------- ShaderIncluder --------------------------- */
@@ -113,59 +173,33 @@ namespace GE
 
     /* ---------------------------- ShaderModule ---------------------------- */
 
-    ShaderModule::ShaderModule(std::vector<uint32_t> spv)
+    ShaderModule::ShaderModule(std::vector<uint32_t> spv, ShaderType type)
     {
         VkShaderModuleCreateInfo create_info = {};
         create_info.sType                    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         create_info.codeSize                 = spv.size() * sizeof(uint32_t);
         create_info.pCode                    = spv.data();
 
-        VK_CHECK(vkCreateShaderModule(VulkanManager::GetInstance().GetVkDevice(), &create_info, nullptr, &m_module));
+        VK_CHECK(vkCreateShaderModule(VulkanCore::GetVkDevice(), &create_info, nullptr, &m_module));
+
+        m_stage = VkInit::GetPipelineShaderStageCreateInfo(static_cast<VkShaderStageFlagBits>(type), m_module);
+
+        m_ready = true;
     }
 
     ShaderModule::~ShaderModule()
     {
-        if (m_compiled)
+        if (m_ready)
         {
-            vkDestroyShaderModule(VulkanManager::GetInstance().GetVkDevice(), m_module, nullptr);
+            vkDestroyShaderModule(VulkanCore::GetVkDevice(), m_module, nullptr);
         }
     }
 
     /* ------------------------------ ShaderManager ----------------------------- */
 
-    shaderc_shader_kind ShaderManager::__shader_kind_from_ext(std::string filepath)
-    {
-        const std::map<std::string, shaderc_shader_kind> ext2kind = {
-            {".vert", shaderc_vertex_shader},
-            {".tesc", shaderc_tess_control_shader},
-            {".tese", shaderc_tess_evaluation_shader},
-            {".geom", shaderc_geometry_shader},
-            {".frag", shaderc_fragment_shader},
-            {".comp", shaderc_compute_shader},
-            {".mesh", shaderc_mesh_shader},
-            {".task", shaderc_task_shader},
-            {".rgen", shaderc_raygen_shader},
-            {".rint", shaderc_intersection_shader},
-            {".rahit", shaderc_anyhit_shader},
-            {".rchit", shaderc_closesthit_shader},
-            {".rmiss", shaderc_miss_shader},
-            {".rcall", shaderc_callable_shader},
-        };
-        std::string ext = fs::path(filepath).extension().string();
-        auto        it  = ext2kind.find(ext);
-        if (it != ext2kind.end())
-        {
-            return it->second;
-        }
-        else
-        {
-            return shaderc_glsl_infer_from_source;
-        }
-    }
-
-    ShaderModule ShaderManager::GetCompiledModule(std::string              path,
-                                                  std::vector<std::string> additional_include_dirs,
-                                                  bool&                    use_cache)
+    std::shared_ptr<ShaderModule> ShaderManager::GetCompiledModule(std::string              path,
+                                                                   std::vector<std::string> additional_include_dirs,
+                                                                   bool&                    use_cache)
     {
         shaderc::CompileOptions options;
         options.SetIncluder(std::make_unique<ShaderIncluder>(path, additional_include_dirs));
@@ -173,13 +207,18 @@ namespace GE
         options.SetGenerateDebugInfo();
         options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
+        std::string ext  = fs::path(path).extension().string();
+        ShaderType  type = __ext2type(ext);
+
         std::vector<uint32_t> spv = GetCompiledSpv(path, options, use_cache);
-        return ShaderModule(spv);
+        return std::make_shared<ShaderModule>(spv, type);
     }
 
     std::vector<uint32_t> ShaderManager::GetCompiledSpv(std::string path, shaderc::CompileOptions opt, bool& use_cache)
     {
-        shaderc_shader_kind shader_kind     = __shader_kind_from_ext(path);
+        std::string ext = fs::path(path).extension().string();
+
+        shaderc_shader_kind shader_kind     = __ext2kind(ext);
         std::string         shader_filename = fs::path(path).filename().string();
         std::string         shader_src_code = __try_load_shader_str(path);
         GE_CORE_ASSERT(shader_src_code.length() > 0, "Failed to load shader file: {}", path);

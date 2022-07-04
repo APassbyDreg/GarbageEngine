@@ -106,6 +106,11 @@ function GE_link_miniz()
 end
 
 
+-------------------------------- stb --------------------------------
+function GE_link_stb() 
+    add_includedirs(rel_local_path("stb"))
+end
+
 -------------------------------- overall --------------------------------
 function GE_link_3rdparty()
     GE_link_vulkan()
@@ -118,6 +123,7 @@ function GE_link_3rdparty()
     GE_link_entt()
     GE_link_shaderc()
     GE_link_miniz()
+    GE_link_stb()
 
     add_packages("openssl")
 end

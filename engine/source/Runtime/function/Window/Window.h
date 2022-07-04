@@ -10,6 +10,8 @@
 #include "Runtime/core/math/math.h"
 #include "Runtime/function/Event/EventSystem.h"
 
+#include "Runtime/function/Render/Routines/__TestBasicRoutine.h"
+
 namespace GE
 {
     struct WindowProperties
@@ -92,5 +94,11 @@ namespace GE
         // TODO: rethink where this should be placed
         float m_Time                 = 0.0f;
         bool  m_needRebuildSwapChain = false;
+
+        /* ------------------------- render routine ------------------------- */
+        // TODO: move to dedicate manager
+        TestBasicRoutine m_renderRoutine;
+
+        VkSampler m_viewportSampler;
     };
 } // namespace GE

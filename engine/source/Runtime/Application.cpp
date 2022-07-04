@@ -2,7 +2,7 @@
 
 #include "Application.h"
 #include "Runtime/function/Message/MessageSystem.h"
-#include "Runtime/function/Render/VulkanManager/VulkanManager.h"
+#include "Runtime/function/Render/VulkanManager/VulkanCore.h"
 
 #include "GLFW/glfw3.h"
 
@@ -23,7 +23,7 @@ namespace GE
         m_activeWindow                            = main_window_layer;
 
         // init subsystems
-        VulkanManager::GetInstance().Init(main_window_layer->GetNativeWindow());
+        VulkanCore::GetInstance().Init(main_window_layer->GetNativeWindow());
     }
 
     Application::~Application() {}

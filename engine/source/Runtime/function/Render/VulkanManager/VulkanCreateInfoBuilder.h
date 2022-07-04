@@ -8,6 +8,74 @@ namespace GE
 {
     namespace VkInit
     {
+        inline VkAttachmentDescription GetAttachmentDescription(VkFormat              format = VK_FORMAT_R8G8B8A8_UNORM,
+                                                                VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT)
+        {
+            VkAttachmentDescription attachment = {};
+            attachment.format                  = format;
+            attachment.samples                 = samples;
+            attachment.loadOp                  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            attachment.storeOp                 = VK_ATTACHMENT_STORE_OP_STORE;
+            attachment.stencilLoadOp           = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            attachment.stencilStoreOp          = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            attachment.initialLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
+            attachment.finalLayout             = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
+            return attachment;
+        }
+
+        inline VkViewport GetViewport(VkExtent2D extent)
+        {
+            VkViewport viewport = {};
+            viewport.x          = 0.0f;
+            viewport.y          = 0.0f;
+            viewport.width      = (float)extent.width;
+            viewport.height     = (float)extent.height;
+            viewport.minDepth   = 0.0f;
+            viewport.maxDepth   = 1.0f;
+            return viewport;
+        }
+
+        inline VkPipelineViewportStateCreateInfo GetPipelineViewportStateCreateInfo(VkViewport viewport,
+                                                                                    VkRect2D   scissor)
+        {
+            VkPipelineViewportStateCreateInfo info = {};
+            info.sType                             = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+            info.viewportCount                     = 1;
+            info.pViewports                        = &viewport;
+            info.scissorCount                      = 1;
+            info.pScissors                         = &scissor;
+            return info;
+        }
+
+        inline VkImageViewCreateInfo GetVkImageViewCreateInfo(VkImage            image,
+                                                              VkImageCreateInfo& img_info,
+                                                              VkImageViewType    viewtype = VK_IMAGE_VIEW_TYPE_MAX_ENUM,
+                                                              VkFlags            flags    = 0)
+        {
+            if (viewtype == VK_IMAGE_VIEW_TYPE_MAX_ENUM)
+            {
+                viewtype = (VkImageViewType)img_info.imageType; // force view type to match image type
+            }
+
+            VkImageViewCreateInfo info           = {};
+            info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            info.pNext                           = nullptr;
+            info.flags                           = 0;
+            info.image                           = image;
+            info.viewType                        = viewtype;
+            info.format                          = img_info.format;
+            info.components.r                    = VK_COMPONENT_SWIZZLE_R;
+            info.components.g                    = VK_COMPONENT_SWIZZLE_G;
+            info.components.b                    = VK_COMPONENT_SWIZZLE_B;
+            info.components.a                    = VK_COMPONENT_SWIZZLE_A;
+            info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            info.subresourceRange.baseMipLevel   = 0;
+            info.subresourceRange.levelCount     = 1;
+            info.subresourceRange.baseArrayLayer = 0;
+            info.subresourceRange.layerCount     = 1;
+            return info;
+        }
+
         inline VkPipelineShaderStageCreateInfo
         GetPipelineShaderStageCreateInfo(VkShaderStageFlagBits            stage,
                                          VkShaderModule                   shaderModule,
@@ -179,6 +247,29 @@ namespace GE
             info.dstAlphaBlendFactor = dstAlphaBlendFactor;
             info.alphaBlendOp        = alphaBlendOp;
             info.colorWriteMask      = colorWriteMask;
+
+            return info;
+        }
+
+        inline VkPipelineColorBlendStateCreateInfo
+        GetPipelineColorBlendStateCreateInfo(std::vector<VkPipelineColorBlendAttachmentState>& attachments,
+                                             bool                                              logicOpEnable = false,
+                                             VkLogicOp                            logicOp = VK_LOGIC_OP_COPY,
+                                             VkPipelineColorBlendStateCreateFlags flags   = 0)
+        {
+            VkPipelineColorBlendStateCreateInfo info = {};
+
+            info.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+            info.pNext             = nullptr;
+            info.flags             = flags;
+            info.logicOpEnable     = logicOpEnable ? VK_TRUE : VK_FALSE;
+            info.logicOp           = logicOp;
+            info.attachmentCount   = attachments.size();
+            info.pAttachments      = attachments.data();
+            info.blendConstants[0] = 0.0f;
+            info.blendConstants[1] = 0.0f;
+            info.blendConstants[2] = 0.0f;
+            info.blendConstants[3] = 0.0f;
 
             return info;
         }

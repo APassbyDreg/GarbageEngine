@@ -1,20 +1,12 @@
-#include "VulkanManager.h"
+#include "VulkanCore.h"
 
 #include "Runtime/function/Log/LogSystem.h"
 
-#define VKB_CHECK_RETURN(src, dest) \
-    do \
-    { \
-        auto ret = src; \
-        GE_CORE_ASSERT(ret.has_value(), "Failed to create Vulkan instance!"); \
-        dest = ret.value(); \
-    } while (false)
-
 namespace GE
 {
-    VulkanManager::VulkanManager() {}
+    VulkanCore::VulkanCore() {}
 
-    VulkanManager::~VulkanManager() {}
+    VulkanCore::~VulkanCore() { Destroy(); }
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL __debug_messenger(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
                                                             VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
@@ -59,25 +51,28 @@ namespace GE
         return VK_FALSE;
     }
 
-    void VulkanManager::Init(GLFWwindow* window)
+    void VulkanCore::Init(GLFWwindow* window)
     {
-        if (!m_initialized)
+        if (!m_ready)
         {
             // init instance, surface, device, etc.
             init_vulkan(window);
+            // init vma
+            init_vma();
         }
-        m_initialized = true;
+        m_ready = true;
     }
 
-    void VulkanManager::Destroy()
+    void VulkanCore::Destroy()
     {
-        if (m_initialized)
+        if (m_ready)
         {
             destroy_vulkan();
+            destroy_vma();
         }
     }
 
-    void VulkanManager::init_vulkan(GLFWwindow* window)
+    void VulkanCore::init_vulkan(GLFWwindow* window)
     {
         // create instance
         {
@@ -147,8 +142,10 @@ namespace GE
         }
     }
 
-    void VulkanManager::destroy_vulkan()
+    void VulkanCore::destroy_vulkan()
     {
+        VK_CHECK(vkDeviceWaitIdle(m_device));
+
         vkb::destroy_device(m_vkbDevice);
 
 #ifdef GE_DEBUG
@@ -160,14 +157,14 @@ namespace GE
         vkb::destroy_instance(m_vkbInstance);
     }
 
-    void VulkanManager::init_vma()
+    void VulkanCore::init_vma()
     {
         VmaVulkanFunctions vulkanFunctions    = {};
         vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
         vulkanFunctions.vkGetDeviceProcAddr   = &vkGetDeviceProcAddr;
 
         VmaAllocatorCreateInfo allocatorCreateInfo = {};
-        allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_2;
+        allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_3;
         allocatorCreateInfo.physicalDevice         = m_physicalDevice;
         allocatorCreateInfo.device                 = m_device;
         allocatorCreateInfo.instance               = m_instance;
@@ -177,32 +174,6 @@ namespace GE
         vmaCreateAllocator(&allocatorCreateInfo, &m_allocator);
     }
 
-    void VulkanManager::destroy_vma() { vmaDestroyAllocator(m_allocator); }
-
-    // void VulkanManager::init_swapchain(int2 size)
-    // {
-    //     vkb::Swapchain        swapchain;
-    //     vkb::SwapchainBuilder builder {m_physicalDevice, m_device, m_surface};
-    //     builder.set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
-    //         .set_desired_format({VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
-    //         .set_desired_extent(size.x, size.y);
-    //     VKB_CHECK_RETURN(builder.build(), swapchain);
-
-    //     m_swapchain       = swapchain.swapchain;
-    //     m_swapchainExtent = swapchain.extent;
-    //     m_swapchainFormat = swapchain.image_format;
-    //     VKB_CHECK_RETURN(swapchain.get_images(), m_swapchainImages);
-    //     VKB_CHECK_RETURN(swapchain.get_image_views(), m_swapchainImageViews);
-    // }
-
-    // void VulkanManager::destroy_swapchain()
-    // {
-    //     for (auto& imageView : m_swapchainImageViews)
-    //     {
-    //         vkDestroyImageView(m_device, imageView, nullptr);
-    //     }
-
-    //     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-    // }
+    void VulkanCore::destroy_vma() { vmaDestroyAllocator(m_allocator); }
 
 } // namespace GE

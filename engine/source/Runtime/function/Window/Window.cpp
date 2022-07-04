@@ -4,7 +4,7 @@
 
 #include "Runtime/function/Event/EventSystem.h"
 #include "Runtime/function/Message/MessageSystem.h"
-#include "Runtime/function/Render/VulkanManager/VulkanManager.h"
+#include "Runtime/function/Render/VulkanManager/VulkanCore.h"
 
 namespace GE
 {
@@ -29,6 +29,15 @@ namespace GE
         ImGui::NewFrame();
 
         m_imguiContext = ImGui::GetCurrentContext();
+
+        ImGui::Begin("viewport");
+        auto img =
+            ImGui_ImplVulkan_AddTexture(m_viewportSampler,
+                                        m_renderRoutine.GetFrameData(m_imguiWindow.FrameIndex)->m_image.GetImageView(),
+                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+        ImGui::Image(img, ImVec2 {viewportPanelSize.x, viewportPanelSize.y});
+        ImGui::End();
     }
 
     void Window::EndWindowRender()
@@ -59,8 +68,8 @@ namespace GE
 
     void Window::__imgui_render_frame(ImDrawData* draw_data)
     {
-        VkDevice vk_device         = VulkanManager::GetInstance().GetVkDevice();
-        VkQueue  vk_graphics_queue = VulkanManager::GetInstance().GetVkGraphicsQueue();
+        VkDevice vk_device         = VulkanCore::GetVkDevice();
+        VkQueue  vk_graphics_queue = VulkanCore::GetVkGraphicsQueue();
 
         VkSemaphore image_acquired_semaphore =
             m_imguiWindow.FrameSemaphores[m_imguiWindow.SemaphoreIndex].ImageAcquiredSemaphore;
@@ -92,37 +101,52 @@ namespace GE
             info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
             VK_CHECK(vkBeginCommandBuffer(fd->CommandBuffer, &info));
         }
+
+        /* -------------------------- renderer pass ------------------------- */
         {
-            VkRenderPassBeginInfo info    = {};
-            info.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            info.renderPass               = m_imguiWindow.RenderPass;
-            info.framebuffer              = fd->Framebuffer;
-            info.renderArea.extent.width  = m_imguiWindow.Width;
-            info.renderArea.extent.height = m_imguiWindow.Height;
-            info.clearValueCount          = 1;
-            info.pClearValues             = &m_imguiWindow.ClearValue;
-            vkCmdBeginRenderPass(fd->CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+            TestBasicDrawData data            = {};
+            data.clear_color.color.float32[0] = 0.8f;
+            data.clear_color.color.float32[1] = 0.0f;
+            data.clear_color.color.float32[2] = 0.8f;
+            data.clear_color.color.float32[3] = 1.0f;
+            m_renderRoutine.DrawFrame(data, m_imguiWindow.FrameIndex, fd->CommandBuffer);
         }
 
-        // Record dear imgui primitives into command buffer
-        ImGui_ImplVulkan_RenderDrawData(draw_data, fd->CommandBuffer);
-
-        // Submit command buffer
-        vkCmdEndRenderPass(fd->CommandBuffer);
+        /* --------------------------- imgui pass --------------------------- */
         {
-            VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            VkSubmitInfo         info       = {};
-            info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            info.waitSemaphoreCount         = 1;
-            info.pWaitSemaphores            = &image_acquired_semaphore;
-            info.pWaitDstStageMask          = &wait_stage;
-            info.commandBufferCount         = 1;
-            info.pCommandBuffers            = &fd->CommandBuffer;
-            info.signalSemaphoreCount       = 1;
-            info.pSignalSemaphores          = &render_complete_semaphore;
+            {
+                VkRenderPassBeginInfo info    = {};
+                info.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                info.renderPass               = m_imguiWindow.RenderPass;
+                info.framebuffer              = fd->Framebuffer;
+                info.renderArea.extent.width  = m_imguiWindow.Width;
+                info.renderArea.extent.height = m_imguiWindow.Height;
+                info.clearValueCount          = 1;
+                info.pClearValues             = &m_imguiWindow.ClearValue;
+                vkCmdBeginRenderPass(fd->CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+            }
 
-            VK_CHECK(vkEndCommandBuffer(fd->CommandBuffer));
-            VK_CHECK(vkQueueSubmit(vk_graphics_queue, 1, &info, fd->Fence));
+            // Record dear imgui primitives into command buffer
+            ImGui_ImplVulkan_RenderDrawData(draw_data, fd->CommandBuffer);
+
+            // Submit command buffer
+            vkCmdEndRenderPass(fd->CommandBuffer);
+
+            {
+                VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                VkSubmitInfo         info       = {};
+                info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                info.waitSemaphoreCount         = 1;
+                info.pWaitSemaphores            = &image_acquired_semaphore;
+                info.pWaitDstStageMask          = &wait_stage;
+                info.commandBufferCount         = 1;
+                info.pCommandBuffers            = &fd->CommandBuffer;
+                info.signalSemaphoreCount       = 1;
+                info.pSignalSemaphores          = &render_complete_semaphore;
+
+                VK_CHECK(vkEndCommandBuffer(fd->CommandBuffer));
+                VK_CHECK(vkQueueSubmit(vk_graphics_queue, 1, &info, fd->Fence));
+            }
         }
     }
 
@@ -133,8 +157,8 @@ namespace GE
             return;
         }
 
-        VkDevice vk_device         = VulkanManager::GetInstance().GetVkDevice();
-        VkQueue  vk_graphics_queue = VulkanManager::GetInstance().GetVkGraphicsQueue();
+        VkDevice vk_device         = VulkanCore::GetVkDevice();
+        VkQueue  vk_graphics_queue = VulkanCore::GetVkGraphicsQueue();
 
         VkSemaphore render_complete_semaphore =
             m_imguiWindow.FrameSemaphores[m_imguiWindow.SemaphoreIndex].RenderCompleteSemaphore;
@@ -160,10 +184,10 @@ namespace GE
 
     void Window::__imgui_rebuild_swapchain()
     {
-        VkInstance       vk_instance             = VulkanManager::GetInstance().GetVkInstance();
-        VkPhysicalDevice vk_physical_device      = VulkanManager::GetInstance().GetVkPhysicalDevice();
-        VkDevice         vk_device               = VulkanManager::GetInstance().GetVkDevice();
-        uint32_t         vk_graphics_queue_index = VulkanManager::GetInstance().GetVkGraphicsQueueFamilyIndex();
+        VkInstance       vk_instance             = VulkanCore::GetVkInstance();
+        VkPhysicalDevice vk_physical_device      = VulkanCore::GetVkPhysicalDevice();
+        VkDevice         vk_device               = VulkanCore::GetVkDevice();
+        uint32_t         vk_graphics_queue_index = VulkanCore::GetVkGraphicsQueueFamilyIndex();
 
         int width, height;
         glfwGetFramebufferSize(m_glfwWindow, &width, &height);
@@ -307,12 +331,12 @@ namespace GE
 
     void Window::__init_imgui(int2 size)
     {
-        VkInstance       vk_instance             = VulkanManager::GetInstance().GetVkInstance();
-        VkSurfaceKHR     vk_surface              = VulkanManager::GetInstance().GetVkSurface();
-        VkPhysicalDevice vk_physical_device      = VulkanManager::GetInstance().GetVkPhysicalDevice();
-        VkDevice         vk_device               = VulkanManager::GetInstance().GetVkDevice();
-        VkQueue          vk_graphics_queue       = VulkanManager::GetInstance().GetVkGraphicsQueue();
-        uint32_t         vk_graphics_queue_index = VulkanManager::GetInstance().GetVkGraphicsQueueFamilyIndex();
+        VkInstance       vk_instance             = VulkanCore::GetVkInstance();
+        VkSurfaceKHR     vk_surface              = VulkanCore::GetVkSurface();
+        VkPhysicalDevice vk_physical_device      = VulkanCore::GetVkPhysicalDevice();
+        VkDevice         vk_device               = VulkanCore::GetVkDevice();
+        VkQueue          vk_graphics_queue       = VulkanCore::GetVkGraphicsQueue();
+        uint32_t         vk_graphics_queue_index = VulkanCore::GetVkGraphicsQueueFamilyIndex();
 
         m_imguiWindow.Surface = vk_surface;
 
@@ -455,10 +479,8 @@ namespace GE
 
     void Window::__cleanup_imgui()
     {
-        ImGui_ImplVulkanH_DestroyWindow(VulkanManager::GetInstance().GetVkInstance(),
-                                        VulkanManager::GetInstance().GetVkDevice(),
-                                        &m_imguiWindow,
-                                        nullptr);
+        ImGui_ImplVulkanH_DestroyWindow(
+            VulkanCore::GetVkInstance(), VulkanCore::GetVkDevice(), &m_imguiWindow, nullptr);
     }
 
     void Window::__init(const WindowProperties& props)
@@ -475,16 +497,33 @@ namespace GE
         __init_glfw_callbacks();
 
         // setup vulkan
-        VulkanManager::GetInstance().Init(m_glfwWindow);
+        VulkanCore::GetInstance().Init(m_glfwWindow);
 
         // setup imgui
         __init_imgui(int2(props.width, props.height));
+
+        // setup render routine
+        m_renderRoutine.Init(m_imguiWindow.ImageCount);
+
+        {
+            VkSamplerCreateInfo info = {};
+            info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+            info.magFilter           = VK_FILTER_LINEAR;
+            info.minFilter           = VK_FILTER_LINEAR;
+            info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            VK_CHECK(vkCreateSampler(VulkanCore::GetVkDevice(), &info, nullptr, &m_viewportSampler));
+        }
     }
 
     void Window::__shutdown()
     {
         __cleanup_imgui();
         __cleanup_glfw();
+
+        vkDestroySampler(VulkanCore::GetVkDevice(), m_viewportSampler, nullptr);
     }
 
     void Window::SetTitle(const std::string& title)
