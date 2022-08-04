@@ -14,7 +14,7 @@ namespace GE
         {
 #define STR(r) \
     case VK_##r: \
-        return #r
+        return #r;
             STR(NOT_READY);
             STR(TIMEOUT);
             STR(EVENT_SET);
@@ -31,6 +31,13 @@ namespace GE
             STR(ERROR_INCOMPATIBLE_DRIVER);
             STR(ERROR_TOO_MANY_OBJECTS);
             STR(ERROR_FORMAT_NOT_SUPPORTED);
+            STR(ERROR_FRAGMENTED_POOL);
+            STR(ERROR_UNKNOWN);
+            STR(ERROR_OUT_OF_POOL_MEMORY);
+            STR(ERROR_INVALID_EXTERNAL_HANDLE);
+            STR(ERROR_FRAGMENTATION);
+            STR(ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS);
+            STR(PIPELINE_COMPILE_REQUIRED);
             STR(ERROR_SURFACE_LOST_KHR);
             STR(ERROR_NATIVE_WINDOW_IN_USE_KHR);
             STR(SUBOPTIMAL_KHR);
@@ -38,6 +45,14 @@ namespace GE
             STR(ERROR_INCOMPATIBLE_DISPLAY_KHR);
             STR(ERROR_VALIDATION_FAILED_EXT);
             STR(ERROR_INVALID_SHADER_NV);
+            STR(ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT);
+            STR(ERROR_NOT_PERMITTED_KHR);
+            STR(ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT);
+            STR(THREAD_IDLE_KHR);
+            STR(THREAD_DONE_KHR);
+            STR(OPERATION_DEFERRED_KHR);
+            STR(OPERATION_NOT_DEFERRED_KHR);
+            STR(ERROR_COMPRESSION_EXHAUSTED_EXT);
 #undef STR
             default:
                 return "UNKNOWN_ERROR";

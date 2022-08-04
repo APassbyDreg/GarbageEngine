@@ -67,8 +67,8 @@ namespace GE
     {
         if (m_ready)
         {
-            destroy_vulkan();
             destroy_vma();
+            destroy_vulkan();
         }
     }
 
@@ -115,7 +115,6 @@ namespace GE
 
         // Choose and create device
         {
-            vkb::PhysicalDevice         m_vkbPhysicalDevice;
             vkb::PhysicalDeviceSelector selector {m_vkbInstance};
             selector.set_minimum_version(1, 3).set_surface(m_surface).require_present().prefer_gpu_device_type(
                 vkb::PreferredDeviceType::discrete);
@@ -123,7 +122,6 @@ namespace GE
 
             // REVIEW: is multiple queue needed?
 
-            vkb::Device        m_vkbDevice;
             vkb::DeviceBuilder builder {m_vkbPhysicalDevice};
             VKB_CHECK_RETURN(builder.build(), m_vkbDevice);
 
@@ -148,13 +146,14 @@ namespace GE
 
         vkb::destroy_device(m_vkbDevice);
 
+        vkb::destroy_surface(m_vkbInstance, m_surface);
+
 #ifdef GE_DEBUG
         vkb::destroy_debug_utils_messenger(m_instance, m_debugMessenger);
 #endif
 
-        vkb::destroy_surface(m_vkbInstance, m_surface);
-
-        vkb::destroy_instance(m_vkbInstance);
+        vkDestroyInstance(m_instance, nullptr);
+        // vkb::destroy_instance(m_vkbInstance);
     }
 
     void VulkanCore::init_vma()

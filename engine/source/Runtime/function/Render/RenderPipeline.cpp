@@ -8,9 +8,12 @@ namespace GE
 {
     GraphicsRenderPipeline::~GraphicsRenderPipeline()
     {
-        vkDestroyPipelineLayout(VulkanCore::GetVkDevice(), m_pipelineLayout, nullptr);
-        vkDestroyPipeline(VulkanCore::GetVkDevice(), m_pipeline, nullptr);
-        m_ready = false;
+        if (m_ready)
+        {
+            vkDestroyPipelineLayout(VulkanCore::GetVkDevice(), m_pipelineLayout, nullptr);
+            vkDestroyPipeline(VulkanCore::GetVkDevice(), m_pipeline, nullptr);
+            m_ready = false;
+        }
     }
 
     void GraphicsRenderPipeline::Build(VkRenderPass pass, VkPipelineCache cache)

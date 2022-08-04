@@ -99,6 +99,7 @@ namespace GE
         // TODO: move to dedicate manager
         TestBasicRoutine m_renderRoutine;
 
-        VkSampler m_viewportSampler;
+        VkSampler                    m_viewportSampler;
+        std::vector<VkDescriptorSet> m_viewportDescriptorSets;
     };
 } // namespace GE

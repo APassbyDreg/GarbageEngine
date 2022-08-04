@@ -31,12 +31,9 @@ namespace GE
         m_imguiContext = ImGui::GetCurrentContext();
 
         ImGui::Begin("viewport");
-        auto img =
-            ImGui_ImplVulkan_AddTexture(m_viewportSampler,
-                                        m_renderRoutine.GetFrameData(m_imguiWindow.FrameIndex)->m_image.GetImageView(),
-                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-        ImGui::Image(img, ImVec2 {viewportPanelSize.x, viewportPanelSize.y});
+        ImGui::Image(m_viewportDescriptorSets[m_imguiWindow.FrameIndex],
+                     ImVec2 {viewportPanelSize.x, viewportPanelSize.y});
         ImGui::End();
     }
 
@@ -515,6 +512,14 @@ namespace GE
             info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
             info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
             VK_CHECK(vkCreateSampler(VulkanCore::GetVkDevice(), &info, nullptr, &m_viewportSampler));
+
+            for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
+            {
+                auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
+                                                       m_renderRoutine.GetFrameData(i)->m_image.GetImageView(),
+                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                m_viewportDescriptorSets.push_back(img);
+            }
         }
     }
 
@@ -522,6 +527,11 @@ namespace GE
     {
         __cleanup_imgui();
         __cleanup_glfw();
+
+        // for (auto &&desc_set : m_viewportDescriptorSets)
+        // {
+        //     vkDestroyDescriptorSetLayout();
+        // }
 
         vkDestroySampler(VulkanCore::GetVkDevice(), m_viewportSampler, nullptr);
     }

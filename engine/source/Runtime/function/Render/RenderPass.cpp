@@ -10,6 +10,7 @@ namespace GE
         if (m_ready)
         {
             vkDestroyRenderPass(VulkanCore::GetVkDevice(), m_renderPass, nullptr);
+            m_ready = false;
         }
     }
 
