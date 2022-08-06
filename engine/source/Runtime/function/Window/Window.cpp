@@ -52,7 +52,7 @@ namespace GE
             __imgui_render_frame(main_draw_data);
 
         // Update and Render additional Platform Windows
-        if (m_imguiIO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        if (m_imguiIO->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
@@ -221,6 +221,7 @@ namespace GE
 
         // set hint
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
 
         // create window
         m_glfwWindow = glfwCreateWindow((int)m_Data.width, (int)m_Data.height, m_Data.title.c_str(), nullptr, nullptr);
@@ -380,30 +381,6 @@ namespace GE
                                                    2);
         }
 
-        // basic configs
-        {
-            // Setup Dear ImGui context
-            IMGUI_CHECKVERSION();
-            ImGui::CreateContext();
-            m_imguiIO = ImGui::GetIO();
-            m_imguiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-            m_imguiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
-            m_imguiIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
-
-            // Setup Dear ImGui style
-            // ImGui::StyleColorsDark();
-            ImGui::StyleColorsClassic();
-
-            // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to
-            // regular ones.
-            ImGuiStyle& style = ImGui::GetStyle();
-            if (m_imguiIO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-            {
-                style.WindowRounding              = 0.0f;
-                style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-            }
-        }
-
         // setup descriptor pool
         {
             VkDescriptorPoolSize       pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
@@ -424,6 +401,29 @@ namespace GE
             pool_info.poolSizeCount                 = (uint32_t)IM_ARRAYSIZE(pool_sizes);
             pool_info.pPoolSizes                    = pool_sizes;
             VK_CHECK(vkCreateDescriptorPool(vk_device, &pool_info, nullptr, &m_imguiDescriptorPool));
+        }
+
+        // Create Context and basic config
+        {
+            // Setup Dear ImGui context
+            IMGUI_CHECKVERSION();
+            ImGui::CreateContext();
+            m_imguiIO = &ImGui::GetIO();
+            m_imguiIO->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+            m_imguiIO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
+            m_imguiIO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
+
+            // Setup Dear ImGui style
+            ImGui::StyleColorsDark();
+
+            // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to
+            // regular ones.
+            ImGuiStyle& style = ImGui::GetStyle();
+            if (m_imguiIO->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+            {
+                style.WindowRounding              = 0.0f;
+                style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+            }
         }
 
         // Setup Platform/Renderer backends
@@ -527,11 +527,6 @@ namespace GE
     {
         __cleanup_imgui();
         __cleanup_glfw();
-
-        // for (auto &&desc_set : m_viewportDescriptorSets)
-        // {
-        //     vkDestroyDescriptorSetLayout();
-        // }
 
         vkDestroySampler(VulkanCore::GetVkDevice(), m_viewportSampler, nullptr);
     }

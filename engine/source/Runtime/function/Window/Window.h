@@ -83,7 +83,7 @@ namespace GE
         WindowData  m_Data;
 
         /* --------------------------- imgui stuff -------------------------- */
-        ImGuiIO                  m_imguiIO;
+        ImGuiIO*                 m_imguiIO;
         ImGui_ImplVulkanH_Window m_imguiWindow;
         ImGuiContext*            m_imguiContext;
 
