@@ -111,6 +111,18 @@ function GE_link_stb()
     add_includedirs(rel_local_path("stb"))
 end
 
+
+-------------------------------- dxc --------------------------------
+function GE_link_dxc() 
+    add_includedirs(rel_local_path("dxc/include"))
+    
+    if is_plat("windows") then 
+        add_links(rel_local_path("dxc/lib/dxclib"))
+        add_links(rel_local_path("dxc/lib/dxcompiler"))
+    end
+end
+
+
 -------------------------------- overall --------------------------------
 function GE_link_3rdparty()
     GE_link_vulkan()

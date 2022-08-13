@@ -1,12 +1,10 @@
-#include "__TestBasicTrianglePass.h"
-
-#include "../VulkanManager/VulkanCreateInfoBuilder.h"
+#include "__TestBasicMeshPass.h"
 
 namespace GE
 {
-    void TestBasicTrianglePass::Init()
+    void TestBasicMeshPass::Init()
     {
-        m_name = "TestBasicTrianglePass";
+        m_name = "TestBasicMeshPass";
 
         /* ------------------------- setup resources ------------------------ */
         RenderPassResource output = {};
@@ -19,15 +17,18 @@ namespace GE
 
         /* ------------------------- setup pipeline ------------------------- */
         bool                     use_cache    = false;
-        std::vector<std::string> shader_paths = {"passes/__test01_simple_triangle/test.frag",
-                                                 "passes/__test01_simple_triangle/test.vert"};
+        std::vector<std::string> shader_paths = {"passes/__test02_simple_mesh/test.frag",
+                                                 "passes/__test02_simple_mesh/test.vert"};
         for (auto&& path : shader_paths)
         {
             fs::path fullpath = fs::path(Config::shader_dir) / path;
             m_pipeline.m_shaders.push_back(
                 ShaderManager::GetInstance().GetCompiledModule(fullpath.string(), {}, use_cache));
         }
-        m_pipeline.m_vertexInputState = VkInit::GetPipelineVertexInputStateCreateInfo({}, {});
+
+        static VertexInputDescription input_desc = Vertex::GetVertexInputDesc();
+        m_pipeline.m_vertexInputState =
+            VkInit::GetPipelineVertexInputStateCreateInfo(input_desc.bindings, input_desc.attributes, input_desc.flags);
 
         m_pipeline.m_inputAssemblyState = VkInit::GetPipelineInputAssemblyStateCreateInfo();
 

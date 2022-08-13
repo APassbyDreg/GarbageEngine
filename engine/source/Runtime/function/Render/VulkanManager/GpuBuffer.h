@@ -17,11 +17,13 @@ namespace GE
 
         ~GpuBuffer();
 
-        void Upload(void* data, size_t& size);
+        void Upload(void* data, size_t size);
 
         void Download(void* data, size_t& size);
 
         void Clone(GpuBuffer& buffer);
+
+        void Alloc(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info);
 
         inline size_t   GetSize() { return m_bufferInfo.size; }
         inline VkBuffer GetBuffer() { return m_buffer; }

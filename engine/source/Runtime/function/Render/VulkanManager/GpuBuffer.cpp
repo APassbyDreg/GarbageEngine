@@ -2,30 +2,38 @@
 
 namespace GE
 {
-    GpuBuffer::GpuBuffer(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info) :
-        m_bufferInfo(buffer_info), m_allocInfo(alloc_info)
+    GpuBuffer::GpuBuffer(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)
     {
-        VK_CHECK(
-            vmaCreateBuffer(VulkanCore::GetAllocator(), &buffer_info, &alloc_info, &m_buffer, &m_allocation, nullptr));
-
-        m_alloced = true;
+        Alloc(buffer_info, alloc_info);
     }
 
-    GpuBuffer::GpuBuffer(GpuBuffer& src) : m_bufferInfo(src.m_bufferInfo), m_allocInfo(src.m_allocInfo)
-    {
-        VK_CHECK(vmaCreateBuffer(
-            VulkanCore::GetAllocator(), &m_bufferInfo, &m_allocInfo, &m_buffer, &m_allocation, nullptr));
-
-        m_alloced = true;
-    }
+    GpuBuffer::GpuBuffer(GpuBuffer& src) { Alloc(src.m_bufferInfo, src.m_allocInfo); }
 
     GpuBuffer::~GpuBuffer()
     {
-        vmaDestroyBuffer(VulkanCore::GetAllocator(), m_buffer, m_allocation);
-        m_alloced = false;
+        if (m_alloced)
+        {
+            vmaDestroyBuffer(VulkanCore::GetAllocator(), m_buffer, m_allocation);
+            m_alloced = false;
+        }
     }
 
-    void GpuBuffer::Upload(void* data, size_t& size)
+    void GpuBuffer::Alloc(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)
+    {
+        if (m_alloced)
+        {
+            vmaDestroyBuffer(VulkanCore::GetAllocator(), m_buffer, m_allocation);
+            m_alloced = false;
+        }
+
+        m_bufferInfo = buffer_info;
+        m_allocInfo  = alloc_info;
+        VK_CHECK(
+            vmaCreateBuffer(VulkanCore::GetAllocator(), &buffer_info, &alloc_info, &m_buffer, &m_allocation, nullptr));
+        m_alloced = true;
+    }
+
+    void GpuBuffer::Upload(void* data, size_t size)
     {
         GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
 

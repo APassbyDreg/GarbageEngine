@@ -26,7 +26,7 @@ target("runtime")
     add_defines("GE_BUILD_RUNTIME")
 
     -- precompiled header
-    set_pcxxheader("engine/source/GE_pch.h")
+    -- set_pcxxheader("engine/source/GE_pch.h")
 
     -- linking packages
     GE_link_3rdparty()
@@ -56,7 +56,7 @@ target("editor")
     add_deps("runtime")
 
     -- precompiled header
-    set_pcxxheader("engine/source/GE_pch.h")
+    -- set_pcxxheader("engine/source/GE_pch.h")
 
     -- linking packages
     GE_link_3rdparty()

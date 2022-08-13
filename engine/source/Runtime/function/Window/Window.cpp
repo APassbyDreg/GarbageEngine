@@ -102,9 +102,9 @@ namespace GE
         /* -------------------------- renderer pass ------------------------- */
         {
             TestBasicDrawData data            = {};
-            data.clear_color.color.float32[0] = 0.8f;
-            data.clear_color.color.float32[1] = 0.0f;
-            data.clear_color.color.float32[2] = 0.8f;
+            data.clear_color.color.float32[0] = 0.2f;
+            data.clear_color.color.float32[1] = 0.2f;
+            data.clear_color.color.float32[2] = 0.2f;
             data.clear_color.color.float32[3] = 1.0f;
             m_renderRoutine.DrawFrame(data, m_imguiWindow.FrameIndex, fd->CommandBuffer);
         }
