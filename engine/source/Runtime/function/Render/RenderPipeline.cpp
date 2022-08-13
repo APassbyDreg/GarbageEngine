@@ -40,7 +40,7 @@ namespace GE
                                                           &m_multisampleState,
                                                           &m_depthStencilState,
                                                           &m_colorBlendState,
-                                                          nullptr);
+                                                          &m_dynamicState);
         VK_CHECK(vkCreateGraphicsPipelines(VulkanCore::GetVkDevice(), VK_NULL_HANDLE, 1, &info, nullptr, &m_pipeline));
 
         m_ready = true;

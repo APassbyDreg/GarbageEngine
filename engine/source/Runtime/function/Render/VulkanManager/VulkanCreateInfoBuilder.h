@@ -274,6 +274,20 @@ namespace GE
             return info;
         }
 
+        inline VkPipelineDynamicStateCreateInfo
+        GetPipelineDynamicStateCreateInfo(std::vector<VkDynamicState>&      dynamicStates,
+                                          VkPipelineDynamicStateCreateFlags flags = 0)
+        {
+            VkPipelineDynamicStateCreateInfo info = {};
+
+            info.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+            info.pNext             = nullptr;
+            info.flags             = flags;
+            info.dynamicStateCount = dynamicStates.size();
+            info.pDynamicStates    = dynamicStates.data();
+            return info;
+        }
+
         inline VkPipelineLayoutCreateInfo
         GetPipelineLayoutCreateInfo(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
                                     const std::vector<VkPushConstantRange>&   pushConstantRanges,

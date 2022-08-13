@@ -67,30 +67,49 @@ namespace GE
 
         Resize(1280, 720);
 
-        Vertex vertices[3]   = {{}, {}, {}};
-        vertices[0].position = {0.5f, 0.5f, 0.0f};
-        vertices[1].position = {-0.5f, 0.5f, 0.0f};
-        vertices[2].position = {0.0f, -0.5f, 0.0f};
-        uint vertices_size   = sizeof(vertices);
+        /* ------------- create default vertex and index buffer ------------- */
+        {
+            Vertex vertices[4]   = {{}, {}, {}};
+            vertices[0].position = {0.5f, 0.5f, 0.0f};
+            vertices[1].position = {-0.5f, 0.5f, 0.0f};
+            vertices[2].position = {-0.5f, -0.5f, 0.0f};
+            vertices[3].position = {0.5f, -0.5f, 0.0f};
+            uint vertices_size   = sizeof(vertices);
 
-        VkBufferCreateInfo buffer_info = {};
-        buffer_info.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        buffer_info.size               = vertices_size;
-        buffer_info.usage              = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            VkBufferCreateInfo buffer_info = {};
+            buffer_info.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            buffer_info.size               = vertices_size;
+            buffer_info.usage              = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 
-        VmaAllocationCreateInfo alloc_info = {};
-        alloc_info.usage                   = VMA_MEMORY_USAGE_CPU_TO_GPU;
+            VmaAllocationCreateInfo alloc_info = {};
+            alloc_info.usage                   = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-        m_vertexBuffer = std::make_shared<GpuBuffer>(buffer_info, alloc_info);
-        m_vertexBuffer->Upload(vertices, vertices_size);
+            m_vertexBuffer = std::make_shared<GpuBuffer>(buffer_info, alloc_info);
+            m_vertexBuffer->Upload(vertices, vertices_size);
+        }
+        {
+            uint32_t indices[]    = {0, 1, 2, 2, 3, 0};
+            uint     indices_size = sizeof(indices);
+
+            VkBufferCreateInfo buffer_info = {};
+            buffer_info.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            buffer_info.size               = indices_size;
+            buffer_info.usage              = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
+            VmaAllocationCreateInfo alloc_info = {};
+            alloc_info.usage                   = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+            m_indexBuffer = std::make_shared<GpuBuffer>(buffer_info, alloc_info);
+            m_indexBuffer->Upload(indices, indices_size);
+        }
     }
 
     void TestBasicRoutine::DrawFrame(TestBasicDrawData& draw_data, uint index, VkCommandBuffer cmd)
     {
         std::shared_ptr<TestBasicFrameData> fd = m_frameData[index];
 
-        // draw_data.vertex_buffer = m_vertexBuffer;
-        // draw_data.vertex_cnt    = 3;
+        draw_data.vertex_buffer = m_vertexBuffer;
+        draw_data.vertex_cnt    = 6;
 
         if (draw_data.vertex_cnt == 0)
         {
@@ -112,25 +131,31 @@ namespace GE
         }
         else
         {
-            {
-                VkRenderPassBeginInfo info = {};
-                info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                info.renderPass            = m_basicMeshPass.GetRenderPass();
-                info.framebuffer           = fd->m_framebuffer;
-                info.renderArea.offset     = {0, 0};
-                info.renderArea.extent     = m_viewportSize;
-                info.clearValueCount       = 1;
-                info.pClearValues          = &draw_data.clear_color;
-                vkCmdBeginRenderPass(cmd, &info, VK_SUBPASS_CONTENTS_INLINE);
-            }
-
+            VkRenderPassBeginInfo info = {};
+            info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            info.renderPass            = m_basicMeshPass.GetRenderPass();
+            info.framebuffer           = fd->m_framebuffer;
+            info.renderArea.offset     = {0, 0};
+            info.renderArea.extent     = m_viewportSize;
+            info.clearValueCount       = 1;
+            info.pClearValues          = &draw_data.clear_color;
+            vkCmdBeginRenderPass(cmd, &info, VK_SUBPASS_CONTENTS_INLINE);
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_basicMeshPass.GetPipeline());
 
+            // set dynamic viewport
+            VkViewport viewport = VkInit::GetViewport(m_viewportSize);
+            VkRect2D   scissor  = {{0, 0}, m_viewportSize};
+            vkCmdSetViewport(cmd, 0, 1, &viewport);
+            vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+            // set vertex buffer
             VkDeviceSize offset    = 0;
             VkBuffer     buffers[] = {draw_data.vertex_buffer->GetBuffer()};
             vkCmdBindVertexBuffers(cmd, 0, 1, buffers, &offset);
+            vkCmdBindIndexBuffer(cmd, m_indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-            vkCmdDraw(cmd, draw_data.vertex_cnt, 1, 0, 0);
+            // draw
+            vkCmdDrawIndexed(cmd, draw_data.vertex_cnt, 1, 0, 0, 0);
 
             vkCmdEndRenderPass(cmd);
         }

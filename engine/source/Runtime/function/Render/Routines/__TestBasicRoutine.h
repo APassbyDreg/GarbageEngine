@@ -50,6 +50,7 @@ namespace GE
         TestBasicMeshPass     m_basicMeshPass;
 
         std::shared_ptr<GpuBuffer> m_vertexBuffer;
+        std::shared_ptr<GpuBuffer> m_indexBuffer;
 
         VkExtent2D m_viewportSize = {0, 0};
 
