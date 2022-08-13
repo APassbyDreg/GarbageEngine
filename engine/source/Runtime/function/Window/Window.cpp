@@ -31,9 +31,12 @@ namespace GE
         m_imguiContext = ImGui::GetCurrentContext();
 
         ImGui::Begin("viewport");
-        ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-        ImGui::Image(m_viewportDescriptorSets[m_imguiWindow.FrameIndex],
-                     ImVec2 {viewportPanelSize.x, viewportPanelSize.y});
+        __viewport_resize(ImGui::GetContentRegionAvail());
+        if (m_frameIdx >= m_imguiWindow.ImageCount)
+        {
+            // only draw when we have gone through all frames for at least once
+            ImGui::Image(m_viewportDescriptorSets[m_imguiWindow.FrameIndex], m_viewportSize);
+        }
         ImGui::End();
     }
 
@@ -145,6 +148,8 @@ namespace GE
                 VK_CHECK(vkQueueSubmit(vk_graphics_queue, 1, &info, fd->Fence));
             }
         }
+
+        m_frameIdx++;
     }
 
     void Window::__imgui_present_frame()
@@ -502,24 +507,23 @@ namespace GE
         // setup render routine
         m_renderRoutine.Init(m_imguiWindow.ImageCount);
 
-        {
-            VkSamplerCreateInfo info = {};
-            info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-            info.magFilter           = VK_FILTER_LINEAR;
-            info.minFilter           = VK_FILTER_LINEAR;
-            info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-            info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-            info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-            info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-            VK_CHECK(vkCreateSampler(VulkanCore::GetVkDevice(), &info, nullptr, &m_viewportSampler));
+        // viewport sampler & image
+        VkSamplerCreateInfo info = {};
+        info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        info.magFilter           = VK_FILTER_LINEAR;
+        info.minFilter           = VK_FILTER_LINEAR;
+        info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        VK_CHECK(vkCreateSampler(VulkanCore::GetVkDevice(), &info, nullptr, &m_viewportSampler));
 
-            for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
-            {
-                auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
-                                                       m_renderRoutine.GetFrameData(i)->m_image.GetImageView(),
-                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                m_viewportDescriptorSets.push_back(img);
-            }
+        for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
+        {
+            auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
+                                                   m_renderRoutine.GetFrameData(i)->m_image.GetImageView(),
+                                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            m_viewportDescriptorSets.push_back(img);
         }
     }
 
@@ -529,6 +533,28 @@ namespace GE
         __cleanup_glfw();
 
         vkDestroySampler(VulkanCore::GetVkDevice(), m_viewportSampler, nullptr);
+    }
+
+    void Window::__viewport_resize(ImVec2 size)
+    {
+        if (size.x != m_viewportSize.x || size.y != m_viewportSize.y)
+        {
+            m_viewportSize = size;
+            m_renderRoutine.Resize(size.x, size.y);
+
+            // recreate viewport descriptor sets
+            m_viewportDescriptorSets.clear();
+            for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
+            {
+                auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
+                                                       m_renderRoutine.GetFrameData(i)->m_image.GetImageView(),
+                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                m_viewportDescriptorSets.push_back(img);
+            }
+
+            // reset frame index
+            m_frameIdx = 0;
+        }
     }
 
     void Window::SetTitle(const std::string& title)

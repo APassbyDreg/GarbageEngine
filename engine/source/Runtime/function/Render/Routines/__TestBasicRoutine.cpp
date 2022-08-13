@@ -8,44 +8,52 @@ namespace GE
 
     TestBasicRoutine::~TestBasicRoutine() {}
 
-    void TestBasicRoutine::Resize(VkExtent2D extent)
+    void TestBasicRoutine::Resize(uint width, uint height)
     {
-        m_viewportSize = extent;
-
-        // recreate framedata
-        m_frameData.clear();
-        for (size_t i = 0; i < m_frameCnt; i++)
+        if (width != m_viewportSize.width || height != m_viewportSize.height)
         {
-            std::shared_ptr<TestBasicFrameData> fd = std::make_shared<TestBasicFrameData>();
+            // wait all old frames to finish
+            vkQueueWaitIdle(VulkanCore::GetVkGraphicsQueue());
 
-            VkImageCreateInfo image_info       = {};
-            image_info.sType                   = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-            image_info.imageType               = VK_IMAGE_TYPE_2D;
-            image_info.extent.width            = m_viewportSize.width;
-            image_info.extent.height           = m_viewportSize.height;
-            image_info.extent.depth            = 1;
-            image_info.format                  = VK_FORMAT_R8G8B8A8_UNORM;
-            image_info.mipLevels               = 1;
-            image_info.arrayLayers             = 1;
-            image_info.initialLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
-            image_info.usage                   = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-            image_info.samples                 = VK_SAMPLE_COUNT_1_BIT;
-            image_info.tiling                  = VK_IMAGE_TILING_OPTIMAL;
-            image_info.sharingMode             = VK_SHARING_MODE_EXCLUSIVE;
-            VmaAllocationCreateInfo alloc_info = {};
-            fd->m_image.Alloc(image_info, alloc_info);
+            m_viewportSize.width  = width;
+            m_viewportSize.height = height;
 
-            VkFramebufferCreateInfo framebuffer_info = {};
-            VkImageView             img_views[]      = {fd->m_image.GetImageView()};
-            framebuffer_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebuffer_info.renderPass              = m_basicTrianglePass.GetRenderPass();
-            framebuffer_info.attachmentCount         = 1;
-            framebuffer_info.pAttachments            = img_views;
-            framebuffer_info.width                   = m_viewportSize.width;
-            framebuffer_info.height                  = m_viewportSize.height;
-            framebuffer_info.layers                  = 1;
-            VK_CHECK(vkCreateFramebuffer(VulkanCore::GetVkDevice(), &framebuffer_info, nullptr, &fd->m_framebuffer));
-            m_frameData.emplace_back(fd);
+            // recreate framedata
+            m_frameData.clear();
+            for (size_t i = 0; i < m_frameCnt; i++)
+            {
+                std::shared_ptr<TestBasicFrameData> fd = std::make_shared<TestBasicFrameData>();
+
+                VkImageCreateInfo image_info       = {};
+                image_info.sType                   = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+                image_info.imageType               = VK_IMAGE_TYPE_2D;
+                image_info.extent.width            = m_viewportSize.width;
+                image_info.extent.height           = m_viewportSize.height;
+                image_info.extent.depth            = 1;
+                image_info.format                  = VK_FORMAT_R8G8B8A8_UNORM;
+                image_info.mipLevels               = 1;
+                image_info.arrayLayers             = 1;
+                image_info.initialLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
+                image_info.usage                   = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+                image_info.samples                 = VK_SAMPLE_COUNT_1_BIT;
+                image_info.tiling                  = VK_IMAGE_TILING_OPTIMAL;
+                image_info.sharingMode             = VK_SHARING_MODE_EXCLUSIVE;
+                VmaAllocationCreateInfo alloc_info = {};
+                fd->m_image.Alloc(image_info, alloc_info);
+
+                VkFramebufferCreateInfo framebuffer_info = {};
+                VkImageView             img_views[]      = {fd->m_image.GetImageView()};
+                framebuffer_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+                framebuffer_info.renderPass              = m_basicTrianglePass.GetRenderPass();
+                framebuffer_info.attachmentCount         = 1;
+                framebuffer_info.pAttachments            = img_views;
+                framebuffer_info.width                   = m_viewportSize.width;
+                framebuffer_info.height                  = m_viewportSize.height;
+                framebuffer_info.layers                  = 1;
+                VK_CHECK(
+                    vkCreateFramebuffer(VulkanCore::GetVkDevice(), &framebuffer_info, nullptr, &fd->m_framebuffer));
+                m_frameData.emplace_back(fd);
+            }
         }
     }
 
@@ -57,7 +65,7 @@ namespace GE
         m_basicTrianglePass.Init();
         m_basicMeshPass.Init();
 
-        Resize({1280, 720});
+        Resize(1280, 720);
 
         Vertex vertices[3]   = {{}, {}, {}};
         vertices[0].position = {0.5f, 0.5f, 0.0f};
@@ -81,8 +89,8 @@ namespace GE
     {
         std::shared_ptr<TestBasicFrameData> fd = m_frameData[index];
 
-        draw_data.vertex_buffer = m_vertexBuffer;
-        draw_data.vertex_cnt    = 3;
+        // draw_data.vertex_buffer = m_vertexBuffer;
+        // draw_data.vertex_cnt    = 3;
 
         if (draw_data.vertex_cnt == 0)
         {

@@ -41,7 +41,7 @@ namespace GE
 
         void Init(uint n_frames);
 
-        void Resize(VkExtent2D extent);
+        void Resize(uint width, uint height);
 
         inline std::shared_ptr<TestBasicFrameData> GetFrameData(uint idx) { return m_frameData[idx]; }
 
@@ -51,7 +51,7 @@ namespace GE
 
         std::shared_ptr<GpuBuffer> m_vertexBuffer;
 
-        VkExtent2D m_viewportSize;
+        VkExtent2D m_viewportSize = {0, 0};
 
         uint                                             m_frameCnt = 0;
         std::vector<std::shared_ptr<TestBasicFrameData>> m_frameData;

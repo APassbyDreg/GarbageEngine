@@ -75,6 +75,8 @@ namespace GE
         void __imgui_present_frame();
         void __imgui_rebuild_swapchain();
 
+        void __viewport_resize(ImVec2 size);
+
     protected:
         /* --------------------------- glfw stuff --------------------------- */
 
@@ -101,5 +103,8 @@ namespace GE
 
         VkSampler                    m_viewportSampler;
         std::vector<VkDescriptorSet> m_viewportDescriptorSets;
+        ImVec2                       m_viewportSize = {1280, 720};
+
+        uint64 m_frameIdx = 0;
     };
 } // namespace GE
