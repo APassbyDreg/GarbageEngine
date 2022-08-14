@@ -35,8 +35,9 @@ namespace GE
 
         virtual void Build();
 
-        inline VkRenderPass GetRenderPass() { return m_renderPass; }
-        inline VkPipeline   GetPipeline() { return m_pipeline.GetPipeline(); }
+        inline VkRenderPass     GetRenderPass() { return m_renderPass; }
+        inline VkPipeline       GetPipeline() { return m_pipeline.GetPipeline(); }
+        inline VkPipelineLayout GetPipelineLayout() { return m_pipeline.GetPipelineLayout(); }
 
     protected:
         void __update_resource();

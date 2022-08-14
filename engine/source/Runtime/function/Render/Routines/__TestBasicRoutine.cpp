@@ -123,9 +123,11 @@ namespace GE
             info.pClearValues          = &draw_data.clear_color;
             vkCmdBeginRenderPass(cmd, &info, VK_SUBPASS_CONTENTS_INLINE);
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_basicTrianglePass.GetPipeline());
+            {
+                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_basicTrianglePass.GetPipeline());
 
-            vkCmdDraw(cmd, 3, 1, 0, 0);
+                vkCmdDraw(cmd, 3, 1, 0, 0);
+            }
 
             vkCmdEndRenderPass(cmd);
         }
@@ -142,20 +144,34 @@ namespace GE
             vkCmdBeginRenderPass(cmd, &info, VK_SUBPASS_CONTENTS_INLINE);
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_basicMeshPass.GetPipeline());
 
-            // set dynamic viewport
-            VkViewport viewport = VkInit::GetViewport(m_viewportSize);
-            VkRect2D   scissor  = {{0, 0}, m_viewportSize};
-            vkCmdSetViewport(cmd, 0, 1, &viewport);
-            vkCmdSetScissor(cmd, 0, 1, &scissor);
+            {
+                // set dynamic viewport
+                VkViewport viewport = VkInit::GetViewport(m_viewportSize);
+                VkRect2D   scissor  = {{0, 0}, m_viewportSize};
+                vkCmdSetViewport(cmd, 0, 1, &viewport);
+                vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-            // set vertex buffer
-            VkDeviceSize offset    = 0;
-            VkBuffer     buffers[] = {draw_data.vertex_buffer->GetBuffer()};
-            vkCmdBindVertexBuffers(cmd, 0, 1, buffers, &offset);
-            vkCmdBindIndexBuffer(cmd, m_indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                // set vertex buffer
+                VkDeviceSize offset    = 0;
+                VkBuffer     buffers[] = {draw_data.vertex_buffer->GetBuffer()};
+                vkCmdBindVertexBuffers(cmd, 0, 1, buffers, &offset);
+                vkCmdBindIndexBuffer(cmd, m_indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-            // draw
-            vkCmdDrawIndexed(cmd, draw_data.vertex_cnt, 1, 0, 0, 0);
+                // set push constants
+                TestBasicMeshPushConstants push_constants = {};
+                push_constants.mvp                        = float4x4(1.0f);
+                push_constants.cameraPosWS                = {0, 0, 0, 0};
+                push_constants.debugColor                 = {0.8, 0.5, 0.5, 1.0};
+                vkCmdPushConstants(cmd,
+                                   m_basicMeshPass.GetPipelineLayout(),
+                                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                                   0,
+                                   sizeof(push_constants),
+                                   &push_constants);
+
+                // draw
+                vkCmdDrawIndexed(cmd, draw_data.vertex_cnt, 1, 0, 0, 0);
+            }
 
             vkCmdEndRenderPass(cmd);
         }

@@ -41,6 +41,9 @@ namespace GE
 
         m_pipeline.m_colorBlendState = VkInit::GetPipelineColorBlendStateCreateInfo(m_flattenAttachmentBlendStates);
 
+        std::vector<VkDynamicState> dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+        m_pipeline.m_dynamicState                  = VkInit::GetPipelineDynamicStateCreateInfo(dynamic_states);
+
         m_pipeline.Build(m_renderPass, 0);
     }
 } // namespace GE

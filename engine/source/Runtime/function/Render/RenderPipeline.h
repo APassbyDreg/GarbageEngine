@@ -22,6 +22,12 @@ namespace GE
             return m_pipeline;
         }
 
+        inline VkPipelineLayout GetPipelineLayout()
+        {
+            GE_CORE_ASSERT(m_ready, "GraphicsRenderPipeline::GetPipelineLayout: Pipeline is not ready!");
+            return m_pipelineLayout;
+        }
+
     public:
         std::vector<std::shared_ptr<ShaderModule>> m_shaders;
 
