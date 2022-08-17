@@ -5,8 +5,9 @@
 #include "Runtime/core/base/Singleton.h"
 #include "Runtime/core/math/math.h"
 
-#include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"
+#include "spdlog/spdlog.h"
+
 
 namespace GE
 {
@@ -39,50 +40,50 @@ namespace GE
         LogSystem();
         ~LogSystem();
 
-        template<typename... TARGS>
-        void LogCore(std::string level, TARGS&&... args)
+        template<typename... TArgs>
+        void LogCore(std::string level, TArgs&&... args)
         {
-            Log(s_core_logger, s_string2level[level], std::forward<TARGS>(args)...);
+            Log(s_core_logger, s_string2level[level], std::forward<TArgs>(args)...);
         }
 
-        template<typename... TARGS>
-        void LogApplication(std::string level, TARGS&&... args)
+        template<typename... TArgs>
+        void LogApplication(std::string level, TArgs&&... args)
         {
-            Log(s_client_logger, s_string2level[level], std::forward<TARGS>(args)...);
+            Log(s_client_logger, s_string2level[level], std::forward<TArgs>(args)...);
         }
 
     private:
-        template<typename... TARGS>
-        void Log(std::shared_ptr<spdlog::logger> logger, Level level, TARGS&&... args)
+        template<typename... TArgs>
+        void Log(std::shared_ptr<spdlog::logger> logger, Level level, TArgs&&... args)
         {
             switch (level)
             {
                 case Level::Trace:
-                    logger->trace(std::forward<TARGS>(args)...);
+                    logger->trace(std::forward<TArgs>(args)...);
                     break;
                 case Level::Debug:
-                    logger->debug(std::forward<TARGS>(args)...);
+                    logger->debug(std::forward<TArgs>(args)...);
                     break;
                 case Level::Info:
-                    logger->info(std::forward<TARGS>(args)...);
+                    logger->info(std::forward<TArgs>(args)...);
                     break;
                 case Level::Warn:
-                    logger->warn(std::forward<TARGS>(args)...);
+                    logger->warn(std::forward<TArgs>(args)...);
                     break;
                 case Level::Error:
-                    logger->error(std::forward<TARGS>(args)...);
+                    logger->error(std::forward<TArgs>(args)...);
                     break;
                 case Level::Critical:
-                    logger->critical(std::forward<TARGS>(args)...);
-                    criticalCallback(std::forward<TARGS>(args)...);
+                    logger->critical(std::forward<TArgs>(args)...);
+                    criticalCallback(std::forward<TArgs>(args)...);
                     break;
                 default:
                     break;
             }
         }
 
-        template<typename... TARGS>
-        void criticalCallback(TARGS&&... args)
+        template<typename... TArgs>
+        void criticalCallback(TArgs&&... args)
         {
             throw std::runtime_error("critical error occurs");
         }

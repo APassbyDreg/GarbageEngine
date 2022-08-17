@@ -1,7 +1,10 @@
 #include "UnitTest.h"
 
 #include "Runtime/function/Log/LogSystem.h"
+
+#include "function/scene.h"
 #include "resource/resource.h"
+
 
 #define GE_CHECK_TESTCASE(Testcase) \
     do \
@@ -19,5 +22,6 @@ namespace GE
 
         GE_CHECK_TESTCASE(CacheManagerTestCase);
         GE_CHECK_TESTCASE(ShaderManagerTestCase);
+        GE_CHECK_TESTCASE(SceneECSTestCase);
     }
 } // namespace GE

@@ -30,6 +30,8 @@ namespace GE
 
         m_imguiContext = ImGui::GetCurrentContext();
 
+        ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+
         ImGui::Begin("viewport");
         __viewport_resize(ImGui::GetContentRegionAvail());
         if (m_frameIdx >= m_imguiWindow.ImageCount)

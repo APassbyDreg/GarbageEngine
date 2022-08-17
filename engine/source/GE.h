@@ -11,6 +11,7 @@
 #include "Runtime/function/Layer/LayerSystem.h"
 #include "Runtime/function/Log/LogSystem.h"
 #include "Runtime/function/Message/MessageSystem.h"
+#include "Runtime/function/Scene/Scene.h"
 
 /* ------------------------------- entry point ------------------------------ */
 #include "Runtime/entry/EntryPoint.h"

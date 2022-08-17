@@ -2,8 +2,9 @@
 
 #include "GE_pch.h"
 
+#include "entt/entt.hpp"
+
 namespace GE
 {
-    class Component
-    {};
+    
 } // namespace GE

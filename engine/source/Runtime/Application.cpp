@@ -24,6 +24,9 @@ namespace GE
 
         // init subsystems
         VulkanCore::GetInstance().Init(main_window_layer->GetNativeWindow());
+
+        /* ---------------------------- temporary --------------------------- */
+        m_activeScene = std::make_shared<Scene>();
     }
 
     Application::~Application() {}
@@ -45,8 +48,6 @@ namespace GE
                 layer->OnUpdate();
             }
 
-            /* ------------------------ do rendering ------------------------ */
-
             /* ---------------------- show imgui window --------------------- */
             m_activeWindow->BeginWindowRender();
 
@@ -56,9 +57,6 @@ namespace GE
                 last_update = t0;
                 m_activeWindow->SetTitle("fps: " + std::to_string(fps));
             }
-            // debug
-            bool _show_demo_window = true;
-            ImGui::ShowDemoWindow(&_show_demo_window);
             // show layers
             ImGuiContext* ctx = m_activeWindow->GetImGuiContext();
             for (auto&& layer : m_layerStack)

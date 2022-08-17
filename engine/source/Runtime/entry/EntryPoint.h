@@ -5,7 +5,8 @@
 #include "Runtime/Application.h"
 #include "Runtime/testing/UnitTest.h"
 
-#ifdef GE_PLATFORM_WINDOWS
+#ifdef GE_ENTRYPOINT_CPP
+
 extern std::unique_ptr<GE::Application> GE::CreateApplication();
 
 int main(int argc, char const* argv[])
@@ -19,6 +20,5 @@ int main(int argc, char const* argv[])
     app->Run();
     return 0;
 }
-#else
-#error "Unsupported platform"
+
 #endif

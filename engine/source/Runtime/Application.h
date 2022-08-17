@@ -6,7 +6,7 @@
 #include "Runtime/function/Layer/LayerSystem.h"
 #include "Runtime/function/Log/LogSystem.h"
 #include "Runtime/function/Message/MessageSystem.h"
-
+#include "Runtime/function/Scene/Scene.h"
 #include "Runtime/function/Window/Window.h"
 
 namespace GE
@@ -27,6 +27,7 @@ namespace GE
 
         inline static Application&     GetInstance() { return *s_instance; }
         inline std::shared_ptr<Window> GetActiveWindow() { return m_activeWindow; }
+        inline std::shared_ptr<Scene>  GetActiveScene() { return m_activeScene; }
 
     private:
         bool OnWindowClose(WindowCloseEvent& e);
@@ -38,6 +39,8 @@ namespace GE
         static Application* s_instance;
 
         std::shared_ptr<Window> m_activeWindow;
+
+        std::shared_ptr<Scene> m_activeScene;
     };
 
     // Defined in client
