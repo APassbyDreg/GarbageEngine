@@ -4,8 +4,8 @@
 
 #include "Runtime/core/ECS.h"
 
-#include "Runtime/function/Components/Components.h"
 #include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/function/Scene/Components/Components.h"
 
 namespace GE
 {

@@ -1,5 +1,5 @@
 #include "scene.h"
-#include "Runtime/function/Components/Transform.h"
+#include "Runtime/function/Scene/Components/Components.h"
 
 namespace GE
 {

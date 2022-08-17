@@ -4,7 +4,7 @@
 
 #include "Entity.h"
 
-#include "Runtime/function/Components/Components.h"
+#include "Runtime/function/Scene/Components/Components.h"
 
 namespace GE
 {
