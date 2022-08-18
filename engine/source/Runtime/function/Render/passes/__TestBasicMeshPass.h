@@ -4,7 +4,6 @@
 
 #include "../DataStructures/Mesh.h"
 #include "../RenderPass.h"
-#include "../VulkanManager/ShaderManager.h"
 
 #include "Runtime/core/math/math.h"
 

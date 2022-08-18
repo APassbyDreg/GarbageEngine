@@ -25,31 +25,4 @@ namespace GE
         });
         GE_CORE_ASSERT(!CacheManager::GetInstance().Load({"test2", "test2"}, &res, size), "Failed to invalidate");
     }
-
-    void ShaderManagerTestCase::run()
-    {
-        fs::path fpath = fs::path(Config::shader_dir) / "passes/__test01_simple_triangle/test.frag";
-        fs::path vpath = fs::path(Config::shader_dir) / "passes/__test01_simple_triangle/test.vert";
-
-        // clear cache
-        ShaderManager::GetInstance().ClearShaderCache();
-
-        bool                    use_cache;
-        shaderc::CompileOptions options;
-        use_cache = true;
-        ShaderManager::GetInstance().GetCompiledSpv(fpath.string(), options, use_cache);
-        use_cache = true;
-        ShaderManager::GetInstance().GetCompiledSpv(vpath.string(), options, use_cache);
-
-        // load cache
-        use_cache = true;
-        ShaderManager::GetInstance().GetCompiledModule(vpath.string(), {}, use_cache);
-        GE_CORE_ASSERT(use_cache, "Failed to load cached spv");
-
-        // clear cache
-        ShaderManager::GetInstance().ClearShaderCache();
-        use_cache = true;
-        ShaderManager::GetInstance().GetCompiledModule(vpath.string(), {}, use_cache);
-        GE_CORE_ASSERT(!use_cache, "Failed to clear shader cache");
-    }
 } // namespace GE

@@ -2,6 +2,8 @@
 
 #include "../VulkanManager/VulkanCreateInfoBuilder.h"
 
+#include "Runtime/function/Render/ShaderManager/GLSLCompiler.h"
+
 namespace GE
 {
     void TestBasicTrianglePass::Init()
@@ -18,14 +20,15 @@ namespace GE
         Build();
 
         /* ------------------------- setup pipeline ------------------------- */
-        bool                     use_cache    = false;
-        std::vector<std::string> shader_paths = {"passes/__test01_simple_triangle/test.frag",
-                                                 "passes/__test01_simple_triangle/test.vert"};
-        for (auto&& path : shader_paths)
         {
-            fs::path fullpath = fs::path(Config::shader_dir) / path;
-            m_pipeline.m_shaders.push_back(
-                ShaderManager::GetInstance().GetCompiledModule(fullpath.string(), {}, use_cache));
+            fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test01_simple_triangle/test.frag";
+            GLSLCompiler compiler = {ShaderType::FRAGMENT};
+            m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
+        }
+        {
+            fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test01_simple_triangle/test.vert";
+            GLSLCompiler compiler = {ShaderType::VERTEX};
+            m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
         }
         m_pipeline.m_vertexInputState = VkInit::GetPipelineVertexInputStateCreateInfo({}, {});
 

@@ -116,8 +116,7 @@ end
 function GE_link_dxc() 
     add_includedirs(rel_local_path("dxc/include"))
     
-    if is_plat("windows") then 
-        add_links(rel_local_path("dxc/lib/dxclib"))
+    if is_plat("windows") then
         add_links(rel_local_path("dxc/lib/dxcompiler"))
     end
 end

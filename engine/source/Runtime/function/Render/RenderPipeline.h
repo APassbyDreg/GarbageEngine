@@ -4,7 +4,7 @@
 
 #include "Runtime/core/math/math.h"
 
-#include "VulkanManager/ShaderManager.h"
+#include "ShaderManager/ShaderModule.h"
 #include "VulkanManager/VulkanCore.h"
 
 namespace GE

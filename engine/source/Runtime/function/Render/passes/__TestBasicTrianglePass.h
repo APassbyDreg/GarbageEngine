@@ -4,8 +4,6 @@
 
 #include "../RenderPass.h"
 
-#include "../VulkanManager/ShaderManager.h"
-
 namespace GE
 {
     class TestBasicTrianglePass : public RenderPass

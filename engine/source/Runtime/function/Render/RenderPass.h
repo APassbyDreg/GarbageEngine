@@ -4,7 +4,6 @@
 
 #include "Runtime/core/math/math.h"
 
-#include "VulkanManager/ShaderManager.h"
 #include "VulkanManager/VulkanCreateInfoBuilder.h"
 
 #include "RenderPipeline.h"
