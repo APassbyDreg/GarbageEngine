@@ -3,6 +3,7 @@
 #include "Runtime/function/Log/LogSystem.h"
 
 #include "function/scene.h"
+#include "function/shader.h"
 #include "resource/resource.h"
 
 #define GE_CHECK_TESTCASE(Testcase) \
@@ -21,5 +22,6 @@ namespace GE
 
         GE_CHECK_TESTCASE(CacheManagerTestCase);
         GE_CHECK_TESTCASE(SceneECSTestCase);
+        GE_CHECK_TESTCASE(ShaderTestCase);
     }
 } // namespace GE

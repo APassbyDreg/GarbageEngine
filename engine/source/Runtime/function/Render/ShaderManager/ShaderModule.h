@@ -50,7 +50,7 @@ namespace GE
     class ShaderModule
     {
     public:
-        ShaderModule(std::vector<uint32_t> spv, ShaderType type);
+        ShaderModule(std::vector<uint32_t> spv, ShaderType type, const std::string& entry = "main");
         ~ShaderModule();
 
         inline VkShaderModule GetShaderModule()
@@ -66,6 +66,7 @@ namespace GE
 
     private:
         bool                            m_ready = false;
+        std::string                     m_entry = "main";
         VkShaderModule                  m_module;
         VkPipelineShaderStageCreateInfo m_stage;
     };

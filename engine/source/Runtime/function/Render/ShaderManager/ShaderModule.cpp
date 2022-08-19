@@ -2,7 +2,7 @@
 
 namespace GE
 {
-    ShaderModule::ShaderModule(std::vector<uint32_t> spv, ShaderType type)
+    ShaderModule::ShaderModule(std::vector<uint32_t> spv, ShaderType type, const std::string& entry) : m_entry(entry)
     {
         VkShaderModuleCreateInfo create_info = {};
         create_info.sType                    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -11,7 +11,8 @@ namespace GE
 
         VK_CHECK(vkCreateShaderModule(VulkanCore::GetVkDevice(), &create_info, nullptr, &m_module));
 
-        m_stage = VkInit::GetPipelineShaderStageCreateInfo(static_cast<VkShaderStageFlagBits>(type), m_module);
+        m_stage = VkInit::GetPipelineShaderStageCreateInfo(
+            static_cast<VkShaderStageFlagBits>(type), m_module, m_entry.c_str());
 
         m_ready = true;
     }

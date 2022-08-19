@@ -12,9 +12,10 @@ namespace GE
         ShaderCompiler(ShaderType               type,
                        std::vector<std::string> include_dirs = {},
                        std::vector<std::string> defines      = {}) :
-            m_type(type), m_includeDirs(include_dirs), m_defines(defines) {};
+            m_type(type),
+            m_includeDirs(include_dirs), m_defines(defines) {};
 
-        virtual std::shared_ptr<ShaderModule> Compile(std::string shader_path) = 0;
+        virtual std::shared_ptr<ShaderModule> Compile(std::string path, std::string entry) = 0;
 
         ShaderType               m_type;
         std::vector<std::string> m_includeDirs;

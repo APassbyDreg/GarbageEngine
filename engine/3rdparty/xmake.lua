@@ -135,6 +135,7 @@ function GE_link_3rdparty()
     GE_link_shaderc()
     GE_link_miniz()
     GE_link_stb()
+    GE_link_dxc()
 
     add_packages("openssl")
 end

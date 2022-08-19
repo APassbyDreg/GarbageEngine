@@ -1,6 +1,7 @@
 #include "__TestBasicMeshPass.h"
 
 #include "Runtime/function/Render/ShaderManager/GLSLCompiler.h"
+#include "Runtime/function/Render/ShaderManager/HLSLCompiler.h"
 
 namespace GE
 {
@@ -18,15 +19,22 @@ namespace GE
         Build();
 
         /* ------------------------- setup pipeline ------------------------- */
+        // {
+        //     fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test02_simple_mesh/test.frag";
+        //     GLSLCompiler compiler = {ShaderType::FRAGMENT};
+        //     m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
+        // }
+        // {
+        //     fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test02_simple_mesh/test.vert";
+        //     GLSLCompiler compiler = {ShaderType::VERTEX};
+        //     m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
+        // }
         {
-            fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test02_simple_mesh/test.frag";
-            GLSLCompiler compiler = {ShaderType::FRAGMENT};
-            m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
-        }
-        {
-            fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test02_simple_mesh/test.vert";
-            GLSLCompiler compiler = {ShaderType::VERTEX};
-            m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
+            fs::path     fullpath   = fs::path(Config::shader_dir) / "passes/__test02_simple_mesh/test.hlsl";
+            HLSLCompiler vscompiler = {ShaderType::VERTEX};
+            HLSLCompiler fscompiler = {ShaderType::FRAGMENT};
+            m_pipeline.m_shaders.push_back(vscompiler.Compile(fullpath.string(), "vert"));
+            m_pipeline.m_shaders.push_back(fscompiler.Compile(fullpath.string(), "frag"));
         }
 
         static VertexInputDescription input_desc = Vertex::GetVertexInputDesc();

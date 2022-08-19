@@ -146,7 +146,7 @@ namespace GE
 
     /* ---------------------------- GLSL Compiler --------------------------- */
 
-    std::shared_ptr<ShaderModule> GLSLCompiler::Compile(std::string path)
+    std::shared_ptr<ShaderModule> GLSLCompiler::Compile(std::string path, std::string entry)
     {
         std::string ext = fs::path(path).extension().string();
 
