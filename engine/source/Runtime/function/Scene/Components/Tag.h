@@ -33,7 +33,7 @@ namespace GE
                 ImGui::InputText("Name", m_nameBuffer, 256);
                 ImGui::InputInt("Layer", &m_layer);
                 ImGui::InputInt("Tag", &m_tag);
-                m_name = std::string(m_nameBuffer);
+                m_name = m_nameBuffer;
             }
         }
 

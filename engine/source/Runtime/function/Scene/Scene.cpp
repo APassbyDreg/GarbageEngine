@@ -12,11 +12,23 @@ namespace GE
 
     void Scene::InspectStructure()
     {
+        strcpy(m_nameBuffer, m_name.c_str());
+        ImGui::InputText("Scene Name", m_nameBuffer, 256);
+        m_name = m_nameBuffer;
+
+        ImGui::Separator();
+        ImGui::Text("Entities");
+
         int idx = 0;
         for (auto& e : m_entities)
         {
-            TagComponent& tag = e->GetComponent<TagComponent>();
-            if (ImGui::Selectable(tag.m_name.c_str(), m_focusEntityID == idx))
+            TagComponent& tag  = e->GetComponent<TagComponent>();
+            const char*   name = tag.m_name.c_str();
+            if (tag.m_name.empty())
+            {
+                name = "unnamed entity";
+            }
+            if (ImGui::Selectable(name, m_focusEntityID == idx))
             {
                 m_focusEntityID = idx;
             }
@@ -48,6 +60,7 @@ namespace GE
         }
 
         json root;
+        root["name"]        = m_name;
         root["entities"]    = entities;
         root["GE_ASSET_ID"] = "scene";
 
@@ -56,10 +69,10 @@ namespace GE
 
     void Scene::Deserialize(const json& data)
     {
+        m_name = data["name"].get<std::string>();
         for (auto& edata : data["entities"])
         {
             m_entities.push_back(std::make_shared<Entity>(edata, m_registry));
         }
-
     }
 } // namespace GE

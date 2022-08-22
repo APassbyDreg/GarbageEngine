@@ -20,3 +20,7 @@
 [submodule "engine/3rdparty/stb"]
 	path = engine/3rdparty/stb
 	url = https://github.com/nothings/stb.git
+[submodule "engine/3rdparty/imgui_plugins/ImGuiFileDialog"]
+	path = engine/3rdparty/imgui_plugins/ImGuiFileDialog
+	url = https://github.com/aiekick/ImGuiFileDialog.git
+	branch = Lib_Only

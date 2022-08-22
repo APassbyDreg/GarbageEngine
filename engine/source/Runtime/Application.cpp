@@ -31,6 +31,15 @@ namespace GE
 
     Application::~Application() {}
 
+    void Application::OpenScene(std::string path)
+    {
+        std::ifstream sc_desc(path);
+        json          sc_data;
+        sc_desc >> sc_data;
+        sc_desc.close();
+        m_activeScene = std::make_shared<Scene>(sc_data);
+    }
+
     void Application::Run()
     {
         GE_CORE_TRACE("Starting Application");
