@@ -1,11 +1,6 @@
 #pragma once
 
-#include "GE_pch.h"
-
-#include "imgui.h"
-
-#include "Runtime/core/json.h"
-#include "Runtime/core/math/math.h"
+#include "ComponentBase.h"
 
 namespace GE
 {
@@ -15,44 +10,36 @@ namespace GE
         Orthographic
     };
 
-    inline int __camera_type2id(CameraType type)
-    {
-        switch (type)
-        {
-            case CameraType::Perspective:
-                return 0;
-            case CameraType::Orthographic:
-                return 1;
-        }
-        return 0;
-    }
-    inline CameraType __camera_id2type(int id)
-    {
-        switch (id)
-        {
-            case 0:
-                return CameraType::Perspective;
-            case 1:
-                return CameraType::Orthographic;
-        };
-        return CameraType::Perspective;
-    }
-
-    class CameraComponent
+    class CameraComponent : public ComponentBase
     {
     public:
-        float      m_horizonFov = 10;
-        float2     m_clip       = {1e-3, 1e3};
-        CameraType m_type       = CameraType::Perspective;
+        GE_COMPONENT_COMMON(CameraComponent);
+
+        float      m_aspectRatio = 1.0f;
+        float      m_horizonFov  = 54;
+        float2     m_clip        = {1e-3, 1e3};
+        CameraType m_type        = CameraType::Perspective;
 
         CameraComponent() {}
 
-        inline json Serialize() const
+        inline json Serialize() const override
         {
-            return {{"hfov", m_horizonFov}, {"clip", {m_clip.x, m_clip.y}}, {"type", (int)m_type}};
+            return {{"aspect", m_aspectRatio},
+                    {"hfov", m_horizonFov},
+                    {"clip", {m_clip.x, m_clip.y}},
+                    {"type", (int)m_type}};
         }
 
-        void Inspect()
+        inline void Deserialize(const json& data) override
+        {
+            m_aspectRatio = data["aspect"].get<float>();
+            m_horizonFov  = data["hfov"].get<float>();
+            m_clip.x      = data["clip"][0].get<float>();
+            m_clip.y      = data["clip"][1].get<float>();
+            m_type        = __camera_id2type(data["type"].get<int>());
+        }
+
+        inline void Inspect() override
         {
             if (ImGui::CollapsingHeader("Perspective Camera"))
             {
@@ -69,6 +56,46 @@ namespace GE
                     m_clip.y  = tmp;
                 }
                 m_type = __camera_id2type(m_typeid);
+            }
+        }
+
+        /* ----------------------------- helpers ---------------------------- */
+
+        inline int __camera_type2id(CameraType type)
+        {
+            switch (type)
+            {
+                case CameraType::Perspective:
+                    return 0;
+                case CameraType::Orthographic:
+                    return 1;
+            }
+            return 0;
+        }
+        inline CameraType __camera_id2type(int id)
+        {
+            switch (id)
+            {
+                case 0:
+                    return CameraType::Perspective;
+                case 1:
+                    return CameraType::Orthographic;
+            };
+            return CameraType::Perspective;
+        }
+
+        inline float4x4 GetProjectionMatrix() const
+        {
+            switch (m_type)
+            {
+                case CameraType::Perspective: {
+                    return glm::perspective(glm::radians(m_horizonFov), 1.0f, m_clip.x, m_clip.y);
+                }
+                case CameraType::Orthographic: {
+                    float half_width  = m_horizonFov * 0.5;
+                    float half_height = half_width * m_aspectRatio;
+                    return glm::ortho(-half_width, half_width, -half_height, half_height);
+                }
             }
         }
 

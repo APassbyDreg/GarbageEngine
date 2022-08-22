@@ -1,17 +1,14 @@
 #pragma once
 
-#include "GE_pch.h"
-
-#include "imgui.h"
-
-#include "Runtime/core/json.h"
-#include "Runtime/core/math/math.h"
+#include "ComponentBase.h"
 
 namespace GE
 {
-    class TagComponent
+    class TagComponent : public ComponentBase
     {
     public:
+        GE_COMPONENT_COMMON(TagComponent);
+
         std::string m_name  = "unnamed entity";
         int         m_layer = 0, m_tag = 0;
 
@@ -19,9 +16,16 @@ namespace GE
             m_name(name), m_layer(layer), m_tag(tag)
         {}
 
-        inline json Serialize() const { return {{"name", m_name}, {"layer", m_layer}, {"tag", m_tag}}; }
+        inline json Serialize() const override { return {{"name", m_name}, {"layer", m_layer}, {"tag", m_tag}}; }
 
-        inline void Inspect()
+        inline void Deserialize(const json& data) override
+        {
+            m_name  = data["name"].get<std::string>();
+            m_layer = data["layer"].get<int>();
+            m_tag   = data["tag"].get<int>();
+        }
+
+        inline void Inspect() override
         {
             if (ImGui::CollapsingHeader("Tag"))
             {

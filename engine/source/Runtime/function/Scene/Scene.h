@@ -4,7 +4,7 @@
 
 #include "Entity.h"
 
-#include "Runtime/function/Scene/Components/Components.h"
+#include "Runtime/function/Scene/Components/ComponentFactory.h"
 
 namespace GE
 {
@@ -20,6 +20,9 @@ namespace GE
 
         void InspectStructure();
         void InspectFocusedEntity();
+
+        json Serialize() const;
+        void Deserialize(const json& data);
 
     private:
         int                                  m_focusEntityID = -1;
