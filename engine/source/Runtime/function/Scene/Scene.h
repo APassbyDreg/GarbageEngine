@@ -6,6 +6,8 @@
 
 #include "Runtime/function/Scene/Components/ComponentFactory.h"
 
+#include "Runtime/resource/Managers/ResourceManager.h"
+
 namespace GE
 {
     class GE_API Scene
@@ -13,6 +15,7 @@ namespace GE
     public:
         Scene() {}
         Scene(const json& data) { Deserialize(data); }
+        Scene(const fs::path path) { Load(path); }
         ~Scene() {}
 
         inline entt::registry& GetRegistry() { return m_registry; }
@@ -28,6 +31,9 @@ namespace GE
         std::string GetName() const { return m_name; }
         void        SetName(const std::string& name) { m_name = name; }
 
+        void Save(const fs::path path = "", const bool save_as = false);
+        void Load(const fs::path path);
+
     private:
         int                                  m_focusEntityID = -1;
         entt::registry                       m_registry;
@@ -35,5 +41,7 @@ namespace GE
 
         std::string m_name = "GE_scene";
         char        m_nameBuffer[256];
+
+        std::shared_ptr<JsonResource> m_resource = nullptr;
     };
 } // namespace GE

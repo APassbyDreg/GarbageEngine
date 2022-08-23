@@ -4,6 +4,8 @@
 
 #include "imgui.h"
 
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
+
 namespace GE
 {
     class ExplorerLayer : public Layer

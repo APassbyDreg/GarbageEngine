@@ -2,19 +2,6 @@
 
 namespace GE
 {
-
-    std::string __try_load_shader_str(const std::string& path)
-    {
-        if (fs::exists(path))
-        {
-            std::ifstream     file(path);
-            std::stringstream buffer;
-            buffer << file.rdbuf();
-            return buffer.str();
-        }
-        return "";
-    }
-
     inline shaderc_shader_kind __shadertype2kind(ShaderType type)
     {
         switch (type)
@@ -121,7 +108,8 @@ namespace GE
 
         path = __resolve_path(std::string(requested_source), type == shaderc_include_type_relative);
         GE_CORE_ASSERT(path.length() > 0, "Failed to resolve include path: {}", requested_source);
-        contents = __try_load_shader_str(path);
+        auto resource = ResourceManager::GetInstance().GetResource<TextResource>(path);
+        contents      = resource->GetData();
         GE_CORE_ASSERT(contents.length() > 0, "Failed to load include file: {}", path);
 
         auto container  = new std::array<std::string, 2>;
@@ -150,9 +138,10 @@ namespace GE
     {
         std::string ext = fs::path(path).extension().string();
 
+        auto                shader_resource = ResourceManager::GetInstance().GetResource<TextResource>(path);
         shaderc_shader_kind shader_kind     = __shadertype2kind(m_type);
         std::string         shader_filename = fs::path(path).filename().string();
-        std::string         shader_src_code = __try_load_shader_str(path);
+        std::string         shader_src_code = shader_resource->GetData();
         GE_CORE_ASSERT(shader_src_code.length() > 0, "Failed to load shader file: {}", path);
 
         shaderc::CompileOptions options;

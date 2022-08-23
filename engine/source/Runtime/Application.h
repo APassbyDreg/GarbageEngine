@@ -8,6 +8,7 @@
 #include "Runtime/function/Message/MessageSystem.h"
 #include "Runtime/function/Scene/Scene.h"
 #include "Runtime/function/Window/Window.h"
+#include "Runtime/resource/Managers/ResourceManager.h"
 
 namespace GE
 {
@@ -24,8 +25,6 @@ namespace GE
 
         void PushLayer(std::shared_ptr<Layer> layer);
         void PushOverlay(std::shared_ptr<Layer> overlay);
-
-        void OpenScene(std::string path);
 
         inline static Application&     GetInstance() { return *s_instance; }
         inline std::shared_ptr<Window> GetActiveWindow() { return m_activeWindow; }

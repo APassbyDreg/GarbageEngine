@@ -4,6 +4,8 @@
 
 #include "ShaderModule.h"
 
+#include "Runtime/resource/Managers/ResourceManager.h"
+
 namespace GE
 {
     class ShaderCompiler

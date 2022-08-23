@@ -16,12 +16,6 @@
 namespace GE
 {
     template<typename T>
-    json SerializeComponentInstance(const T& component)
-    {
-        return component.SerializeInstance();
-    }
-
-    template<typename T>
     json SerializeComponent(const T& component)
     {
         return component.Serialize();
@@ -48,14 +42,5 @@ namespace GE
         virtual void        Deserialize(const json& data) = 0;
         virtual json        Serialize() const             = 0;
         virtual std::string GetName() const               = 0;
-
-        json SerializeInstance()
-        {
-            json root;
-            root["name"]        = GetName();
-            root["data"]        = Serialize();
-            root["GE_ASSET_ID"] = "component instance";
-            return root;
-        }
     };
 } // namespace GE

@@ -3,6 +3,7 @@
 
 #include "Explorer.h"
 #include "Inspector.h"
+#include "Menu.h"
 
 namespace GE
 {

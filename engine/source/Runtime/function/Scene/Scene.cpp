@@ -60,9 +60,8 @@ namespace GE
         }
 
         json root;
-        root["name"]        = m_name;
-        root["entities"]    = entities;
-        root["GE_ASSET_ID"] = "scene";
+        root["name"]     = m_name;
+        root["entities"] = entities;
 
         return root;
     }
@@ -73,6 +72,41 @@ namespace GE
         for (auto& edata : data["entities"])
         {
             m_entities.push_back(std::make_shared<Entity>(edata, m_registry));
+        }
+    }
+
+    void Scene::Load(fs::path path)
+    {
+        if (m_resource != nullptr) // save previous work
+        {
+            m_resource->SaveData(Serialize());
+        }
+        m_resource = ResourceManager::GetInstance().GetResource<JsonResource>(path, JsonIdentifier::SCENE_DESCRIPTION);
+        Deserialize(m_resource->GetData());
+    }
+
+    void Scene::Save(fs::path path, const bool save_as)
+    {
+        json data  = Serialize();
+        bool saved = false;
+
+        if (m_resource != nullptr) // save previous work
+        {
+            m_resource->SaveData(data);
+            saved = true;
+        }
+
+        if (path != "" && (save_as || m_resource == nullptr)) // save a new file
+        {
+            m_resource =
+                ResourceManager::GetInstance().GetResource<JsonResource>(path, JsonIdentifier::SCENE_DESCRIPTION);
+            m_resource->SaveData(data);
+            saved = true;
+        }
+
+        if (!saved)
+        {
+            GE_CORE_WARN("[Scene::Save] Failed to save because both previous and given path is empty!");
         }
     }
 } // namespace GE
