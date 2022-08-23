@@ -8,8 +8,8 @@
 #include "VkBootstrap.h"
 #include "vma/vk_mem_alloc.h"
 
-#include "Runtime/core/base/Singleton.h"
-#include "Runtime/core/math/math.h"
+#include "Runtime/core/Base/Singleton.h"
+#include "Runtime/core/Math/Math.h"
 
 namespace GE
 {

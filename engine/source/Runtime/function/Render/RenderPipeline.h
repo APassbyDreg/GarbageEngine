@@ -2,7 +2,7 @@
 
 #include "GE_pch.h"
 
-#include "Runtime/core/math/math.h"
+#include "Runtime/core/Math/Math.h"
 
 #include "ShaderManager/ShaderModule.h"
 #include "VulkanManager/VulkanCore.h"

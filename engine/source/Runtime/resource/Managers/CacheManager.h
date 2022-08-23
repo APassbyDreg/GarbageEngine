@@ -2,9 +2,9 @@
 
 #include "GE_pch.h"
 
+#include "Runtime/core/Base/Singleton.h"
 #include "Runtime/core/Json.h"
-#include "Runtime/core/base/Singleton.h"
-#include "Runtime/core/math/math.h"
+#include "Runtime/core/Math/Math.h"
 
 namespace GE
 {

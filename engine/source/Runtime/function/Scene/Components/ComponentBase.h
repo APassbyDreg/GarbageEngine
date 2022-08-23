@@ -4,8 +4,9 @@
 
 #include "imgui.h"
 
+#include "Runtime/core/Math/Math.h"
 #include "Runtime/core/json.h"
-#include "Runtime/core/math/math.h"
+
 
 #define GE_COMPONENT_COMMON(comp) \
     std::string        GetName() const override { return #comp; } \
