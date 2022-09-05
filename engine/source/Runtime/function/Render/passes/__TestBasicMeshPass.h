@@ -5,7 +5,7 @@
 #include "../DataStructures/Mesh.h"
 #include "../RenderPass.h"
 
-#include "Runtime/core/math/math.h"
+#include "Runtime/core/Math/Math.h"
 
 namespace GE
 {

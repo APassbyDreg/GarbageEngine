@@ -10,12 +10,14 @@ namespace GE
             file >> m_data;
             file.close();
             m_identifier = string2jsonId(m_data["type"].get<std::string>());
-            m_loaded     = true;
+            m_valid      = true;
         }
     }
 
     void JsonResource::Save()
     {
+        GE_CORE_ASSERT(m_valid, "[JsonResource::Save] Trying to save invalid resource to {}", m_filePath.string());
+
         m_data["GE_IDENTIFIER"] = jsonId2string(m_identifier);
         std::ofstream file(m_filePath.string());
         file << m_data;

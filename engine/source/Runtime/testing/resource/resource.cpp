@@ -2,6 +2,8 @@
 
 #include "Runtime/function/Log/LogSystem.h"
 
+#include "Runtime/resource/Managers/ResourceManager.h"
+
 namespace GE
 {
     void CacheManagerTestCase::run()
@@ -24,5 +26,32 @@ namespace GE
                    (name == "test3" && specifier == "test3");
         });
         GE_CORE_ASSERT(!CacheManager::GetInstance().Load({"test2", "test2"}, &res, size), "Failed to invalidate");
+
+        Mesh mesh;
+        for (int i = 0; i < 4; i++)
+        {
+            mesh.vertices.push_back({});
+            mesh.vertices[i].position = {i, i, i};
+        }
+        mesh.indices           = {0, 1, 2, 0, 2, 3};
+        fs::path path          = fs::path(Config::asset_dir) / "test.mesh.ge";
+        auto     mesh_resource = ResourceManager::GetInstance().GetResource<MeshResource>(path);
+        mesh_resource->SaveData(mesh);
+        mesh_resource->Invalid();
+        Mesh& loaded_mesh = mesh_resource->GetData();
+        for (int i = 0; i < 4; i++)
+        {
+            auto v  = mesh.vertices[i];
+            auto v_ = loaded_mesh.vertices[i];
+            GE_CORE_ASSERT(
+                v.position == v_.position, "Mesh vertex data error, expected: {}, got: {}", v.position, v_.position);
+        }
+        for (int i = 0; i < 6; i++)
+        {
+            GE_CORE_ASSERT(mesh.indices[i] == loaded_mesh.indices[i],
+                           "Mesh index data error, expected: {}, got: {}",
+                           mesh.indices[i],
+                           loaded_mesh.indices[i]);
+        }
     }
 } // namespace GE

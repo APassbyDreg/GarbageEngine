@@ -69,7 +69,7 @@ namespace GE
 
         /* ------------- create default vertex and index buffer ------------- */
         {
-            Vertex vertices[4]   = {{}, {}, {}};
+            Vertex vertices[4]   = {{}, {}, {}, {}};
             vertices[0].position = {0.5f, 0.5f, 0.0f};
             vertices[1].position = {-0.5f, 0.5f, 0.0f};
             vertices[2].position = {-0.5f, -0.5f, 0.0f};

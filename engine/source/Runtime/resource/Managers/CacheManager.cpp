@@ -1,41 +1,17 @@
 #include "CacheManager.h"
 
 #include "Runtime/core/Hash.h"
+#include "Runtime/core/Packing.h"
 #include "miniz.h"
 
 namespace GE
 {
-    void __compress(uchar* content, uint64 size, uchar** compressed, uint64& cmp_size)
-    {
-        uLong expected_size = compressBound(size);
-        *compressed         = new uchar[expected_size];
-        compress(*compressed, &expected_size, (const uchar*)content, size);
-        cmp_size = expected_size;
-
-        if (cmp_size > size)
-        {
-            // use uncompressed format
-            delete[] * compressed;
-            *compressed = new uchar[size];
-            memcpy(*compressed, content, size);
-            cmp_size = size;
-        }
-    }
-
-    void __decompress(uchar* content, uint64 size, uchar** decompressed, uint64& decmp_size)
-    {
-        uLong true_size;
-        *decompressed = new uchar[decmp_size];
-        uncompress(*decompressed, &true_size, (const uchar*)content, size);
-        assert(true_size == decmp_size);
-    }
-
     void __save_cache(std::string path, const char* content, uint64 size, std::string& sha)
     {
         uint64 cmp_size;
         uchar* cmp_data;
 
-        __compress((uchar*)content, size, &cmp_data, cmp_size);
+        Packing::CompressData((uchar*)content, size, &cmp_data, cmp_size);
 
         std::ofstream file(path, std::ios::binary);
         file.write((char*)&size, sizeof(uint64));
@@ -50,25 +26,29 @@ namespace GE
 
     void __load_cache(std::string path, char** content, uint64& size, std::string& sha)
     {
-        uint64 cmp_size;
-        char*  cmp_data;
-
+        // load basic data
+        uint64        cmp_size;
+        char*         cmp_data;
         std::ifstream file(path, std::ios::binary);
         file.read((char*)&size, sizeof(uint64));
         file.read((char*)&cmp_size, sizeof(uint64));
+
+        // alloc memory
+        *content = new char[size];
         cmp_data = new char[cmp_size];
         file.read((char*)cmp_data, cmp_size);
 
+        // compute sha on compressed data
         sha = sha256((const char*)cmp_data, cmp_size);
 
+        // decompress
         if (size > cmp_size)
         {
-            __decompress((uchar*)cmp_data, cmp_size, (uchar**)content, size);
+            Packing::DecompressData((uchar*)cmp_data, cmp_size, (uchar**)content, size);
         }
         else
         {
             memcpy(*content, cmp_data, cmp_size);
-            size = cmp_size;
         }
 
         file.close();
