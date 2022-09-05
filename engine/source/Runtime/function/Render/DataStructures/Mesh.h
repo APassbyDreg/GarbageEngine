@@ -84,5 +84,7 @@ namespace GE
     {
         std::vector<Vertex>   vertices;
         std::vector<uint32_t> indices;
+
+        inline uint32_t GetTriCount() const { return indices.size() / 3; }
     };
 } // namespace GE
