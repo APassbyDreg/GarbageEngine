@@ -19,12 +19,18 @@ namespace GE
             ImGui::SetCurrentContext(ctx);
 
             // demo window
-            bool _show_demo_window = true;
-            ImGui::ShowDemoWindow(&_show_demo_window);
+            static bool _show_demo_window = true;
+            if (_show_demo_window)
+                ImGui::ShowDemoWindow(&_show_demo_window);
 
             // custom window
-            ImGui::Begin("Test");
+            static bool popen = true;
+            ImGui::Begin("Test", &popen);
             ImGui::Text("This is a test layer");
+            if (ImGui::Button("Toggle demo window"))
+            {
+                _show_demo_window = !_show_demo_window;
+            }
             if (ImGui::Button("Add an basic entity"))
             {
                 Application&            app = Application::GetInstance();

@@ -50,7 +50,7 @@ namespace GE
                 framebuffer_info.width                   = m_viewportSize.width;
                 framebuffer_info.height                  = m_viewportSize.height;
                 framebuffer_info.layers                  = 1;
-                VK_CHECK(
+                GE_VK_ASSERT(
                     vkCreateFramebuffer(VulkanCore::GetVkDevice(), &framebuffer_info, nullptr, &fd->m_framebuffer));
                 m_frameData.emplace_back(fd);
             }

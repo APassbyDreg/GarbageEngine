@@ -25,6 +25,8 @@ namespace GE
 
         void PushLayer(std::shared_ptr<Layer> layer);
         void PushOverlay(std::shared_ptr<Layer> overlay);
+        void PopLayer(std::shared_ptr<Layer> layer);
+        void PopOverlay(std::shared_ptr<Layer> overlay);
 
         inline static Application&     GetInstance() { return *s_instance; }
         inline std::shared_ptr<Window> GetActiveWindow() { return m_activeWindow; }

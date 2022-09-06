@@ -26,7 +26,7 @@ namespace GE
 
         // layout
         auto layout_info = VkInit::GetPipelineLayoutCreateInfo(m_descriptorSetLayout, m_pushConstantRanges);
-        VK_CHECK(vkCreatePipelineLayout(VulkanCore::GetVkDevice(), &layout_info, nullptr, &m_pipelineLayout));
+        GE_VK_ASSERT(vkCreatePipelineLayout(VulkanCore::GetVkDevice(), &layout_info, nullptr, &m_pipelineLayout));
 
         // pipeline
         auto info = VkInit::GetGraphicsPipelineCreateInfo(m_pipelineLayout,
@@ -41,7 +41,8 @@ namespace GE
                                                           &m_depthStencilState,
                                                           &m_colorBlendState,
                                                           &m_dynamicState);
-        VK_CHECK(vkCreateGraphicsPipelines(VulkanCore::GetVkDevice(), VK_NULL_HANDLE, 1, &info, nullptr, &m_pipeline));
+        GE_VK_ASSERT(
+            vkCreateGraphicsPipelines(VulkanCore::GetVkDevice(), VK_NULL_HANDLE, 1, &info, nullptr, &m_pipeline));
 
         m_ready = true;
     }

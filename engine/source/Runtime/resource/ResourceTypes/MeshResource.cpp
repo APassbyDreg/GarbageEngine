@@ -1,5 +1,7 @@
 #include "MeshResource.h"
 
+#include "OBJ_Loader.h"
+
 namespace GE
 {
     void MeshResource::Load()
@@ -65,5 +67,30 @@ namespace GE
         // save and clean
         m_trueResource.SaveData(bytedata);
         m_trueResource.Invalid();
+    }
+
+    void MeshResource::FromObj(fs::path file)
+    {
+        objl::Loader loader;
+        bool         success = loader.LoadFile(file.string());
+        GE_CORE_CHECK(success, "[MeshResource::FromObj] Error loading obj file {}", file.string());
+
+		// convert format
+        for (objl::Mesh& m : loader.LoadedMeshes)
+        {
+            for (unsigned int& idx : m.Indices)
+            {
+                objl::Vertex v = m.Vertices[idx];
+                Vertex       vert;
+                vert.normal   = float3(v.Normal.X, v.Normal.Y, v.Normal.Z);
+                vert.position = float3(v.Position.X, v.Position.Y, v.Position.Z);
+                vert.uv0      = float2(v.TextureCoordinate.X, v.TextureCoordinate.Y);
+                m_data.vertices.push_back(vert);
+            }
+            m_data.indices = m.Indices;
+        }
+		
+		GE_CORE_INFO("[MeshResource::FromObj] loaded {} vertices and {} indices from {}", m_data.vertices.size(), m_data.indices.size(), file.string());
+        m_valid = true;
     }
 } // namespace GE

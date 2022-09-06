@@ -9,7 +9,7 @@ namespace GE
         create_info.codeSize                 = spv.size() * sizeof(uint32_t);
         create_info.pCode                    = spv.data();
 
-        VK_CHECK(vkCreateShaderModule(VulkanCore::GetVkDevice(), &create_info, nullptr, &m_module));
+        GE_VK_ASSERT(vkCreateShaderModule(VulkanCore::GetVkDevice(), &create_info, nullptr, &m_module));
 
         m_stage = VkInit::GetPipelineShaderStageCreateInfo(
             static_cast<VkShaderStageFlagBits>(type), m_module, m_entry.c_str());

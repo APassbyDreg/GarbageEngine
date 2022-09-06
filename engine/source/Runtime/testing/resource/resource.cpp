@@ -27,31 +27,38 @@ namespace GE
         });
         GE_CORE_ASSERT(!CacheManager::GetInstance().Load({"test2", "test2"}, &res, size), "Failed to invalidate");
 
-        Mesh mesh;
-        for (int i = 0; i < 4; i++)
-        {
-            mesh.vertices.push_back({});
-            mesh.vertices[i].position = {i, i, i};
-        }
-        mesh.indices           = {0, 1, 2, 0, 2, 3};
-        fs::path path          = fs::path(Config::asset_dir) / "test.mesh.ge";
-        auto     mesh_resource = ResourceManager::GetInstance().GetResource<MeshResource>(path);
-        mesh_resource->SaveData(mesh);
-        mesh_resource->Invalid();
-        Mesh& loaded_mesh = mesh_resource->GetData();
-        for (int i = 0; i < 4; i++)
-        {
-            auto v  = mesh.vertices[i];
-            auto v_ = loaded_mesh.vertices[i];
-            GE_CORE_ASSERT(
-                v.position == v_.position, "Mesh vertex data error, expected: {}, got: {}", v.position, v_.position);
-        }
-        for (int i = 0; i < 6; i++)
-        {
-            GE_CORE_ASSERT(mesh.indices[i] == loaded_mesh.indices[i],
-                           "Mesh index data error, expected: {}, got: {}",
-                           mesh.indices[i],
-                           loaded_mesh.indices[i]);
-        }
+        fs::path obj_path      = fs::path(Config::asset_dir) / "mesh" / "basic" / "cube.obj";
+        fs::path resource_path = fs::path(Config::asset_dir) / "test.mesh.ge";
+        auto     resource      = ResourceManager::GetInstance().GetResource<MeshResource>(resource_path);
+        resource->FromObj(obj_path);
+        Mesh& mesh = resource->GetData();
+        // resource->Save();
+
+        // Mesh mesh;
+        // for (int i = 0; i < 4; i++)
+        // {
+        //     mesh.vertices.push_back({});
+        //     mesh.vertices[i].position = {i, i, i};
+        // }
+        // mesh.indices           = {0, 1, 2, 0, 2, 3};
+        // fs::path path          = fs::path(Config::asset_dir) / "test.mesh.ge";
+        // auto     mesh_resource = ResourceManager::GetInstance().GetResource<MeshResource>(path);
+        // mesh_resource->SaveData(mesh);
+        // mesh_resource->Invalid();
+        // Mesh& loaded_mesh = mesh_resource->GetData();
+        // for (int i = 0; i < 4; i++)
+        // {
+        //     auto v  = mesh.vertices[i];
+        //     auto v_ = loaded_mesh.vertices[i];
+        //     GE_CORE_ASSERT(
+        //         v.position == v_.position, "Mesh vertex data error, expected: {}, got: {}", v.position, v_.position);
+        // }
+        // for (int i = 0; i < 6; i++)
+        // {
+        //     GE_CORE_ASSERT(mesh.indices[i] == loaded_mesh.indices[i],
+        //                    "Mesh index data error, expected: {}, got: {}",
+        //                    mesh.indices[i],
+        //                    loaded_mesh.indices[i]);
+        // }
     }
 } // namespace GE

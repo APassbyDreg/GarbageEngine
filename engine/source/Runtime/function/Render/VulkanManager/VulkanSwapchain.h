@@ -32,13 +32,13 @@ namespace GE
             GE_CORE_ASSERT(m_ready, "swapchain not ready");
             uint idx;
             bool success;
-            VK_CHECK_NOEXIT_RESULT(vkAcquireNextImageKHR(VulkanCore::GetVkDevice(),
-                                                         m_swapchain,
-                                                         1000,
-                                                         m_imageAvailableSemaphores[m_currentIndex],
-                                                         VK_NULL_HANDLE,
-                                                         &idx),
-                                   success);
+            GE_VK_CHECK_RESULT(vkAcquireNextImageKHR(VulkanCore::GetVkDevice(),
+                                                     m_swapchain,
+                                                     1000,
+                                                     m_imageAvailableSemaphores[m_currentIndex],
+                                                     VK_NULL_HANDLE,
+                                                     &idx),
+                               success);
             m_currentIndex = (m_currentIndex + 1) % m_imageCount;
             return success ? idx : -1;
         }

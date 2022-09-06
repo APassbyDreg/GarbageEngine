@@ -28,6 +28,8 @@ namespace GE
         void Load() override;
         void Save() override;
 
+        void FromObj(fs::path file);
+
         uint64 m_version = 0;
 
     private:

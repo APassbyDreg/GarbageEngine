@@ -53,7 +53,7 @@ namespace GE
         {
             VkRenderPassCreateInfo info =
                 VkInit::GetRenderPassCreateInfo(m_flattenAttachments, m_subpasses, m_dependencies);
-            VK_CHECK(vkCreateRenderPass(VulkanCore::GetVkDevice(), &info, nullptr, &m_renderPass));
+            GE_VK_ASSERT(vkCreateRenderPass(VulkanCore::GetVkDevice(), &info, nullptr, &m_renderPass));
             m_ready = true;
         }
     }

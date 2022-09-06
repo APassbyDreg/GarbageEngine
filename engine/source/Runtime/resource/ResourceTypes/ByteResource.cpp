@@ -33,7 +33,7 @@ namespace GE
             }
             else
             {
-                GE_CORE_ERROR("ByteResource::Load: full_size < cmp_size");
+                GE_CORE_ERROR("[ByteResource::Load]: full_size < cmp_size");
                 return;
             }
             m_data = std::vector<byte>(tmp, tmp + full_size);

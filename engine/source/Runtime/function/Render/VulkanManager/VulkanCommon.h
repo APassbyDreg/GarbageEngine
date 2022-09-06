@@ -76,21 +76,21 @@ namespace GE
         return true;
     }
 
-#define VK_CHECK(call) \
+#define GE_VK_ASSERT(call) \
     do \
     { \
         VkResult __vk_check_res = (call); \
         __vk_check_fn(__vk_check_res); \
     } while (0)
 
-#define VK_CHECK_NOEXIT(call) \
+#define GE_VK_CHECK(call) \
     do \
     { \
         VkResult __vk_check_res = (call); \
         __vk_check_fn_noexit(__vk_check_res); \
     } while (0)
 
-#define VK_CHECK_NOEXIT_RESULT(call, result) \
+#define GE_VK_CHECK_RESULT(call, result) \
     do \
     { \
         VkResult __vk_check_res = (call); \

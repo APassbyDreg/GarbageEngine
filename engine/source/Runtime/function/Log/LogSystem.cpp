@@ -6,14 +6,14 @@
 
 namespace GE
 {
-    std::shared_ptr<spdlog::logger>         LogSystem::s_core_logger;
-    std::shared_ptr<spdlog::logger>         LogSystem::s_client_logger;
-    std::map<std::string, LogSystem::Level> LogSystem::s_string2level = {{"trace", Level::Trace},
-                                                                         {"debug", Level::Debug},
-                                                                         {"info", Level::Info},
-                                                                         {"warn", Level::Warn},
-                                                                         {"error", Level::Error},
-                                                                         {"critical", Level::Critical}};
+    std::shared_ptr<spdlog::logger> LogSystem::s_core_logger;
+    std::shared_ptr<spdlog::logger> LogSystem::s_client_logger;
+    std::map<std::string, LogLevel> LogSystem::s_string2level = {{"trace", LogLevel::Trace},
+                                                                 {"debug", LogLevel::Debug},
+                                                                 {"info", LogLevel::Info},
+                                                                 {"warn", LogLevel::Warn},
+                                                                 {"error", LogLevel::Error},
+                                                                 {"critical", LogLevel::Critical}};
 
     LogSystem::LogSystem()
     {

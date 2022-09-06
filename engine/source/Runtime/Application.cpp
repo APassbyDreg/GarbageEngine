@@ -61,7 +61,8 @@ namespace GE
             ImGuiContext* ctx = m_activeWindow->GetImGuiContext();
             for (auto&& layer : m_layerStack)
             {
-                layer->OnImGuiRender(ctx);
+                layer->Update();
+                layer->RenderImGui(ctx);
             }
 
             m_activeWindow->EndWindowRender();
@@ -107,6 +108,18 @@ namespace GE
     {
         m_layerStack.PushOverlay(overlay);
         overlay->OnAttach();
+    }
+
+    void Application::PopLayer(std::shared_ptr<Layer> layer)
+    {
+        m_layerStack.PopLayer(layer);
+        layer->OnDetach();
+    }
+
+    void Application::PopOverlay(std::shared_ptr<Layer> overlay)
+    {
+        m_layerStack.PopOverlay(overlay);
+        overlay->OnDetach();
     }
 
     bool Application::OnWindowClose(WindowCloseEvent& e)

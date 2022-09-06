@@ -110,7 +110,7 @@ namespace GE
 
         // Create Surface
         {
-            VK_CHECK(glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface));
+            GE_VK_ASSERT(glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface));
         }
 
         // Choose and create device
@@ -142,7 +142,7 @@ namespace GE
 
     void VulkanCore::destroy_vulkan()
     {
-        VK_CHECK(vkDeviceWaitIdle(m_device));
+        GE_VK_ASSERT(vkDeviceWaitIdle(m_device));
 
         vkb::destroy_device(m_vkbDevice);
 

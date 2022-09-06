@@ -88,20 +88,20 @@ namespace GE
             m_needRebuildSwapChain = true;
             return;
         }
-        VK_CHECK(res);
+        GE_VK_ASSERT(res);
 
         ImGui_ImplVulkanH_Frame* fd = &m_imguiWindow.Frames[m_imguiWindow.FrameIndex];
         {
-            VK_CHECK(vkWaitForFences(vk_device, 1, &fd->Fence, VK_TRUE, UINT64_MAX));
+            GE_VK_ASSERT(vkWaitForFences(vk_device, 1, &fd->Fence, VK_TRUE, UINT64_MAX));
 
-            VK_CHECK(vkResetFences(vk_device, 1, &fd->Fence));
+            GE_VK_ASSERT(vkResetFences(vk_device, 1, &fd->Fence));
         }
         {
-            VK_CHECK(vkResetCommandPool(vk_device, fd->CommandPool, 0));
+            GE_VK_ASSERT(vkResetCommandPool(vk_device, fd->CommandPool, 0));
             VkCommandBufferBeginInfo info = {};
             info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
             info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            VK_CHECK(vkBeginCommandBuffer(fd->CommandBuffer, &info));
+            GE_VK_ASSERT(vkBeginCommandBuffer(fd->CommandBuffer, &info));
         }
 
         /* -------------------------- renderer pass ------------------------- */
@@ -146,8 +146,8 @@ namespace GE
                 info.signalSemaphoreCount       = 1;
                 info.pSignalSemaphores          = &render_complete_semaphore;
 
-                VK_CHECK(vkEndCommandBuffer(fd->CommandBuffer));
-                VK_CHECK(vkQueueSubmit(vk_graphics_queue, 1, &info, fd->Fence));
+                GE_VK_ASSERT(vkEndCommandBuffer(fd->CommandBuffer));
+                GE_VK_ASSERT(vkQueueSubmit(vk_graphics_queue, 1, &info, fd->Fence));
             }
         }
 
@@ -180,7 +180,7 @@ namespace GE
             m_needRebuildSwapChain = true;
             return;
         }
-        VK_CHECK(res);
+        GE_VK_ASSERT(res);
 
         m_imguiWindow.SemaphoreIndex =
             (m_imguiWindow.SemaphoreIndex + 1) % m_imguiWindow.ImageCount; // Now we can use the next set of semaphores
@@ -348,7 +348,7 @@ namespace GE
         // Check for WSI support
         {
             VkBool32 res;
-            VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(
+            GE_VK_ASSERT(vkGetPhysicalDeviceSurfaceSupportKHR(
                 vk_physical_device, vk_graphics_queue_index, m_imguiWindow.Surface, &res));
             GE_CORE_ASSERT(res == VK_TRUE, "WSI not supported Error no WSI support on selected physical device!");
         }
@@ -407,7 +407,7 @@ namespace GE
             pool_info.maxSets                       = 1000 * IM_ARRAYSIZE(pool_sizes);
             pool_info.poolSizeCount                 = (uint32_t)IM_ARRAYSIZE(pool_sizes);
             pool_info.pPoolSizes                    = pool_sizes;
-            VK_CHECK(vkCreateDescriptorPool(vk_device, &pool_info, nullptr, &m_imguiDescriptorPool));
+            GE_VK_ASSERT(vkCreateDescriptorPool(vk_device, &pool_info, nullptr, &m_imguiDescriptorPool));
         }
 
         // Create Context and basic config
@@ -459,12 +459,12 @@ namespace GE
             VkCommandPool   command_pool   = m_imguiWindow.Frames[m_imguiWindow.FrameIndex].CommandPool;
             VkCommandBuffer command_buffer = m_imguiWindow.Frames[m_imguiWindow.FrameIndex].CommandBuffer;
 
-            VK_CHECK(vkResetCommandPool(vk_device, command_pool, 0));
+            GE_VK_ASSERT(vkResetCommandPool(vk_device, command_pool, 0));
             VkCommandBufferBeginInfo begin_info = {};
             begin_info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
             begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-            VK_CHECK(vkBeginCommandBuffer(command_buffer, &begin_info));
+            GE_VK_ASSERT(vkBeginCommandBuffer(command_buffer, &begin_info));
 
             ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
 
@@ -473,9 +473,9 @@ namespace GE
             end_info.commandBufferCount = 1;
             end_info.pCommandBuffers    = &command_buffer;
 
-            VK_CHECK(vkEndCommandBuffer(command_buffer));
-            VK_CHECK(vkQueueSubmit(vk_graphics_queue, 1, &end_info, VK_NULL_HANDLE));
-            VK_CHECK(vkDeviceWaitIdle(vk_device));
+            GE_VK_ASSERT(vkEndCommandBuffer(command_buffer));
+            GE_VK_ASSERT(vkQueueSubmit(vk_graphics_queue, 1, &end_info, VK_NULL_HANDLE));
+            GE_VK_ASSERT(vkDeviceWaitIdle(vk_device));
 
             ImGui_ImplVulkan_DestroyFontUploadObjects();
         }
@@ -518,7 +518,7 @@ namespace GE
         info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        VK_CHECK(vkCreateSampler(VulkanCore::GetVkDevice(), &info, nullptr, &m_viewportSampler));
+        GE_VK_ASSERT(vkCreateSampler(VulkanCore::GetVkDevice(), &info, nullptr, &m_viewportSampler));
 
         for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
         {

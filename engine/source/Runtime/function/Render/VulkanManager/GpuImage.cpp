@@ -26,11 +26,11 @@ namespace GE
         m_imageInfo = image_info;
         m_allocInfo = alloc_info;
 
-        VK_CHECK(
+        GE_VK_ASSERT(
             vmaCreateImage(VulkanCore::GetAllocator(), &image_info, &alloc_info, &m_image, &m_allocation, nullptr));
 
         VkImageViewCreateInfo info = VkInit::GetVkImageViewCreateInfo(m_image, image_info);
-        VK_CHECK(vkCreateImageView(VulkanCore::GetVkDevice(), &info, nullptr, &m_imageView));
+        GE_VK_ASSERT(vkCreateImageView(VulkanCore::GetVkDevice(), &info, nullptr, &m_imageView));
 
         m_alloced = true;
     }

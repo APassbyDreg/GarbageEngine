@@ -28,7 +28,7 @@ namespace GE
 
         m_bufferInfo = buffer_info;
         m_allocInfo  = alloc_info;
-        VK_CHECK(
+        GE_VK_ASSERT(
             vmaCreateBuffer(VulkanCore::GetAllocator(), &buffer_info, &alloc_info, &m_buffer, &m_allocation, nullptr));
         m_alloced = true;
     }
@@ -38,7 +38,7 @@ namespace GE
         GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
 
         void* mapped;
-        VK_CHECK(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, &mapped));
+        GE_VK_ASSERT(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, &mapped));
         memcpy(mapped, data, size);
         vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
     }
@@ -50,7 +50,7 @@ namespace GE
         size = m_bufferInfo.size;
 
         void* mapped;
-        VK_CHECK(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, &mapped));
+        GE_VK_ASSERT(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, &mapped));
         memcpy(data, mapped, size);
         vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
     }
@@ -69,7 +69,7 @@ namespace GE
         {
             m_bufferInfo = buffer.GetBufferInfo();
             m_allocInfo  = buffer.GetAllocInfo();
-            VK_CHECK(vmaCreateBuffer(
+            GE_VK_ASSERT(vmaCreateBuffer(
                 VulkanCore::GetAllocator(), &m_bufferInfo, &m_allocInfo, &m_buffer, &m_allocation, nullptr));
             m_alloced = true;
         }

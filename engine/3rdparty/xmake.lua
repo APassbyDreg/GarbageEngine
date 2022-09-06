@@ -128,6 +128,10 @@ function GE_link_dxc()
     end
 end
 
+function GE_link_objloader() 
+    add_includedirs((rel_local_path("OBJ_Loader")))
+end
+
 
 -------------------------------- overall --------------------------------
 function GE_link_3rdparty()
@@ -144,6 +148,7 @@ function GE_link_3rdparty()
     GE_link_miniz()
     GE_link_stb()
     GE_link_dxc()
+    GE_link_objloader()
 
     add_packages("openssl")
 end

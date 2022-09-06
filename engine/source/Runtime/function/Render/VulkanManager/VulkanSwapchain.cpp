@@ -36,7 +36,7 @@ namespace GE
             VkSemaphoreCreateInfo semaphore_info = {};
             semaphore_info.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
             VkSemaphore image_available_semaphore;
-            VK_CHECK(
+            GE_VK_ASSERT(
                 vkCreateSemaphore(VulkanCore::GetVkDevice(), &semaphore_info, nullptr, &image_available_semaphore));
             m_imageAvailableSemaphores.push_back(image_available_semaphore);
         }
