@@ -42,12 +42,13 @@ namespace GE
         {
             std::vector<std::string> remove_list = {};
 
+            uint idx = 0;
             m_entities[m_focusEntityID]->IterateComponent([&](ComponentBase& comp, Entity& e) {
                 if (ImGui::CollapsingHeader(comp.GetName().c_str()))
                 {
                     if (comp.GetName() != TagComponent::GetNameStatic())
                     {
-                        ImGui::PushID(1);
+                        ImGui::PushID(idx);
                         ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
                         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
                         ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
@@ -61,6 +62,7 @@ namespace GE
                     comp.Inspect();
                 }
                 ImGui::Separator();
+                idx++;
             });
 
             for (auto&& name : remove_list)
