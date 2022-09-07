@@ -2,6 +2,8 @@
 
 #include "ComponentBase.h"
 
+#include "Runtime/resource/ResourceTypes/MeshResource.h"
+
 namespace GE
 {
     class InstancedMeshComponent : public ComponentBase
@@ -9,20 +11,18 @@ namespace GE
     public:
         GE_COMPONENT_COMMON(InstancedMeshComponent);
 
-        std::string m_source = "";
+        std::shared_ptr<MeshResource> m_source = nullptr;
 
+    public:
         InstancedMeshComponent() {}
 
         inline json Serialize() const override { return {}; }
 
         inline void Deserialize(const json& data) override {}
 
-        inline void Inspect() override
-        {
-            if (ImGui::CollapsingHeader("InstancedMesh"))
-            {}
-        }
+        void Inspect() override;
 
     private:
+        void HandleOpenFile();
     };
 } // namespace GE
