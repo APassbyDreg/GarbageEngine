@@ -129,7 +129,7 @@ function GE_link_dxc()
 end
 
 function GE_link_objloader() 
-    add_includedirs((rel_local_path("OBJ_Loader")))
+    add_includedirs(rel_local_path("OBJ_Loader"))
 end
 
 
