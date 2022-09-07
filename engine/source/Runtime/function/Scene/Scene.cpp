@@ -40,10 +40,33 @@ namespace GE
     {
         if (m_focusEntityID >= 0 && m_focusEntityID < m_entities.size())
         {
-            m_entities[m_focusEntityID]->IterateComponent([](ComponentBase& comp) {
-                comp.Inspect();
+            std::vector<std::string> remove_list = {};
+
+            m_entities[m_focusEntityID]->IterateComponent([&](ComponentBase& comp, Entity& e) {
+                if (ImGui::CollapsingHeader(comp.GetName().c_str()))
+                {
+                    if (comp.GetName() != TagComponent::GetNameStatic())
+                    {
+                        ImGui::PushID(1);
+                        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
+                        if (ImGui::Button("remove", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
+                        {
+                            remove_list.push_back(comp.GetName());
+                        }
+                        ImGui::PopStyleColor(3);
+                        ImGui::PopID();
+                    }
+                    comp.Inspect();
+                }
                 ImGui::Separator();
             });
+
+            for (auto&& name : remove_list)
+            {
+                ComponentFactory::GetInstance().DetachComponent(name, *m_entities[m_focusEntityID]);
+            }
         }
         else
         {

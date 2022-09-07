@@ -41,22 +41,19 @@ namespace GE
 
         inline void Inspect() override
         {
-            if (ImGui::CollapsingHeader("Perspective Camera"))
+            m_typeid                  = __camera_type2id(m_type);
+            const char* type_names[2] = {"Perspective", "Orthographic"};
+            const int   type_count    = 2;
+            ImGui::Combo("Camera Type", &m_typeid, type_names, type_count);
+            ImGui::DragFloat("Field of View (horizon)", &m_horizonFov);
+            ImGui::DragFloat2("Z Clip (near -> far)", reinterpret_cast<float*>(&m_clip));
+            if (m_clip.x > m_clip.y)
             {
-                m_typeid                  = __camera_type2id(m_type);
-                const char* type_names[2] = {"Perspective", "Orthographic"};
-                const int   type_count    = 2;
-                ImGui::Combo("Camera Type", &m_typeid, type_names, type_count);
-                ImGui::DragFloat("Field of View (horizon)", &m_horizonFov);
-                ImGui::DragFloat2("Z Clip (near -> far)", reinterpret_cast<float*>(&m_clip));
-                if (m_clip.x > m_clip.y)
-                {
-                    float tmp = m_clip.x;
-                    m_clip.x  = m_clip.y;
-                    m_clip.y  = tmp;
-                }
-                m_type = __camera_id2type(m_typeid);
+                float tmp = m_clip.x;
+                m_clip.x  = m_clip.y;
+                m_clip.y  = tmp;
             }
+            m_type = __camera_id2type(m_typeid);
         }
 
         /* ----------------------------- helpers ---------------------------- */

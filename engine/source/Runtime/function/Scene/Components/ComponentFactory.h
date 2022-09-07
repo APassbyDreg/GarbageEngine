@@ -4,6 +4,7 @@
 
 /* ------------------------ register components here ------------------------ */
 #include "Camera.h"
+#include "InstancedMesh.h"
 #include "Tag.h"
 #include "Transform.h"
 
@@ -22,27 +23,17 @@ namespace GE
             m_componentFactories[name](data, e);
         }
 
-    private:
-        template<typename T>
-        void RegisterComponent(std::string name)
+        inline void DetachComponent(std::string name, Entity& e)
         {
-            m_componentFactories[name] = [](const json& data, Entity& e) { e.AddComponent<T>(data); };
+            EnsureInit();
+            m_componentRemovers[name](e);
         }
 
-#define REGISTER_TYPE(typename) RegisterComponent<typename>(#typename);
-        inline void EnsureInit()
-        {
-            if (!m_initialized)
-            {
-                REGISTER_TYPE(CameraComponent);
-                REGISTER_TYPE(TagComponent);
-                REGISTER_TYPE(TransformComponent);
-                m_initialized = true;
-            }
-        }
-#undef REGISTER_TYPE
+    private:
+        void EnsureInit();
 
         std::map<std::string, std::function<void(const json&, Entity&)>> m_componentFactories;
+        std::map<std::string, std::function<void(Entity&)>>              m_componentRemovers;
         bool                                                             m_initialized = false;
     };
 } // namespace GE

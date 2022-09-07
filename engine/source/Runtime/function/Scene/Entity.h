@@ -5,8 +5,8 @@
 #include "Runtime/core/ECS.h"
 
 #include "Runtime/function/Log/LogSystem.h"
-#include "Runtime/function/Scene/Components/ComponentFactory.h"
 
+#include "Components/ComponentFactory.h"
 #include "Systems/SystemBase.h"
 
 namespace GE
@@ -27,8 +27,8 @@ namespace GE
 
         /* --------------------------- components --------------------------- */
 
-        using ComponentIteratorFunc      = std::function<void(ComponentBase&)>;
-        using ComponentConstIteratorFunc = std::function<void(const ComponentBase&)>;
+        using ComponentIteratorFunc      = std::function<void(ComponentBase&, Entity&)>;
+        using ComponentConstIteratorFunc = std::function<void(const ComponentBase&, Entity&)>;
 
         template<std::derived_from<ComponentBase> T, typename... TArgs>
         void AddComponent(TArgs&&... args)
@@ -37,18 +37,18 @@ namespace GE
             m_srcReg.emplace<T>(m_entityID, std::forward<TArgs>(args)...);
             m_compIters[T::GetNameStatic()] = [&, this](ComponentIteratorFunc f) {
                 T& comp = GetComponent<T>();
-                f(comp);
+                f(comp, *this);
             };
             m_compConstIters[T::GetNameStatic()] = [&, this](ComponentConstIteratorFunc f) {
                 const T& comp = GetComponent<T>();
-                f(comp);
+                f(comp, *this);
             };
         }
 
         template<std::derived_from<ComponentBase> T>
         void RemoveComponent()
         {
-            GE_CORE_ASSERT(HasComponent<T>() == true, "[Entity::RemoveComponent] Component not found");
+            GE_CORE_ASSERT(HasComponent<T>(), "[Entity::RemoveComponent] Component {} not found", T::GetNameStatic());
             m_srcReg.remove<T>(m_entityID);
             m_compIters.erase(T::GetNameStatic());
             m_compConstIters.erase(T::GetNameStatic());
@@ -63,7 +63,7 @@ namespace GE
         template<std::derived_from<ComponentBase> T>
         T& GetComponent()
         {
-            GE_CORE_ASSERT(HasComponent<T>() == true, "[Entity::GetComponent] Component not found");
+            GE_CORE_ASSERT(HasComponent<T>(), "[Entity::GetComponent] Component {} not found", T::GetNameStatic());
             return m_srcReg.get<T>(m_entityID);
         }
 

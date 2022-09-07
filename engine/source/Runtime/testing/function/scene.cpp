@@ -1,5 +1,7 @@
 #include "scene.h"
+
 #include "Runtime/function/Scene/Components/ComponentFactory.h"
+
 
 namespace GE
 {
@@ -13,6 +15,7 @@ namespace GE
             TransformComponent& trans = e0->GetComponent<TransformComponent>();
         }
         auto e1 = sc.CreateEntity("Entity 1", 1, 0);
+        e1->RemoveComponent<TagComponent>();
 
         json data = sc.Serialize();
         GE_CORE_INFO("Serialized scene: {}", data.dump());

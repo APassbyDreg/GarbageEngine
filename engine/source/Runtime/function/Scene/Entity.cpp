@@ -7,7 +7,7 @@ namespace GE
     json Entity::Serialize() const
     {
         json components;
-        IterateComponentConst([&](const ComponentBase& comp) { components[comp.GetName()] = comp.Serialize(); });
+        IterateComponentConst([&](const ComponentBase& comp, Entity& e) { components[comp.GetName()] = comp.Serialize(); });
 
         json systems = json::array();
         {

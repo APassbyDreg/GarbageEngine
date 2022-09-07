@@ -46,13 +46,10 @@ namespace GE
 
         inline void Inspect() override
         {
-            if (ImGui::CollapsingHeader("Transform"))
-            {
-                ImGui::DragFloat3("Position", reinterpret_cast<float*>(&m_position));
-                ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&m_scale));
-                ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&m_eulerAngles));
-                m_rotation = glm::quat(glm::radians(m_eulerAngles));
-            }
+            ImGui::DragFloat3("Position", reinterpret_cast<float*>(&m_position));
+            ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&m_scale));
+            ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&m_eulerAngles));
+            m_rotation = glm::quat(glm::radians(m_eulerAngles));
         }
 
         /* ----------------------------- helpers ---------------------------- */

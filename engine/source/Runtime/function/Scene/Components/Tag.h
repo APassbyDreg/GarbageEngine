@@ -27,14 +27,11 @@ namespace GE
 
         inline void Inspect() override
         {
-            if (ImGui::CollapsingHeader("Tag"))
-            {
-                strcpy(m_nameBuffer, m_name.c_str());
-                ImGui::InputText("Name", m_nameBuffer, 256);
-                ImGui::InputInt("Layer", &m_layer);
-                ImGui::InputInt("Tag", &m_tag);
-                m_name = m_nameBuffer;
-            }
+            strcpy(m_nameBuffer, m_name.c_str());
+            ImGui::InputText("Name", m_nameBuffer, 256);
+            ImGui::InputInt("Layer", &m_layer);
+            ImGui::InputInt("Tag", &m_tag);
+            m_name = m_nameBuffer;
         }
 
     private:

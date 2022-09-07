@@ -4,6 +4,8 @@
 
 #include "Runtime/core/Base/Singleton.h"
 
+#include "SystemBase.h"
+
 namespace GE
 {
     class Entity;
