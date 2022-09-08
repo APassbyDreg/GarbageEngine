@@ -31,10 +31,9 @@ end
 -------------------------------- vulkan
 --------------------------------
 function GE_link_vulkan() 
-    add_includedirs(rel_local_path("vulkan/include"))
-    if is_plat("windows") then 
-        add_links(rel_local_path("vulkan/lib/Windows/vulkan-1"))
-    end
+    local vk_dir = os.getenv("VULKAN_SDK")
+    add_includedirs(path.join(vk_dir, "Include"))
+    add_links(path.join(vk_dir, "Lib/vulkan-1"))
 end
 
 
