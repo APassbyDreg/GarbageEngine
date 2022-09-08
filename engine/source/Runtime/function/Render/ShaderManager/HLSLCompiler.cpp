@@ -75,6 +75,7 @@ namespace GE
     {
         std::vector<std::wstring> args;
         args.emplace_back(L"-spirv");
+        args.emplace_back(L"-fspv-target-env=vulkan1.2"); // REVIEW: Use dynamic vulkan version.
         args.emplace_back(L"-E");
         args.emplace_back(std::wstring(entry.begin(), entry.end()));
         for (auto& dir : m_includeDirs)

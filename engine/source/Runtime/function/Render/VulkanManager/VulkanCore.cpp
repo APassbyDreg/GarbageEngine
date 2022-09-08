@@ -87,7 +87,7 @@ namespace GE
                 .set_app_version(1)
                 .set_engine_name("GE")
                 .set_engine_version(1)
-                .require_api_version(VK_API_VERSION_1_3);
+                .require_api_version(VK_API_VERSION_1_2);
 
             // extensions
             uint32_t     glfw_extension_count = 0;
@@ -116,7 +116,7 @@ namespace GE
         // Choose and create device
         {
             vkb::PhysicalDeviceSelector selector {m_vkbInstance};
-            selector.set_minimum_version(1, 3).set_surface(m_surface).require_present().prefer_gpu_device_type(
+            selector.set_minimum_version(1, 2).set_surface(m_surface).require_present().prefer_gpu_device_type(
                 vkb::PreferredDeviceType::discrete);
             VKB_CHECK_RETURN(selector.select(), m_vkbPhysicalDevice);
 
@@ -129,14 +129,34 @@ namespace GE
             m_device         = m_vkbDevice.device;
 
             VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::graphics), m_graphicsQueue);
-            VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::present), m_presentQueue);
-            VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute), m_computeQueue);
-            VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::transfer), m_transferQueue);
-
             VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::graphics), m_graphicsQueueFamilyIndex);
+
+            VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::present), m_presentQueue);
             VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::present), m_presentQueueFamilyIndex);
-            VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute), m_computeQueueFamilyIndex);
-            VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::transfer), m_transferQueueFamilyIndex);
+
+            try
+            {
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute), m_computeQueue);
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute), m_computeQueueFamilyIndex);
+                m_supportCompute = true;
+            }
+            catch (const std::exception& e)
+            {
+                GE_CORE_ERROR("Failed to get compute queue: {}", e.what());
+                m_supportCompute = false;
+            }
+
+            try
+            {
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::transfer), m_transferQueue);
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::transfer), m_transferQueueFamilyIndex);
+                m_supportTransfer = true;
+            }
+            catch (const std::exception& e)
+            {
+                GE_CORE_ERROR("Failed to get transfer queue: {}", e.what());
+                m_supportTransfer = false;
+            }
         }
     }
 
@@ -163,7 +183,7 @@ namespace GE
         vulkanFunctions.vkGetDeviceProcAddr   = &vkGetDeviceProcAddr;
 
         VmaAllocatorCreateInfo allocatorCreateInfo = {};
-        allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_3;
+        allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_2;
         allocatorCreateInfo.physicalDevice         = m_physicalDevice;
         allocatorCreateInfo.device                 = m_device;
         allocatorCreateInfo.instance               = m_instance;

@@ -46,13 +46,15 @@ namespace GE
         {
             return GetInstance().ensure_ready().m_presentQueueFamilyIndex;
         }
-        static inline uint32_t GetVkComputeQueueFamilyIndex()
+        static inline uint32_t GetVkComputeQueueFamilyIndex(bool& support)
         {
-            return GetInstance().ensure_ready().m_computeQueueFamilyIndex;
+            support = GetInstance().ensure_ready().m_supportCompute;
+            return support ? GetInstance().ensure_ready().m_computeQueueFamilyIndex : 0;
         }
-        static inline uint32_t GetVkTransferQueueFamilyIndex()
+        static inline uint32_t GetVkTransferQueueFamilyIndex(bool& support)
         {
-            return GetInstance().ensure_ready().m_transferQueueFamilyIndex;
+            support = GetInstance().ensure_ready().m_supportTransfer;
+            return support ? GetInstance().ensure_ready().m_transferQueueFamilyIndex : 0;
         }
 
     private:
@@ -77,10 +79,12 @@ namespace GE
         VkDebugUtilsMessengerEXT m_debugMessenger;
         VkPhysicalDevice         m_physicalDevice;
         VkDevice                 m_device;
-        VkQueue                  m_graphicsQueue, m_presentQueue, m_computeQueue, m_transferQueue;
-        uint32_t                 m_graphicsQueueFamilyIndex, m_presentQueueFamilyIndex, m_computeQueueFamilyIndex,
-            m_transferQueueFamilyIndex;
-        VkSurfaceKHR m_surface;
+        bool                     m_supportCompute, m_supportTransfer;
+        VkQueue                  m_graphicsQueue, m_presentQueue;
+        VkQueue                  m_computeQueue, m_transferQueue;
+        uint32_t                 m_graphicsQueueFamilyIndex, m_presentQueueFamilyIndex;
+        uint32_t                 m_computeQueueFamilyIndex, m_transferQueueFamilyIndex;
+        VkSurfaceKHR             m_surface;
 
         /* -------------------------- vkb variables ------------------------- */
         vkb::Instance       m_vkbInstance;
@@ -96,7 +100,9 @@ namespace GE
 #define VKB_CHECK_RETURN(src, dest) \
     do \
     { \
-        auto ret = src; \
-        GE_CORE_ASSERT(ret.has_value(), "Failed to create Vulkan instance!"); \
-        dest = ret.value(); \
+        auto ret     = src; \
+        bool success = ret.has_value(); \
+        GE_CORE_ASSERT(success, "VKB failed when running {}", #src); \
+        if (success) \
+            dest = ret.value(); \
     } while (false)
