@@ -14,7 +14,7 @@ namespace GE
         const uint64 MESH    = 1;
     } // namespace ByteResourceMagicNumber
 
-    class ByteResource : public Resource<std::vector<byte>>
+    class GE_API ByteResource : public Resource<std::vector<byte>>
     {
     public:
         ByteResource(fs::path file, uint64 magic_number = 0, bool use_cache = false, bool delayed_load = false) :

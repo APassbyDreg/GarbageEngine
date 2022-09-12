@@ -6,7 +6,7 @@
 
 namespace GE
 {
-    class TextResource : public Resource<std::string>
+    class GE_API TextResource : public Resource<std::string>
     {
     public:
         TextResource(fs::path file, bool use_cache = false, bool delayed_load = false) :

@@ -28,6 +28,9 @@ namespace GE
         void PopLayer(std::shared_ptr<Layer> layer);
         void PopOverlay(std::shared_ptr<Layer> overlay);
 
+        // add a one-time action to be executed at the end of frame
+        inline void AddPendingAction(std::function<void()> action) { m_pendingActions.push_back(action); }
+
         inline static Application&     GetInstance() { return *s_instance; }
         inline std::shared_ptr<Window> GetActiveWindow() { return m_activeWindow; }
         inline std::shared_ptr<Scene>  GetActiveScene() { return m_activeScene; }
@@ -38,16 +41,16 @@ namespace GE
         bool OnWindowClose(WindowCloseEvent& e);
 
     private:
+        static Application* s_instance;
+
         bool       m_running = true;
         LayerStack m_layerStack;
 
-        static Application* s_instance;
+        std::vector<std::function<void()>> m_pendingActions = {};
 
         std::shared_ptr<Window> m_activeWindow;
-
-        std::shared_ptr<Scene> m_activeScene;
-
-        std::string m_workDir;
+        std::shared_ptr<Scene>  m_activeScene;
+        std::string             m_workDir;
     };
 
     // Defined in client

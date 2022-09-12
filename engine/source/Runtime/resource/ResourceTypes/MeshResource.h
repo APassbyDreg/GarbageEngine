@@ -17,7 +17,7 @@ namespace GE
      * [vertex plain data]
      * [index plain data]
      */
-    class MeshResource : public Resource<Mesh>
+    class GE_API MeshResource : public Resource<Mesh>
     {
     public:
         MeshResource(fs::path file, bool use_cache = false, bool delayed_load = false) :

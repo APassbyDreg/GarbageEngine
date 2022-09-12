@@ -67,6 +67,13 @@ namespace GE
 
             m_activeWindow->EndWindowRender();
 
+            /* --------------------- run pending actions -------------------- */
+            for (auto&& action : m_pendingActions)
+            {
+                action();
+            }
+            m_pendingActions.clear();
+
             /* ----------------------- finalize frame ----------------------- */
             t1  = glfwGetTime();
             fps = fps * 0.9 + 0.1 * 1.0f / (t1 - t0);

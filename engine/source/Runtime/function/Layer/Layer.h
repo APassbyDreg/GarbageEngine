@@ -58,7 +58,7 @@ namespace GE
             }
         }
 
-    private:
+    protected:
         std::string m_layerName;
         bool        m_isEnabled        = true;
         bool        m_lastEnableStatus = true;
