@@ -40,8 +40,23 @@ namespace GE
     {
         if (m_focusEntityID >= 0 && m_focusEntityID < m_entities.size())
         {
+            std::vector<std::string> add_list    = {};
             std::vector<std::string> remove_list = {};
 
+            // add new component
+            if (ImGui::Button("Add Component.."))
+                ImGui::OpenPopup("ge_add_component_popup");
+            if (ImGui::BeginPopup("ge_add_component_popup"))
+            {
+                for (auto [name, factory] : ComponentFactory::GetInstance().GetFactoriesMap())
+                {
+                    if (ImGui::Selectable(name.c_str()))
+                        factory({}, *m_entities[m_focusEntityID]);
+                }
+                ImGui::EndPopup();
+            }
+
+            // per component
             uint idx = 0;
             m_entities[m_focusEntityID]->IterateComponent([&](ComponentBase& comp, Entity& e) {
                 if (ImGui::CollapsingHeader(comp.GetName().c_str()))

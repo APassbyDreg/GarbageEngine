@@ -33,7 +33,7 @@ namespace GE
         template<std::derived_from<ComponentBase> T, typename... TArgs>
         void AddComponent(TArgs&&... args)
         {
-            GE_CORE_ASSERT(HasComponent<T>() == false, "[Entity::AddComponent] Component already exists");
+            GE_CORE_CHECK(HasComponent<T>() == false, "[Entity::AddComponent] Component already exists");
             m_srcReg.emplace<T>(m_entityID, std::forward<TArgs>(args)...);
             m_compIters[T::GetNameStatic()] = [&, this](ComponentIteratorFunc f) {
                 T& comp = GetComponent<T>();
@@ -48,7 +48,7 @@ namespace GE
         template<std::derived_from<ComponentBase> T>
         void RemoveComponent()
         {
-            GE_CORE_ASSERT(HasComponent<T>(), "[Entity::RemoveComponent] Component {} not found", T::GetNameStatic());
+            GE_CORE_CHECK(HasComponent<T>(), "[Entity::RemoveComponent] Component {} not found", T::GetNameStatic());
             m_srcReg.remove<T>(m_entityID);
             m_compIters.erase(T::GetNameStatic());
             m_compConstIters.erase(T::GetNameStatic());
