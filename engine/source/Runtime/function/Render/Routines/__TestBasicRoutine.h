@@ -2,8 +2,8 @@
 
 #include "GE_pch.h"
 
-#include "../Passes/__TestBasicMeshPass.h"
-#include "../Passes/__TestBasicTrianglePass.h"
+#include "../RenderPass/__TestBasicMeshPass.h"
+#include "../RenderPass/__TestBasicTrianglePass.h"
 
 #include "../VulkanManager/GpuBuffer.h"
 #include "../VulkanManager/GpuImage.h"
