@@ -6,6 +6,8 @@
 
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 
+#include "Editor/Tools/ObjToMeshConverter.h"
+
 namespace GE
 {
     class MenuLayer : public Layer
@@ -20,12 +22,14 @@ namespace GE
             None
         };
 
-        MenuLayer() {}
+        MenuLayer() : Layer("Menu") {}
         ~MenuLayer() {}
         inline void OnImGuiRender(ImGuiContext* ctx) override
         {
+            Application& app = Application::GetInstance();
+
             ImGui::BeginMainMenuBar();
-            if (ImGui::BeginMenu("Menu"))
+            if (ImGui::BeginMenu("File"))
             {
                 if (ImGui::MenuItem("Open Workspace"))
                 {
@@ -35,7 +39,7 @@ namespace GE
                 if (ImGui::MenuItem("Open Scene"))
                 {
                     m_pressedItem    = MenuItem::OpenScene;
-                    fs::path workdir = Application::GetInstance().GetWorkDirectory();
+                    fs::path workdir = app.GetWorkDirectory();
                     ImGuiFileDialog::Instance()->OpenDialog(
                         "ChooseFileDlgKey", "Choose File", ".json,.*", workdir.string().c_str());
                 }
@@ -46,9 +50,22 @@ namespace GE
                 if (ImGui::MenuItem("Save As"))
                 {
                     m_pressedItem    = MenuItem::SaveAs;
-                    fs::path workdir = Application::GetInstance().GetWorkDirectory();
+                    fs::path workdir = app.GetWorkDirectory();
                     ImGuiFileDialog::Instance()->OpenDialog(
                         "ChooseDirDlgKey", "Choose Directory to Save To", nullptr, workdir.string().c_str());
+                }
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Tools"))
+            {
+                if (ImGui::MenuItem("OBJ to Mesh Converter"))
+                {
+                    std::shared_ptr<ObjToMeshConverterToolLayer> layer =
+                        std::make_shared<ObjToMeshConverterToolLayer>();
+
+                    layer->SetOnExit([&]() { app.AddPendingAction([&]() { app.PopLayer(layer); }); });
+                    app.AddPendingAction([=]() { Application::GetInstance().PushLayer(layer); });
                 }
                 ImGui::EndMenu();
             }

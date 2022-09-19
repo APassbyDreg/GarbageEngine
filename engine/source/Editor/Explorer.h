@@ -11,7 +11,7 @@ namespace GE
     class ExplorerLayer : public Layer
     {
     public:
-        ExplorerLayer() {}
+        ExplorerLayer() : Layer("Explorer") {}
         ~ExplorerLayer() {}
 
         inline void UpdateWorkSpace()

@@ -15,7 +15,7 @@ namespace GE
         UNKNOWN
     };
 
-    class JsonResource : public Resource<json>
+    class GE_API JsonResource : public Resource<json>
     {
     public:
         JsonResource(fs::path file, JsonIdentifier type, bool delayed_load = false) :

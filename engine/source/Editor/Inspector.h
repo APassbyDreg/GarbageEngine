@@ -9,13 +9,13 @@ namespace GE
     class InspectorLayer : public Layer
     {
     public:
-        InspectorLayer() {}
+        InspectorLayer() : Layer("Inspector") {}
         ~InspectorLayer() {}
 
         void OnImGuiRender(ImGuiContext* ctx) override
         {
             ImGui::SetCurrentContext(ctx);
-			
+
             Application&           app = Application::GetInstance();
             std::shared_ptr<Scene> sc  = app.GetActiveScene();
 
