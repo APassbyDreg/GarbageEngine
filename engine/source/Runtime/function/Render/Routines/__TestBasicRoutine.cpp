@@ -10,6 +10,11 @@ namespace GE
 
     void TestBasicRoutine::Resize(uint width, uint height)
     {
+        if (width == 0 || height == 0)
+        {
+            GE_CORE_ERROR("[TestBasicRoutine::Resize] Invalid width or height");
+            return;
+        }
         if (width != m_viewportSize.width || height != m_viewportSize.height)
         {
             // wait all old frames to finish
