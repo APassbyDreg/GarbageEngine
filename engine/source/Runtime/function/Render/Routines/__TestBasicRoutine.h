@@ -27,7 +27,7 @@ namespace GE
     {
         VkClearValue               clear_color   = {0.0f, 0.0f, 0.0f, 1.0f};
         std::shared_ptr<GpuBuffer> vertex_buffer = nullptr;
-        uint                       vertex_cnt    = 0;
+        uint                       passid;
     };
 
     class TestBasicRoutine
