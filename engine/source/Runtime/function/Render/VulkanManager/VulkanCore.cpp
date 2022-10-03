@@ -190,7 +190,7 @@ namespace GE
         allocatorCreateInfo.pVulkanFunctions       = &vulkanFunctions;
 
         VmaAllocator allocator;
-        vmaCreateAllocator(&allocatorCreateInfo, &m_allocator);
+        GE_VK_ASSERT(vmaCreateAllocator(&allocatorCreateInfo, &m_allocator));
     }
 
     void VulkanCore::destroy_vma() { vmaDestroyAllocator(m_allocator); }

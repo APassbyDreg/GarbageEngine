@@ -4,6 +4,7 @@
 
 #include "../DataStructures/Mesh.h"
 #include "../RenderPass.h"
+#include "../VulkanManager/GpuBuffer.h"
 
 #include "Runtime/core/Math/Math.h"
 
@@ -23,6 +24,13 @@ namespace GE
         ~TestBasicMeshPass() {};
 
         void Init();
+
+        void Run(VkExtent2D&                viewport_size,
+                 VkRenderPassBeginInfo&     rp_info,
+                 VkCommandBuffer&           cmd,
+                 std::shared_ptr<GpuBuffer> vertex_buffer,
+                 std::shared_ptr<GpuBuffer> index_buffer,
+                 uint                       vertex_cnt);
     };
 
 } // namespace GE

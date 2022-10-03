@@ -19,16 +19,6 @@ namespace GE
         Build();
 
         /* ------------------------- setup pipeline ------------------------- */
-        // {
-        //     fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test02_simple_mesh/test.frag";
-        //     GLSLCompiler compiler = {ShaderType::FRAGMENT};
-        //     m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
-        // }
-        // {
-        //     fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test02_simple_mesh/test.vert";
-        //     GLSLCompiler compiler = {ShaderType::VERTEX};
-        //     m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
-        // }
         {
             fs::path     fullpath   = fs::path(Config::shader_dir) / "passes/__test02_simple_mesh/test.hlsl";
             HLSLCompiler vscompiler = {ShaderType::VERTEX};
@@ -63,5 +53,48 @@ namespace GE
         m_pipeline.m_pushConstantRanges.push_back(push_constant);
 
         m_pipeline.Build(m_renderPass, 0);
+    }
+
+    void TestBasicMeshPass::Run(VkExtent2D&                viewport_size,
+                                VkRenderPassBeginInfo&     rp_info,
+                                VkCommandBuffer&           cmd,
+                                std::shared_ptr<GpuBuffer> vertex_buffer,
+                                std::shared_ptr<GpuBuffer> index_buffer,
+                                uint                       vertex_cnt)
+    {
+        vkCmdBeginRenderPass(cmd, &rp_info, VK_SUBPASS_CONTENTS_INLINE);
+
+        {
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline());
+
+            // set dynamic viewport
+            VkViewport viewport = VkInit::GetViewport(viewport_size);
+            VkRect2D   scissor  = {{0, 0}, viewport_size};
+            vkCmdSetViewport(cmd, 0, 1, &viewport);
+            vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+            // set vertex buffer
+            VkDeviceSize offset    = 0;
+            VkBuffer     buffers[] = {vertex_buffer->GetBuffer()};
+            vkCmdBindVertexBuffers(cmd, 0, 1, buffers, &offset);
+            vkCmdBindIndexBuffer(cmd, index_buffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+            // set push constants
+            TestBasicMeshPushConstants push_constants = {};
+            push_constants.mvp                        = float4x4(1.0f);
+            push_constants.cameraPosWS                = {0, 0, 0, 0};
+            push_constants.debugColor                 = {0.8, 0.5, 0.5, 1.0};
+            vkCmdPushConstants(cmd,
+                               GetPipelineLayout(),
+                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                               0,
+                               sizeof(push_constants),
+                               &push_constants);
+
+            // draw
+            vkCmdDrawIndexed(cmd, vertex_cnt, 1, 0, 0, 0);
+        }
+
+        vkCmdEndRenderPass(cmd);
     }
 } // namespace GE

@@ -2,8 +2,8 @@
 
 #include "GE_pch.h"
 
-#include "../Passes/__TestBasicMeshPass.h"
-#include "../Passes/__TestBasicTrianglePass.h"
+#include "../RenderPass/__TestBasicMeshPass.h"
+#include "../RenderPass/__TestBasicTrianglePass.h"
 
 #include "../VulkanManager/GpuBuffer.h"
 #include "../VulkanManager/GpuImage.h"
@@ -27,7 +27,7 @@ namespace GE
     {
         VkClearValue               clear_color   = {0.0f, 0.0f, 0.0f, 1.0f};
         std::shared_ptr<GpuBuffer> vertex_buffer = nullptr;
-        uint                       vertex_cnt    = 0;
+        uint                       passid;
     };
 
     class TestBasicRoutine

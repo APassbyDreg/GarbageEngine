@@ -13,5 +13,7 @@ namespace GE
         ~TestBasicTrianglePass() {};
 
         void Init();
+
+        void Run(VkRenderPassBeginInfo& rp_info, VkCommandBuffer& cmd);
     };
 } // namespace GE

@@ -16,6 +16,8 @@ namespace GE
 
         void Build(VkRenderPass pass, VkPipelineCache cache = VK_NULL_HANDLE);
 
+        inline bool       IsReady() { return m_ready; }
+        
         inline VkPipeline GetPipeline()
         {
             GE_CORE_ASSERT(m_ready, "GraphicsRenderPipeline::GetPipeline: Pipeline is not ready!");

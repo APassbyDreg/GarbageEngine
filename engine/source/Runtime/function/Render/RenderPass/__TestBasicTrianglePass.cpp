@@ -49,4 +49,16 @@ namespace GE
 
         m_pipeline.Build(m_renderPass, 0);
     }
+
+    void TestBasicTrianglePass::Run(VkRenderPassBeginInfo& rp_info, VkCommandBuffer& cmd)
+    {
+        vkCmdBeginRenderPass(cmd, &rp_info, VK_SUBPASS_CONTENTS_INLINE);
+
+        {
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline());
+            vkCmdDraw(cmd, 3, 1, 0, 0);
+        }
+
+        vkCmdEndRenderPass(cmd);
+    }
 } // namespace GE

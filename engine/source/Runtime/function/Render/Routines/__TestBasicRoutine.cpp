@@ -10,6 +10,11 @@ namespace GE
 
     void TestBasicRoutine::Resize(uint width, uint height)
     {
+        if (width == 0 || height == 0)
+        {
+            GE_CORE_ERROR("[TestBasicRoutine::Resize] Invalid width or height");
+            return;
+        }
         if (width != m_viewportSize.width || height != m_viewportSize.height)
         {
             // wait all old frames to finish
@@ -108,10 +113,8 @@ namespace GE
     {
         std::shared_ptr<TestBasicFrameData> fd = m_frameData[index];
 
-        draw_data.vertex_buffer = m_vertexBuffer;
-        draw_data.vertex_cnt    = 6;
-
-        if (draw_data.vertex_cnt == 0)
+        draw_data.passid = 1;
+        if (draw_data.passid == 0)
         {
             VkRenderPassBeginInfo info = {};
             info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -121,17 +124,10 @@ namespace GE
             info.renderArea.extent     = m_viewportSize;
             info.clearValueCount       = 1;
             info.pClearValues          = &draw_data.clear_color;
-            vkCmdBeginRenderPass(cmd, &info, VK_SUBPASS_CONTENTS_INLINE);
 
-            {
-                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_basicTrianglePass.GetPipeline());
-
-                vkCmdDraw(cmd, 3, 1, 0, 0);
-            }
-
-            vkCmdEndRenderPass(cmd);
+            m_basicTrianglePass.Run(info, cmd);
         }
-        else
+        else if (draw_data.passid == 1)
         {
             VkRenderPassBeginInfo info = {};
             info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -141,39 +137,8 @@ namespace GE
             info.renderArea.extent     = m_viewportSize;
             info.clearValueCount       = 1;
             info.pClearValues          = &draw_data.clear_color;
-            vkCmdBeginRenderPass(cmd, &info, VK_SUBPASS_CONTENTS_INLINE);
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_basicMeshPass.GetPipeline());
 
-            {
-                // set dynamic viewport
-                VkViewport viewport = VkInit::GetViewport(m_viewportSize);
-                VkRect2D   scissor  = {{0, 0}, m_viewportSize};
-                vkCmdSetViewport(cmd, 0, 1, &viewport);
-                vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-                // set vertex buffer
-                VkDeviceSize offset    = 0;
-                VkBuffer     buffers[] = {draw_data.vertex_buffer->GetBuffer()};
-                vkCmdBindVertexBuffers(cmd, 0, 1, buffers, &offset);
-                vkCmdBindIndexBuffer(cmd, m_indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
-
-                // set push constants
-                TestBasicMeshPushConstants push_constants = {};
-                push_constants.mvp                        = float4x4(1.0f);
-                push_constants.cameraPosWS                = {0, 0, 0, 0};
-                push_constants.debugColor                 = {0.8, 0.5, 0.5, 1.0};
-                vkCmdPushConstants(cmd,
-                                   m_basicMeshPass.GetPipelineLayout(),
-                                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                                   0,
-                                   sizeof(push_constants),
-                                   &push_constants);
-
-                // draw
-                vkCmdDrawIndexed(cmd, draw_data.vertex_cnt, 1, 0, 0, 0);
-            }
-
-            vkCmdEndRenderPass(cmd);
+            m_basicMeshPass.Run(m_viewportSize, info, cmd, m_vertexBuffer, m_indexBuffer, 6);
         }
     }
 } // namespace GE
