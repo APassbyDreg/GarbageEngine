@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+#include "Runtime/function/Scene/Components/Tag.h"
+
 namespace GE
 {
     std::shared_ptr<Entity> Scene::CreateEntity(std::string tagname, uint layer, uint tag)

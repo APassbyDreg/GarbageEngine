@@ -2,19 +2,19 @@
 
 #include "GE_pch.h"
 
-/* ------------------------ register components here ------------------------ */
-#include "Camera.h"
-#include "InstancedMesh.h"
-#include "Tag.h"
-#include "Transform.h"
-
 #include "Runtime/core/Base/Singleton.h"
+#include "Runtime/core/Json.h"
+#include "Runtime/core/Math/Math.h"
+
+#include "Runtime/function/Log/LogSystem.h"
+
+#include "ComponentBase.h"
 
 namespace GE
 {
     class Entity;
 
-    class ComponentFactory : public Singleton<ComponentFactory>
+    class GE_API ComponentFactory : public Singleton<ComponentFactory>
     {
     public:
         inline void AttachComponent(std::string name, const json& data, Entity& e)

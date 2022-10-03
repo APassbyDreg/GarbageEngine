@@ -1,7 +1,8 @@
 #include "scene.h"
 
 #include "Runtime/function/Scene/Components/ComponentFactory.h"
-
+#include "Runtime/function/Scene/Components/Tag.h"
+#include "Runtime/function/Scene/Components/Transform.h"
 
 namespace GE
 {

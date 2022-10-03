@@ -4,6 +4,7 @@
 #include "Explorer.h"
 #include "Inspector.h"
 #include "Menu.h"
+#include "Test.h"
 
 namespace GE
 {
