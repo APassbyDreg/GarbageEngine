@@ -20,8 +20,6 @@ namespace GE
         float2     m_clip        = {1e-3, 1e3};
         CameraType m_type        = CameraType::Perspective;
 
-        CameraComponent() {}
-
         inline json Serialize() const override
         {
             return {{"aspect", m_aspectRatio},
@@ -56,31 +54,6 @@ namespace GE
             m_type = __camera_id2type(m_typeid);
         }
 
-        /* ----------------------------- helpers ---------------------------- */
-
-        inline int __camera_type2id(CameraType type)
-        {
-            switch (type)
-            {
-                case CameraType::Perspective:
-                    return 0;
-                case CameraType::Orthographic:
-                    return 1;
-            }
-            return 0;
-        }
-        inline CameraType __camera_id2type(int id)
-        {
-            switch (id)
-            {
-                case 0:
-                    return CameraType::Perspective;
-                case 1:
-                    return CameraType::Orthographic;
-            };
-            return CameraType::Perspective;
-        }
-
         inline float4x4 GetProjectionMatrix() const
         {
             switch (m_type)
@@ -94,6 +67,34 @@ namespace GE
                     return glm::ortho(-half_width, half_width, -half_height, half_height);
                 }
             }
+            return float4x4(1.0f);
+        }
+
+    private:
+        /* ----------------------------- helpers ---------------------------- */
+
+        inline int __camera_type2id(CameraType type)
+        {
+            switch (type)
+            {
+                case CameraType::Perspective:
+                    return 0;
+                case CameraType::Orthographic:
+                    return 1;
+            }
+            return 0;
+        }
+
+        inline CameraType __camera_id2type(int id)
+        {
+            switch (id)
+            {
+                case 0:
+                    return CameraType::Perspective;
+                case 1:
+                    return CameraType::Orthographic;
+            };
+            return CameraType::Perspective;
         }
 
     private:

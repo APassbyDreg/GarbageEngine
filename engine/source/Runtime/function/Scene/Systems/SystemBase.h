@@ -6,20 +6,24 @@
 
 namespace GE
 {
+    class Entity;
+
 #define GE_SYSTEM_COMMON(sys) \
     std::string        GetName() const override { return #sys; } \
-    static std::string GetNameStatic() { return #sys; }
+    static std::string GetNameStatic() { return #sys; } \
+    sys(std::shared_ptr<Entity> e) : m_entity(e) {}
 
     class SystemBase
     {
     public:
-        SystemBase(entt::registry& reg, entt::entity entityID) : m_entityID(entityID), m_srcReg(reg) {}
+        SystemBase(std::shared_ptr<Entity> e) : m_entity(e) {}
 
-        virtual void        OnUpdate(double dt) = 0;
-        virtual std::string GetName()           = 0;
+        virtual void OnUpdate(double dt) {};
+        virtual void OnEvent() {} // TODO: create scene event syetem
+
+        virtual std::string GetName() = 0;
 
     private:
-        entt::entity    m_entityID;
-        entt::registry& m_srcReg;
+        std::shared_ptr<Entity> m_entity;
     };
 } // namespace GE

@@ -11,7 +11,7 @@
 
 namespace GE
 {
-    class Entity
+    class Entity : public std::enable_shared_from_this<Entity>
     {
     public:
         Entity(entt::registry& reg) : m_srcReg(reg) { m_entityID = reg.create(); }
@@ -34,7 +34,7 @@ namespace GE
         void AddComponent(TArgs&&... args)
         {
             GE_CORE_CHECK(HasComponent<T>() == false, "[Entity::AddComponent] Component already exists");
-            m_srcReg.emplace<T>(m_entityID, std::forward<TArgs>(args)...);
+            m_srcReg.emplace<T>(m_entityID, shared_from_this(), std::forward<TArgs>(args)...);
             m_compIters[T::GetNameStatic()] = [&, this](ComponentIteratorFunc f) {
                 T& comp = GetComponent<T>();
                 f(comp, *this);
@@ -43,6 +43,7 @@ namespace GE
                 const T& comp = GetComponent<T>();
                 f(comp, *this);
             };
+            MarkChanged();
         }
 
         template<std::derived_from<ComponentBase> T>
@@ -52,16 +53,25 @@ namespace GE
             m_srcReg.remove<T>(m_entityID);
             m_compIters.erase(T::GetNameStatic());
             m_compConstIters.erase(T::GetNameStatic());
+            MarkChanged();
         }
 
         template<std::derived_from<ComponentBase> T>
-        bool HasComponent()
+        bool HasComponent() const
         {
             return m_srcReg.any_of<T>(m_entityID);
         }
 
         template<std::derived_from<ComponentBase> T>
         T& GetComponent()
+        {
+            GE_CORE_ASSERT(HasComponent<T>(), "[Entity::GetComponent] Component {} not found", T::GetNameStatic());
+            MarkChanged(); // NOTE: conservatively increament version
+            return m_srcReg.get<T>(m_entityID);
+        }
+
+        template<std::derived_from<ComponentBase> T>
+        const T& GetComponent() const
         {
             GE_CORE_ASSERT(HasComponent<T>(), "[Entity::GetComponent] Component {} not found", T::GetNameStatic());
             return m_srcReg.get<T>(m_entityID);
@@ -74,11 +84,16 @@ namespace GE
         template<std::derived_from<SystemBase> T>
         void AddSystem()
         {
-            std::shared_ptr<SystemBase> system = std::make_shared<T>(m_srcReg, m_entityID);
+            std::shared_ptr<SystemBase> system = std::make_shared<T>(shared_from_this());
             m_systems.push_back(system);
+            MarkChanged();
         }
 
         void OnUpdate(const double dt);
+
+        /* ------------------------ entity basic info ----------------------- */
+        inline uint         GetVersion() const { return m_version; }
+        inline entt::entity GetEntityID() const { return m_entityID; }
 
     private:
         template<std::derived_from<ComponentBase> T>
@@ -87,6 +102,9 @@ namespace GE
             return GetComponent<T>();
         }
 
+        inline void MarkChanged() { m_version = (m_version + 1) % (2 << 30); }
+
+        uint                                                                   m_version = 0;
         entt::entity                                                           m_entityID;
         entt::registry&                                                        m_srcReg;
         std::map<std::string, std::function<void(ComponentIteratorFunc)>>      m_compIters;

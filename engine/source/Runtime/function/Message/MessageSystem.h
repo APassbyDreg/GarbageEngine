@@ -19,8 +19,8 @@ namespace GE
     class GE_API MessageDispatcher : public Singleton<MessageDispatcher<MsgBody, MsgResult>>
     {
     public:
-        using ListenerFn = std::function<std::shared_ptr<MsgResult>(MsgBody)>;
-        // using MsgCallback = std::function<void(std::vector<std::shared_ptr<MsgResult>>)>;
+        using ListenerFn  = std::function<std::shared_ptr<MsgResult>(MsgBody)>;
+        using MsgCallback = std::function<void(std::vector<std::shared_ptr<MsgResult>>)>;
 
         MessageDispatcher() {};
         ~MessageDispatcher() {};

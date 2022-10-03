@@ -7,7 +7,8 @@ namespace GE
     json Entity::Serialize() const
     {
         json components;
-        IterateComponentConst([&](const ComponentBase& comp, Entity& e) { components[comp.GetName()] = comp.Serialize(); });
+        IterateComponentConst(
+            [&](const ComponentBase& comp, Entity& e) { components[comp.GetName()] = comp.Serialize(); });
 
         json systems = json::array();
         {
@@ -33,6 +34,7 @@ namespace GE
         {
             SystemFactory::GetInstance().AttachSystem(sys, *this);
         }
+        MarkChanged();
     }
 
     void Entity::OnUpdate(double dt)
@@ -41,6 +43,7 @@ namespace GE
         {
             system->OnUpdate(dt);
         }
+        MarkChanged();
     }
 
     void Entity::IterateComponent(ComponentIteratorFunc f)
@@ -49,6 +52,7 @@ namespace GE
         {
             iter(f);
         }
+        MarkChanged();
     }
 
     void Entity::IterateComponentConst(ComponentConstIteratorFunc f) const

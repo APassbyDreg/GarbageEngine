@@ -12,8 +12,8 @@ namespace GE
         std::string m_name  = "unnamed entity";
         int         m_layer = 0, m_tag = 0;
 
-        TagComponent(std::string name = "unnamed entity", int layer = 0, int tag = 0) :
-            m_name(name), m_layer(layer), m_tag(tag)
+        TagComponent(std::shared_ptr<Entity> e, std::string name = "unnamed entity", int layer = 0, int tag = 0) :
+            m_name(name), m_layer(layer), m_tag(tag), ComponentBase(e)
         {}
 
         inline json Serialize() const override { return {{"name", m_name}, {"layer", m_layer}, {"tag", m_tag}}; }

@@ -14,8 +14,6 @@ namespace GE
         std::shared_ptr<MeshResource> m_source = nullptr;
 
     public:
-        InstancedMeshComponent() {}
-
         inline json Serialize() const override { return {}; }
 
         inline void Deserialize(const json& data) override {}

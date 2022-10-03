@@ -13,11 +13,11 @@ namespace GE
         float3 m_scale    = {1, 1, 1};
         quat   m_rotation = {1, 0, 0, 0};
 
-        TransformComponent() {}
-        TransformComponent(float3 pos, float3 scale, float3 rot) :
-            m_position(pos), m_scale(scale), m_rotation(rot), m_eulerAngles(rot)
+        TransformComponent(std::shared_ptr<Entity> e, float3 pos, float3 scale, float3 rot) :
+            m_position(pos), m_scale(scale), m_rotation(rot), m_eulerAngles(rot), ComponentBase(e)
         {}
-        TransformComponent(float3 pos, float3 scale, quat rot) : m_position(pos), m_scale(scale), m_rotation(rot)
+        TransformComponent(std::shared_ptr<Entity> e, float3 pos, float3 scale, quat rot) :
+            m_position(pos), m_scale(scale), m_rotation(rot), ComponentBase(e)
         {
             m_eulerAngles = glm::degrees(glm::eulerAngles(m_rotation));
         }
