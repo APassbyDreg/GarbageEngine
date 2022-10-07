@@ -20,7 +20,7 @@ namespace GE
 
         /* ------------------------- setup pipeline ------------------------- */
         {
-            fs::path     fullpath   = fs::path(Config::shader_dir) / "passes/__test02_simple_mesh/test.hlsl";
+            fs::path     fullpath   = fs::path(Config::shader_dir) / "Passes/__test02_simple_mesh/test.hlsl";
             HLSLCompiler vscompiler = {ShaderType::VERTEX};
             HLSLCompiler fscompiler = {ShaderType::FRAGMENT};
             m_pipeline.m_shaders.push_back(vscompiler.Compile(fullpath.string(), "vert"));

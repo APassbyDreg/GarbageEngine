@@ -21,12 +21,12 @@ namespace GE
 
         /* ------------------------- setup pipeline ------------------------- */
         {
-            fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test01_simple_triangle/test.frag";
+            fs::path     fullpath = fs::path(Config::shader_dir) / "Passes/__test01_simple_triangle/test.frag";
             GLSLCompiler compiler = {ShaderType::FRAGMENT};
             m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
         }
         {
-            fs::path     fullpath = fs::path(Config::shader_dir) / "passes/__test01_simple_triangle/test.vert";
+            fs::path     fullpath = fs::path(Config::shader_dir) / "Passes/__test01_simple_triangle/test.vert";
             GLSLCompiler compiler = {ShaderType::VERTEX};
             m_pipeline.m_shaders.push_back(compiler.Compile(fullpath.string()));
         }
