@@ -3,6 +3,7 @@
 #include "Runtime/function/Log/LogSystem.h"
 
 #include "Runtime/resource/Managers/ResourceManager.h"
+#include "Runtime/resource/ResourceTypes/MeshResource.h"
 
 namespace GE
 {

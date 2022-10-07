@@ -2,7 +2,7 @@
 
 #include "GE_pch.h"
 
-#include "../Resource.h"
+#include "../ResourceBase.h"
 
 #include "Runtime/core/Json.h"
 

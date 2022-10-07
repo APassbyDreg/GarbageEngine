@@ -2,7 +2,7 @@
 
 #include "GE_pch.h"
 
-#include "../Resource.h"
+#include "../ResourceBase.h"
 
 namespace GE
 {

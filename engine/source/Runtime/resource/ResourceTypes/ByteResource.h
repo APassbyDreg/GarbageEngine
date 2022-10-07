@@ -4,7 +4,7 @@
 
 #include "Runtime/core/Math/Math.h"
 
-#include "../Resource.h"
+#include "../ResourceBase.h"
 
 namespace GE
 {

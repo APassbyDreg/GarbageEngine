@@ -5,6 +5,7 @@
 #include "ShaderModule.h"
 
 #include "Runtime/resource/Managers/ResourceManager.h"
+#include "Runtime/resource/ResourceTypes/TextResource.h"
 
 namespace GE
 {

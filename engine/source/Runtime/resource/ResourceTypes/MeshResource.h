@@ -2,8 +2,9 @@
 
 #include "GE_pch.h"
 
-#include "../Resource.h"
+#include "../ResourceBase.h"
 
+#include "Runtime/core/Math/Bounds.h"
 #include "Runtime/function/Render/DataStructures/Mesh.h"
 
 #include "ByteResource.h"
@@ -30,7 +31,8 @@ namespace GE
 
         void FromObj(fs::path file);
 
-        uint64 m_version = 0;
+        inline uint64&   Version() { return m_version; }
+        inline Bounds3f& BBox() { return m_bbox; }
 
     private:
         const int64 VERSION_OFFSET    = 0;
@@ -38,6 +40,11 @@ namespace GE
         const int64 IDXEX_CNT_OFFSET  = VERTEX_CNT_OFFSET + sizeof(uint64);
         const int64 VERTEX_OFFSET     = IDXEX_CNT_OFFSET + sizeof(uint64);
 
+        uint64       m_version = 0;
+        Bounds3f     m_bbox;
         ByteResource m_trueResource;
+
+    private:
+        void CalculateBBox();
     };
 } // namespace GE

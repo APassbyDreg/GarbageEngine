@@ -39,6 +39,9 @@ namespace GE
         // clean up
         m_trueResource.Invalid(); // free data
 
+        // postprocess
+        CalculateBBox();
+
         m_valid = true;
     }
 
@@ -75,7 +78,7 @@ namespace GE
         bool         success = loader.LoadFile(file.string());
         GE_CORE_CHECK(success, "[MeshResource::FromObj] Error loading obj file {}", file.string());
 
-		// convert format
+        // convert format
         for (objl::Mesh& m : loader.LoadedMeshes)
         {
             for (unsigned int& idx : m.Indices)
@@ -89,8 +92,23 @@ namespace GE
             }
             m_data.indices = m.Indices;
         }
-		
-		GE_CORE_INFO("[MeshResource::FromObj] loaded {} vertices and {} indices from {}", m_data.vertices.size(), m_data.indices.size(), file.string());
+
+        GE_CORE_INFO("[MeshResource::FromObj] loaded {} vertices and {} indices from {}",
+                     m_data.vertices.size(),
+                     m_data.indices.size(),
+                     file.string());
         m_valid = true;
+    }
+
+    void MeshResource::CalculateBBox()
+    {
+        auto& vertices = m_data.vertices;
+        GE_CORE_CHECK(vertices.size() > 0, "[MeshResource::CalculateBBox] calculating bbox from empty mesh");
+
+        m_bbox = Bounds3f(vertices[0].position);
+        for (int i = 1; i < vertices.size(); i++)
+        {
+            m_bbox += Bounds3f(vertices[i].position);
+        }
     }
 } // namespace GE

@@ -7,6 +7,7 @@
 #include "Runtime/function/Scene/Components/ComponentFactory.h"
 
 #include "Runtime/resource/Managers/ResourceManager.h"
+#include "Runtime/resource/ResourceTypes/JsonResource.h"
 
 namespace GE
 {
