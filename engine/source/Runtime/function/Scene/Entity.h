@@ -11,16 +11,13 @@
 
 namespace GE
 {
+    class Scene;
+
     class Entity : public std::enable_shared_from_this<Entity>
     {
     public:
-        Entity(entt::registry& reg) : m_srcReg(reg) { m_entityID = reg.create(); }
-        Entity(const Entity& entity) : m_srcReg(entity.m_srcReg), m_entityID(entity.m_entityID) {}
-        Entity(const json& data, entt::registry& reg) : m_srcReg(reg)
-        {
-            m_entityID = reg.create();
-            Deserialize(data);
-        }
+        Entity(Scene& sc, int eid);
+        Entity(Scene& sc, const json& data);
 
         json Serialize() const;
         void Deserialize(const json& data);
@@ -95,6 +92,8 @@ namespace GE
         inline uint         GetVersion() const { return m_version; }
         inline entt::entity GetEntityID() const { return m_entityID; }
 
+        inline Scene& GetScene() { return m_scene; }
+
     private:
         template<std::derived_from<ComponentBase> T>
         ComponentBase& GetComponentAsBase()
@@ -104,7 +103,9 @@ namespace GE
 
         inline void MarkChanged() { m_version = (m_version + 1) % (2 << 30); }
 
+        Scene&                                                                 m_scene;
         uint                                                                   m_version = 0;
+        int                                                                    m_fixedID;
         entt::entity                                                           m_entityID;
         entt::registry&                                                        m_srcReg;
         std::map<std::string, std::function<void(ComponentIteratorFunc)>>      m_compIters;

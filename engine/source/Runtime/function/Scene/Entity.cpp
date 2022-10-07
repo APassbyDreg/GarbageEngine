@@ -2,8 +2,21 @@
 #include "Components/ComponentFactory.h"
 #include "Systems/SystemFactory.h"
 
+#include "Scene.h"
+
 namespace GE
 {
+    Entity::Entity(Scene& sc, int eid) : m_scene(sc), m_fixedID(eid), m_srcReg(sc.m_registry)
+    {
+        m_entityID = m_srcReg.create();
+    }
+
+    Entity::Entity(Scene& sc, const json& data) : m_scene(sc), m_srcReg(sc.m_registry)
+    {
+        m_entityID = m_srcReg.create();
+        Deserialize(data);
+    }
+
     json Entity::Serialize() const
     {
         json components;
@@ -21,6 +34,7 @@ namespace GE
         json root;
         root["components"] = components;
         root["systems"]    = systems;
+        root["id"]         = m_fixedID;
         return root;
     }
 
@@ -34,6 +48,7 @@ namespace GE
         {
             SystemFactory::GetInstance().AttachSystem(sys, *this);
         }
+        m_fixedID = data["id"].get<int>();
         MarkChanged();
     }
 

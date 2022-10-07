@@ -4,11 +4,30 @@
 
 namespace GE
 {
-    std::shared_ptr<Entity> Scene::CreateEntity(std::string tagname, uint layer, uint tag)
+    std::shared_ptr<Entity> Scene::CreateEntity(int eid, std::string tagname, int layer, int tag)
     {
-        auto e = std::make_shared<Entity>(m_registry);
+        if (m_entities.find(eid) != m_entities.end())
+        {
+            while (m_entities.find(m_availableEntityID) != m_entities.end())
+            {
+                eid++;
+            }
+        }
+        auto e = std::make_shared<Entity>(*this, eid);
         e->AddComponent<TagComponent>(tagname, layer, tag);
-        m_entities.push_back(e);
+        m_entities[eid] = e;
+        return e;
+    }
+
+    std::shared_ptr<Entity> Scene::CreateEntity(std::string tagname, int layer, int tag)
+    {
+        while (m_entities.find(m_availableEntityID) != m_entities.end())
+        {
+            m_availableEntityID++;
+        }
+        auto e = std::make_shared<Entity>(*this, m_availableEntityID);
+        e->AddComponent<TagComponent>(tagname, layer, tag);
+        m_entities[m_availableEntityID] = e;
         return e;
     }
 
@@ -22,7 +41,7 @@ namespace GE
         ImGui::Text("Entities");
 
         int idx = 0;
-        for (auto& e : m_entities)
+        for (auto&& [eid, e] : m_entities)
         {
             TagComponent& tag  = e->GetComponent<TagComponent>();
             const char*   name = tag.m_name.c_str();
@@ -32,7 +51,7 @@ namespace GE
             }
             if (ImGui::Selectable(name, m_focusEntityID == idx))
             {
-                m_focusEntityID = idx;
+                m_focusEntityID = eid;
             }
             idx++;
         }
@@ -40,7 +59,7 @@ namespace GE
 
     void Scene::InspectFocusedEntity()
     {
-        if (m_focusEntityID >= 0 && m_focusEntityID < m_entities.size())
+        if (m_entities.find(m_focusEntityID) != m_entities.end())
         {
             std::vector<std::string> add_list    = {};
             std::vector<std::string> remove_list = {};
@@ -96,7 +115,7 @@ namespace GE
     json Scene::Serialize() const
     {
         json entities = json::array();
-        for (auto&& e : m_entities)
+        for (auto&& [eid, e] : m_entities)
         {
             entities.push_back(e->Serialize());
         }
@@ -113,7 +132,8 @@ namespace GE
         m_name = data["name"].get<std::string>();
         for (auto& edata : data["entities"])
         {
-            m_entities.push_back(std::make_shared<Entity>(edata, m_registry));
+            int eid         = edata["id"].get<int>();
+            m_entities[eid] = std::make_shared<Entity>(*this, edata);
         }
     }
 
