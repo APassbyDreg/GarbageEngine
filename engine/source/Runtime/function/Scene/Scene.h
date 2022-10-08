@@ -51,5 +51,7 @@ namespace GE
         int                           m_focusEntityID     = -1;
         uint                          m_availableEntityID = 0;
         std::shared_ptr<JsonResource> m_resource          = nullptr;
+
+        void SetupEntityInheritance();
     };
 } // namespace GE

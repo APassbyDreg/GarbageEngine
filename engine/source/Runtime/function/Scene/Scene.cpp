@@ -1,4 +1,4 @@
-#include "Scene.h"
+#include "Scene.h" Entity
 
 #include "Runtime/function/Scene/Components/Tag.h"
 
@@ -101,7 +101,7 @@ namespace GE
                     std::string display_name = std::to_string(eid) + ": " + entity->GetComponent<TagComponent>().m_name;
                     if (ImGui::Selectable(display_name.c_str()))
                     {
-                        focused_entity->m_parentID = eid;
+                        focused_entity->SetParent(entity);
                     }
                 }
                 ImGui::EndPopup();
@@ -170,8 +170,11 @@ namespace GE
         for (auto& edata : data["entities"])
         {
             int eid         = edata["id"].get<int>();
-            m_entities[eid] = std::make_shared<Entity>(*this, edata);
+            m_entities[eid] = std::make_shared<Entity>(*this, eid);
+            m_entities[eid]->Deserialize(edata);
         }
+
+        SetupEntityInheritance();
     }
 
     void Scene::Load(fs::path path)
@@ -206,6 +209,18 @@ namespace GE
         if (!saved)
         {
             GE_CORE_WARN("[Scene::Save] Failed to save because both previous and given path is empty!");
+        }
+    }
+
+    void Scene::SetupEntityInheritance()
+    {
+        for (auto&& [eid, entity] : m_entities)
+        {
+            std::shared_ptr<Entity> parent = entity->GetParent();
+            if (parent != nullptr)
+            {
+                parent->m_children.push_back(entity);
+            }
         }
     }
 } // namespace GE

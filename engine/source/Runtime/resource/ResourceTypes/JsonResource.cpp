@@ -9,7 +9,7 @@ namespace GE
             std::ifstream file(m_filePath.string());
             file >> m_data;
             file.close();
-            m_identifier = string2jsonId(m_data["type"].get<std::string>());
+            m_identifier = string2jsonId(m_data["GE_IDENTIFIER"].get<std::string>());
             m_valid      = true;
         }
     }

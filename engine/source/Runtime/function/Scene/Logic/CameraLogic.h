@@ -25,7 +25,7 @@ namespace GE
         float4x4 GetVPMatrix(const Entity& e);
 
     private:
-        std::map<entt::entity, MatCacheValue> m_VMatrixCache, m_PMatrixCache, m_VPMatrixCache;
+        std::map<int, MatCacheValue> m_VMatrixCache, m_PMatrixCache, m_VPMatrixCache;
 
         // Camera looks at z direction with y as up in local coord
         const float4x4 m_defaultLookAt = glm::lookAt(float3(0, 0, 0), float3(0, 0, 1), float3(0, 1, 0));

@@ -11,12 +11,6 @@ namespace GE
         m_registryID = m_srcReg.create();
     }
 
-    Entity::Entity(Scene& sc, const json& data) : m_scene(sc), m_srcReg(sc.m_registry)
-    {
-        m_registryID = m_srcReg.create();
-        Deserialize(data);
-    }
-
     json Entity::Serialize() const
     {
         json components;
@@ -80,5 +74,41 @@ namespace GE
         }
     }
 
-    std::shared_ptr<Entity> Entity::GetParent() { return m_scene.GetEntityByID(m_parentID); }
+    std::shared_ptr<Entity> Entity::GetParent()
+    {
+        m_parent = (m_parent == nullptr) ? m_scene.GetEntityByID(m_parentID) : m_parent;
+        return m_parent;
+    }
+
+    void Entity::SetParent(std::shared_ptr<Entity> e)
+    {
+        // wipe old parent info
+        if (GetParent() != nullptr)
+        {
+            auto iter = m_parent->m_children.begin();
+            while (iter != m_parent->m_children.end())
+            {
+                if (*iter == shared_from_this())
+                {
+                    m_parent->m_children.erase(iter);
+                    break;
+                }
+                iter++;
+            }
+        }
+
+        // write new parent info
+        m_parent   = e;
+        m_parentID = e->GetEntityID();
+        e->m_children.push_back(shared_from_this());
+    }
+
+    void Entity::MarkChanged()
+    {
+        m_version = (m_version + 1) % (2 << 30);
+        for (auto&& child : m_children)
+        {
+            child->MarkChanged();
+        }
+    }
 } // namespace GE

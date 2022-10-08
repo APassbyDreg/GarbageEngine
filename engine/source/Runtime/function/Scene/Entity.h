@@ -13,13 +13,12 @@ namespace GE
 {
     class Scene;
 
-    class Entity : public std::enable_shared_from_this<Entity>
+    class GE_API Entity : public std::enable_shared_from_this<Entity>
     {
         friend class Scene;
 
     public:
         Entity(Scene& sc, int eid);
-        Entity(Scene& sc, const json& data);
 
         json Serialize() const;
         void Deserialize(const json& data);
@@ -105,6 +104,7 @@ namespace GE
 
         inline Scene&           GetScene() { return m_scene; }
         std::shared_ptr<Entity> GetParent();
+        void                    SetParent(std::shared_ptr<Entity> e);
 
     private:
         template<std::derived_from<ComponentBase> T>
@@ -113,13 +113,16 @@ namespace GE
             return GetComponent<T>();
         }
 
-        inline void MarkChanged() { m_version = (m_version + 1) % (2 << 30); }
+        inline void MarkChanged();
 
-        Scene&          m_scene;
-        uint            m_version  = 0;
-        int             m_entityID = -1; // valid entity id has to be greater than zero
-        int             m_parentID = -1; // negative value indecates no parent
-        entt::registry& m_srcReg;
+        Scene&                               m_scene;
+        uint                                 m_version  = 0;
+        int                                  m_entityID = -1; // valid entity id has to be greater than zero
+        int                                  m_parentID = -1; // negative value indecates no parent
+        std::shared_ptr<Entity>              m_parent   = nullptr;
+        std::vector<std::shared_ptr<Entity>> m_children = {};
+
+        entt::registry&                                                        m_srcReg;
         std::map<std::string, std::function<void(ComponentIteratorFunc)>>      m_compIters;
         std::map<std::string, std::function<void(ComponentConstIteratorFunc)>> m_compConstIters;
         std::vector<std::shared_ptr<SystemBase>>                               m_systems;
