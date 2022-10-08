@@ -15,6 +15,8 @@ namespace GE
 
     class Entity : public std::enable_shared_from_this<Entity>
     {
+        friend class Scene;
+
     public:
         Entity(Scene& sc, int eid);
         Entity(Scene& sc, const json& data);
@@ -30,8 +32,13 @@ namespace GE
         template<std::derived_from<ComponentBase> T, typename... TArgs>
         void AddComponent(TArgs&&... args)
         {
-            GE_CORE_CHECK(HasComponent<T>() == false, "[Entity::AddComponent] Component already exists");
-            m_srcReg.emplace<T>(m_entityID, shared_from_this(), std::forward<TArgs>(args)...);
+            if (HasComponent<T>())
+            {
+                GE_CORE_WARN("[Entity::AddComponent] Component '{}' already exists, doing nothing", T::GetNameStatic());
+                return;
+            }
+
+            m_srcReg.emplace<T>(m_registryID, shared_from_this(), std::forward<TArgs>(args)...);
             m_compIters[T::GetNameStatic()] = [&, this](ComponentIteratorFunc f) {
                 T& comp = GetComponent<T>();
                 f(comp, *this);
@@ -46,8 +53,12 @@ namespace GE
         template<std::derived_from<ComponentBase> T>
         void RemoveComponent()
         {
-            GE_CORE_CHECK(HasComponent<T>(), "[Entity::RemoveComponent] Component {} not found", T::GetNameStatic());
-            m_srcReg.remove<T>(m_entityID);
+            if (!HasComponent<T>())
+            {
+                GE_CORE_WARN("[Entity::RemoveComponent] Component '{}' not found, doing nothing", T::GetNameStatic());
+                return;
+            }
+            m_srcReg.remove<T>(m_registryID);
             m_compIters.erase(T::GetNameStatic());
             m_compConstIters.erase(T::GetNameStatic());
             MarkChanged();
@@ -56,22 +67,22 @@ namespace GE
         template<std::derived_from<ComponentBase> T>
         bool HasComponent() const
         {
-            return m_srcReg.any_of<T>(m_entityID);
+            return m_srcReg.any_of<T>(m_registryID);
         }
 
         template<std::derived_from<ComponentBase> T>
         T& GetComponent()
         {
-            GE_CORE_ASSERT(HasComponent<T>(), "[Entity::GetComponent] Component {} not found", T::GetNameStatic());
+            GE_CORE_ASSERT(HasComponent<T>(), "[Entity::GetComponent] Component '{}' not found", T::GetNameStatic());
             MarkChanged(); // NOTE: conservatively increament version
-            return m_srcReg.get<T>(m_entityID);
+            return m_srcReg.get<T>(m_registryID);
         }
 
         template<std::derived_from<ComponentBase> T>
         const T& GetComponent() const
         {
-            GE_CORE_ASSERT(HasComponent<T>(), "[Entity::GetComponent] Component {} not found", T::GetNameStatic());
-            return m_srcReg.get<T>(m_entityID);
+            GE_CORE_ASSERT(HasComponent<T>(), "[Entity::GetComponent] Component '{}' not found", T::GetNameStatic());
+            return m_srcReg.get<T>(m_registryID);
         }
 
         void IterateComponent(ComponentIteratorFunc f);
@@ -89,10 +100,11 @@ namespace GE
         void OnUpdate(const double dt);
 
         /* ------------------------ entity basic info ----------------------- */
-        inline uint         GetVersion() const { return m_version; }
-        inline entt::entity GetEntityID() const { return m_entityID; }
+        inline uint GetVersion() const { return m_version; }
+        inline int  GetEntityID() const { return m_entityID; }
 
-        inline Scene& GetScene() { return m_scene; }
+        inline Scene&           GetScene() { return m_scene; }
+        std::shared_ptr<Entity> GetParent();
 
     private:
         template<std::derived_from<ComponentBase> T>
@@ -103,13 +115,14 @@ namespace GE
 
         inline void MarkChanged() { m_version = (m_version + 1) % (2 << 30); }
 
-        Scene&                                                                 m_scene;
-        uint                                                                   m_version = 0;
-        int                                                                    m_fixedID;
-        entt::entity                                                           m_entityID;
-        entt::registry&                                                        m_srcReg;
+        Scene&          m_scene;
+        uint            m_version  = 0;
+        int             m_entityID = -1; // valid entity id has to be greater than zero
+        int             m_parentID = -1; // negative value indecates no parent
+        entt::registry& m_srcReg;
         std::map<std::string, std::function<void(ComponentIteratorFunc)>>      m_compIters;
         std::map<std::string, std::function<void(ComponentConstIteratorFunc)>> m_compConstIters;
         std::vector<std::shared_ptr<SystemBase>>                               m_systems;
+        entt::entity                                                           m_registryID;
     };
 } // namespace GE

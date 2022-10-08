@@ -4,7 +4,7 @@
 
 namespace GE
 {
-    std::shared_ptr<Entity> Scene::CreateEntity(int eid, std::string tagname, int layer, int tag)
+    std::shared_ptr<Entity> Scene::CreateEntity(uint eid, std::string tagname, int layer, int tag)
     {
         if (m_entities.find(eid) != m_entities.end())
         {
@@ -30,6 +30,19 @@ namespace GE
         m_entities[m_availableEntityID] = e;
         return e;
     }
+
+    std::shared_ptr<Entity> Scene::GetEntityByID(int eid)
+    {
+        auto found = m_entities.find(eid);
+        if (eid < 0 || found == m_entities.end())
+        {
+            return nullptr;
+        }
+        else
+        {
+            return found->second;
+        }
+    };
 
     void Scene::InspectStructure()
     {
@@ -59,7 +72,8 @@ namespace GE
 
     void Scene::InspectFocusedEntity()
     {
-        if (m_entities.find(m_focusEntityID) != m_entities.end())
+        std::shared_ptr<Entity> focused_entity = GetEntityByID(m_focusEntityID);
+        if (focused_entity != nullptr)
         {
             std::vector<std::string> add_list    = {};
             std::vector<std::string> remove_list = {};
@@ -72,14 +86,37 @@ namespace GE
                 for (auto [name, factory] : ComponentFactory::GetInstance().GetFactoriesMap())
                 {
                     if (ImGui::Selectable(name.c_str()))
-                        factory({}, *m_entities[m_focusEntityID]);
+                        factory({}, *focused_entity);
                 }
                 ImGui::EndPopup();
             }
 
+            // parent entity selector
+            if (ImGui::Button("Select Parent.."))
+                ImGui::OpenPopup("ge_parent_entity_popup");
+            if (ImGui::BeginPopup("ge_parent_entity_popup"))
+            {
+                for (auto [eid, entity] : m_entities)
+                {
+                    std::string display_name = std::to_string(eid) + ": " + entity->GetComponent<TagComponent>().m_name;
+                    if (ImGui::Selectable(display_name.c_str()))
+                    {
+                        focused_entity->m_parentID = eid;
+                    }
+                }
+                ImGui::EndPopup();
+            }
+
+            // display parent
+            ImGui::SameLine();
+            std::shared_ptr<Entity> parent = focused_entity->GetParent();
+            std::string             parent_text =
+                "Parent: " + ((parent == nullptr) ? "None" : parent->GetComponent<TagComponent>().m_name);
+            ImGui::Text(parent_text.c_str());
+
             // per component
             uint idx = 0;
-            m_entities[m_focusEntityID]->IterateComponent([&](ComponentBase& comp, Entity& e) {
+            focused_entity->IterateComponent([&](ComponentBase& comp, Entity& e) {
                 if (ImGui::CollapsingHeader(comp.GetName().c_str()))
                 {
                     if (comp.GetName() != TagComponent::GetNameStatic())

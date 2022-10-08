@@ -6,14 +6,14 @@
 
 namespace GE
 {
-    Entity::Entity(Scene& sc, int eid) : m_scene(sc), m_fixedID(eid), m_srcReg(sc.m_registry)
+    Entity::Entity(Scene& sc, int eid) : m_scene(sc), m_entityID(eid), m_srcReg(sc.m_registry)
     {
-        m_entityID = m_srcReg.create();
+        m_registryID = m_srcReg.create();
     }
 
     Entity::Entity(Scene& sc, const json& data) : m_scene(sc), m_srcReg(sc.m_registry)
     {
-        m_entityID = m_srcReg.create();
+        m_registryID = m_srcReg.create();
         Deserialize(data);
     }
 
@@ -34,7 +34,8 @@ namespace GE
         json root;
         root["components"] = components;
         root["systems"]    = systems;
-        root["id"]         = m_fixedID;
+        root["id"]         = m_entityID;
+        root["parent"]     = m_parentID;
         return root;
     }
 
@@ -48,7 +49,8 @@ namespace GE
         {
             SystemFactory::GetInstance().AttachSystem(sys, *this);
         }
-        m_fixedID = data["id"].get<int>();
+        m_entityID = data["id"].get<int>();
+        m_parentID = data["parent"].get<int>();
         MarkChanged();
     }
 
@@ -77,4 +79,6 @@ namespace GE
             iter(f);
         }
     }
+
+    std::shared_ptr<Entity> Entity::GetParent() { return m_scene.GetEntityByID(m_parentID); }
 } // namespace GE

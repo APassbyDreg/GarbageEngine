@@ -24,9 +24,9 @@ namespace GE
         inline entt::registry& GetRegistry() { return m_registry; }
 
         std::shared_ptr<Entity>
-        CreateEntity(int eid, std::string tagname = "unnamed entity", int layer = 0, int tag = 0);
+        CreateEntity(uint eid, std::string tagname = "unnamed entity", int layer = 0, int tag = 0);
         std::shared_ptr<Entity> CreateEntity(std::string tagname = "unnamed entity", int layer = 0, int tag = 0);
-        std::shared_ptr<Entity> GetEntityByID(uint eid) { return m_entities[eid]; };
+        std::shared_ptr<Entity> GetEntityByID(int eid);
 
         void InspectStructure();
         void InspectFocusedEntity();
@@ -41,15 +41,15 @@ namespace GE
         void Load(const fs::path path);
 
     protected:
-        entt::registry                         m_registry;
-        std::map<int, std::shared_ptr<Entity>> m_entities;
+        entt::registry                          m_registry;
+        std::map<uint, std::shared_ptr<Entity>> m_entities;
 
         std::string m_name = "GE_scene";
         char        m_nameBuffer[256];
 
     private:
         int                           m_focusEntityID     = -1;
-        int                           m_availableEntityID = 0;
+        uint                          m_availableEntityID = 0;
         std::shared_ptr<JsonResource> m_resource          = nullptr;
     };
 } // namespace GE
