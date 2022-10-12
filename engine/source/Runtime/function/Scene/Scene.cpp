@@ -1,4 +1,4 @@
-#include "Scene.h" Entity
+#include "Scene.h"
 
 #include "Runtime/function/Scene/Components/Tag.h"
 
@@ -57,12 +57,12 @@ namespace GE
         for (auto&& [eid, e] : m_entities)
         {
             TagComponent& tag  = e->GetComponent<TagComponent>();
-            const char*   name = tag.m_name.c_str();
-            if (tag.m_name.empty())
+            std::string   name = tag.GetCoreValues().name;
+            if (name.empty())
             {
                 name = "unnamed entity";
             }
-            if (ImGui::Selectable(name, m_focusEntityID == idx))
+            if (ImGui::Selectable(name.c_str(), m_focusEntityID == idx))
             {
                 m_focusEntityID = eid;
             }
@@ -98,7 +98,8 @@ namespace GE
             {
                 for (auto [eid, entity] : m_entities)
                 {
-                    std::string display_name = std::to_string(eid) + ": " + entity->GetComponent<TagComponent>().m_name;
+                    std::string display_name =
+                        std::to_string(eid) + ": " + entity->GetComponent<TagComponent>().GetCoreValues().name;
                     if (ImGui::Selectable(display_name.c_str()))
                     {
                         focused_entity->SetParent(entity);
@@ -111,7 +112,7 @@ namespace GE
             ImGui::SameLine();
             std::shared_ptr<Entity> parent = focused_entity->GetParent();
             std::string             parent_text =
-                "Parent: " + ((parent == nullptr) ? "None" : parent->GetComponent<TagComponent>().m_name);
+                "Parent: " + ((parent == nullptr) ? "None" : parent->GetComponent<TagComponent>().GetCoreValues().name);
             ImGui::Text(parent_text.c_str());
 
             // per component

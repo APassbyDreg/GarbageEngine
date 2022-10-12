@@ -10,60 +10,78 @@ namespace GE
         Orthographic
     };
 
+    struct CameraComponentCore
+    {
+        float      aspectRatio = 1.0f;
+        float      horizonFov  = 54;
+        float2     clip        = {1e-3, 1e3};
+        CameraType type        = CameraType::Perspective;
+
+        bool operator==(CameraComponentCore&& rhs)
+        {
+            return aspectRatio == rhs.aspectRatio && horizonFov == rhs.horizonFov && clip == rhs.clip &&
+                   type == rhs.type;
+        }
+
+        operator std::tuple<float, float, float2, CameraType>() { return {aspectRatio, horizonFov, clip, type}; }
+    };
+
     class CameraComponent : public ComponentBase
     {
-    public:
         GE_COMPONENT_COMMON(CameraComponent);
 
-        float      m_aspectRatio = 1.0f;
-        float      m_horizonFov  = 54;
-        float2     m_clip        = {1e-3, 1e3};
-        CameraType m_type        = CameraType::Perspective;
-
+    public:
         inline json Serialize() const override
         {
-            return {{"aspect", m_aspectRatio},
-                    {"hfov", m_horizonFov},
-                    {"clip", {m_clip.x, m_clip.y}},
-                    {"type", (int)m_type}};
+            auto [aspect, fov, clip, cam_type] = m_core.GetValue();
+            return {{"aspect", aspect}, {"hfov", fov}, {"clip", {clip.x, clip.y}}, {"type", (int)cam_type}};
         }
 
         inline void Deserialize(const json& data) override
         {
-            m_aspectRatio = data["aspect"].get<float>();
-            m_horizonFov  = data["hfov"].get<float>();
-            m_clip.x      = data["clip"][0].get<float>();
-            m_clip.y      = data["clip"][1].get<float>();
-            m_type        = __camera_id2type(data["type"].get<int>());
+            float      aspect, fov;
+            float2     clip;
+            CameraType cam_type;
+
+            aspect   = data["aspect"].get<float>();
+            fov      = data["hfov"].get<float>();
+            clip.x   = data["clip"][0].get<float>();
+            clip.y   = data["clip"][1].get<float>();
+            cam_type = __camera_id2type(data["type"].get<int>());
+
+            m_core = {aspect, fov, clip, cam_type};
         }
 
         inline void Inspect() override
         {
-            m_typeid                  = __camera_type2id(m_type);
-            const char* type_names[2] = {"Perspective", "Orthographic"};
-            const int   type_count    = 2;
+            auto [aspect, fov, clip, cam_type] = m_core.GetValue();
+            m_typeid                           = __camera_type2id(cam_type);
+            const char* type_names[2]          = {"Perspective", "Orthographic"};
+            const int   type_count             = 2;
             ImGui::Combo("Camera Type", &m_typeid, type_names, type_count);
-            ImGui::DragFloat("Field of View (horizon)", &m_horizonFov);
-            ImGui::DragFloat2("Z Clip (near -> far)", reinterpret_cast<float*>(&m_clip));
-            if (m_clip.x > m_clip.y)
+            ImGui::DragFloat("Field of View (horizon)", &fov);
+            ImGui::DragFloat2("Z Clip (near -> far)", reinterpret_cast<float*>(&clip));
+            if (clip.x > clip.y)
             {
-                float tmp = m_clip.x;
-                m_clip.x  = m_clip.y;
-                m_clip.y  = tmp;
+                float tmp = clip.x;
+                clip.x    = clip.y;
+                clip.y    = tmp;
             }
-            m_type = __camera_id2type(m_typeid);
+            cam_type = __camera_id2type(m_typeid);
+            m_core   = {aspect, fov, clip, cam_type};
         }
 
         inline float4x4 GetProjectionMatrix() const
         {
-            switch (m_type)
+            auto [aspect, fov, clip, cam_type] = m_core.GetValue();
+            switch (cam_type)
             {
                 case CameraType::Perspective: {
-                    return glm::perspective(glm::radians(m_horizonFov), 1.0f, m_clip.x, m_clip.y);
+                    return glm::perspective(glm::radians(fov), 1.0f, clip.x, clip.y);
                 }
                 case CameraType::Orthographic: {
-                    float half_width  = m_horizonFov * 0.5;
-                    float half_height = half_width * m_aspectRatio;
+                    float half_width  = fov * 0.5;
+                    float half_height = half_width * aspect;
                     return glm::ortho(-half_width, half_width, -half_height, half_height);
                 }
             }

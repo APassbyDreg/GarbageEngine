@@ -6,11 +6,13 @@
 
 namespace GE
 {
+    typedef int RendererComponentCore;
+
     class RendererComponent : public ComponentBase
     {
-    public:
         GE_COMPONENT_COMMON(RendererComponent);
 
+    public:
         inline json Serialize() const override { return {}; }
         inline void Deserialize(const json& data) override {}
         inline void Inspect() override {}

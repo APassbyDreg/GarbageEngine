@@ -4,37 +4,52 @@
 
 namespace GE
 {
+    struct TagComponentCore
+    {
+        std::string name  = "unnamed entity";
+        int         layer = 0, tag = 0;
+
+        bool operator==(TagComponentCore&& rhs) { return name == rhs.name && layer == rhs.layer && tag == rhs.tag; }
+             operator std::tuple<std::string, int, int>() { return {name, layer, tag}; }
+    };
+
     class TagComponent : public ComponentBase
     {
-    public:
         GE_COMPONENT_COMMON(TagComponent);
 
-        std::string m_name  = "unnamed entity";
-        int         m_layer = 0, m_tag = 0;
-
+    public:
         TagComponent(std::shared_ptr<Entity> e, std::string name = "unnamed entity", int layer = 0, int tag = 0) :
-            m_name(name), m_layer(layer), m_tag(tag), ComponentBase(e)
-        {}
+            ComponentBase(e)
+        {
+            m_core = {name, layer, tag};
+        }
 
-        inline json Serialize() const override { return {{"name", m_name}, {"layer", m_layer}, {"tag", m_tag}}; }
+        inline json Serialize() const override
+        {
+            auto [name, layer, tag] = m_core.GetValue();
+            return {{"name", name}, {"layer", layer}, {"tag", tag}};
+        }
 
         inline void Deserialize(const json& data) override
         {
-            m_name  = data["name"].get<std::string>();
-            m_layer = data["layer"].get<int>();
-            m_tag   = data["tag"].get<int>();
+            std::string name;
+            int         layer, tag;
+            name   = data["name"].get<std::string>();
+            layer  = data["layer"].get<int>();
+            tag    = data["tag"].get<int>();
+            m_core = {name, layer, tag};
         }
 
         inline void Inspect() override
         {
-            strcpy(m_nameBuffer, m_name.c_str());
-            ImGui::InputText("Name", m_nameBuffer, 256);
-            ImGui::InputInt("Layer", &m_layer);
-            ImGui::InputInt("Tag", &m_tag);
-            m_name = m_nameBuffer;
+            auto [name, layer, tag] = m_core.GetValue();
+            char nameBuffer[256]    = {};
+            strcpy(nameBuffer, name.c_str());
+            ImGui::InputText("Name", nameBuffer, 256);
+            ImGui::InputInt("Layer", &layer);
+            ImGui::InputInt("Tag", &tag);
+            name   = nameBuffer;
+            m_core = {name, layer, tag};
         }
-
-    private:
-        char m_nameBuffer[256] = {};
     };
 } // namespace GE

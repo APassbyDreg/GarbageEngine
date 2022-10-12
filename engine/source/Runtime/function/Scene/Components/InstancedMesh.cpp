@@ -8,12 +8,14 @@ namespace GE
 {
     inline void InstancedMeshComponent::HandleOpenFile()
     {
-        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
         {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
-                std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
-                m_source             = ResourceManager::GetInstance().GetResource<MeshResource>(filepath);
+                std::string                   filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::shared_ptr<MeshResource> m_source =
+                    ResourceManager::GetInstance().GetResource<MeshResource>(filepath);
+                m_core = m_source;
             }
             ImGuiFileDialog::Instance()->Close();
         }
@@ -21,7 +23,8 @@ namespace GE
 
     void InstancedMeshComponent::Inspect()
     {
-        std::string path = m_source != nullptr ? m_source->GetFilePath().string() : "not selected";
+        std::shared_ptr<MeshResource> m_source = m_core;
+        std::string                   path = m_source != nullptr ? m_source->GetFilePath().string() : "not selected";
         ImGui::Text("Source: %s", path.c_str());
         if (ImGui::Button("select"))
         {

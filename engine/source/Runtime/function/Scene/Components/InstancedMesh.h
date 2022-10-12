@@ -6,12 +6,11 @@
 
 namespace GE
 {
+    typedef std::shared_ptr<MeshResource> InstancedMeshComponentCore;
+
     class InstancedMeshComponent : public ComponentBase
     {
-    public:
         GE_COMPONENT_COMMON(InstancedMeshComponent);
-
-        std::shared_ptr<MeshResource> m_source = nullptr;
 
     public:
         inline json Serialize() const override { return {}; }

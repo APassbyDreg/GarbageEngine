@@ -4,52 +4,70 @@
 
 namespace GE
 {
+    struct TransformComponentCore
+    {
+        float3 position = {0, 0, 0};
+        float3 scale    = {1, 1, 1};
+        quat   rotation = {1, 0, 0, 0};
+
+        bool operator==(TransformComponentCore&& rhs)
+        {
+            return position == rhs.position && scale == rhs.scale && rotation == rhs.rotation;
+        }
+
+        operator std::tuple<float3, float3, quat>() { return {position, scale, rotation}; }
+    };
+
     class TransformComponent : public ComponentBase
     {
-    public:
         GE_COMPONENT_COMMON(TransformComponent);
 
-        float3 m_position = {0, 0, 0};
-        float3 m_scale    = {1, 1, 1};
-        quat   m_rotation = {1, 0, 0, 0};
-
-        TransformComponent(std::shared_ptr<Entity> e, float3 pos, float3 scale, float3 rot) :
-            m_position(pos), m_scale(scale), m_rotation(rot), m_eulerAngles(rot), ComponentBase(e)
-        {}
-        TransformComponent(std::shared_ptr<Entity> e, float3 pos, float3 scale, quat rot) :
-            m_position(pos), m_scale(scale), m_rotation(rot), ComponentBase(e)
+    public:
+        TransformComponent(std::shared_ptr<Entity> e, float3 pos, float3 scale, float3 rot) : ComponentBase(e)
         {
-            m_eulerAngles = glm::degrees(glm::eulerAngles(m_rotation));
+            m_core = {pos, scale, rot};
+        }
+        TransformComponent(std::shared_ptr<Entity> e, float3 pos, float3 scale, quat rot) : ComponentBase(e)
+        {
+            m_core = {pos, scale, rot};
         }
 
         inline json Serialize() const override
         {
-            return {{"position", {m_position.x, m_position.y, m_position.z}},
-                    {"scale", {m_scale.x, m_scale.y, m_scale.z}},
-                    {"rotation", {m_rotation.x, m_rotation.y, m_rotation.z, m_rotation.w}}};
+            auto [position, scale, rotation] = m_core.GetValue();
+            return {{"position", {position.x, position.y, position.z}},
+                    {"scale", {scale.x, scale.y, scale.z}},
+                    {"rotation", {rotation.x, rotation.y, rotation.z, rotation.w}}};
         }
 
         inline void Deserialize(const json& data) override
         {
-            m_position.x  = data["position"][0].get<float>();
-            m_position.y  = data["position"][1].get<float>();
-            m_position.z  = data["position"][2].get<float>();
-            m_scale.x     = data["scale"][0].get<float>();
-            m_scale.y     = data["scale"][1].get<float>();
-            m_scale.z     = data["scale"][2].get<float>();
-            m_rotation.x  = data["rotation"][0].get<float>();
-            m_rotation.y  = data["rotation"][1].get<float>();
-            m_rotation.z  = data["rotation"][2].get<float>();
-            m_rotation.w  = data["rotation"][3].get<float>();
-            m_eulerAngles = glm::degrees(glm::eulerAngles(m_rotation));
+            float3 position, scale;
+            quat   rotation;
+
+            position.x = data["position"][0].get<float>();
+            position.y = data["position"][1].get<float>();
+            position.z = data["position"][2].get<float>();
+            scale.x    = data["scale"][0].get<float>();
+            scale.y    = data["scale"][1].get<float>();
+            scale.z    = data["scale"][2].get<float>();
+            rotation.x = data["rotation"][0].get<float>();
+            rotation.y = data["rotation"][1].get<float>();
+            rotation.z = data["rotation"][2].get<float>();
+            rotation.w = data["rotation"][3].get<float>();
+
+            m_core = {position, scale, rotation};
         }
 
         inline void Inspect() override
         {
-            ImGui::DragFloat3("Position", reinterpret_cast<float*>(&m_position));
-            ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&m_scale));
-            ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&m_eulerAngles));
-            m_rotation = glm::quat(glm::radians(m_eulerAngles));
+            auto [position, scale, rotation] = m_core.GetValue();
+            float3 euler                     = glm::degrees(glm::eulerAngles(rotation));
+            ImGui::DragFloat3("Position", reinterpret_cast<float*>(&position));
+            ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&scale));
+            ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&euler));
+            rotation = glm::quat(glm::radians(euler));
+            m_core   = {position, scale, rotation};
         }
 
         /* ----------------------------- helpers ---------------------------- */
@@ -57,10 +75,8 @@ namespace GE
         // get transform matrix in S->R->T order
         inline float4x4 GetTransformMatrix() const
         {
-            return glm::translate(glm::mat4_cast(m_rotation) * glm::scale(m_scale), m_position);
+            auto [position, scale, rotation] = m_core.GetValue();
+            return glm::translate(glm::mat4_cast(rotation) * glm::scale(scale), position);
         }
-
-    private:
-        float3 m_eulerAngles = {0, 0, 0};
     };
 } // namespace GE

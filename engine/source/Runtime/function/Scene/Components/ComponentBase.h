@@ -4,6 +4,7 @@
 
 #include "imgui.h"
 
+#include "Runtime/core/Base/WatchedValue.h"
 #include "Runtime/core/ECS.h"
 #include "Runtime/core/Math/Math.h"
 #include "Runtime/core/json.h"
@@ -33,10 +34,13 @@ namespace GE
     class Entity;
 
 #define GE_COMPONENT_COMMON(comp) \
+public: \
     std::string        GetName() const override { return #comp; } \
     static std::string GetNameStatic() { return #comp; } \
     comp(std::shared_ptr<Entity> e, const json& data) : ComponentBase(e) { Deserialize(data); } \
-    comp(std::shared_ptr<Entity> e) : ComponentBase(e) {}
+    comp(std::shared_ptr<Entity> e) : ComponentBase(e) {} \
+    comp##Core               GetCoreValues() { return m_core.GetValue(); } \
+    WatchedValue<comp##Core> m_core;
 
     class ComponentBase
     {
