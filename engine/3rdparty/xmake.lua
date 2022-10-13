@@ -65,17 +65,9 @@ end
 
 
 -------------------------------- vkb --------------------------------
-target("GE_vkb")
-    set_kind("static")
-
-    GE_link_vulkan()
-    add_includedirs(rel_local_path("vk-bootstrap/src"))
-
-    add_files(rel_local_path("vk-bootstrap/src/**.cpp"))
-
 function GE_link_vkb() 
     add_includedirs(rel_local_path("vk-bootstrap/src"))
-    add_deps("GE_vkb")
+    add_files(rel_local_path("vk-bootstrap/src/**.cpp"))
 end
 
 

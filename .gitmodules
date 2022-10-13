@@ -24,3 +24,6 @@
 	path = engine/3rdparty/imgui_plugins/ImGuiFileDialog
 	url = https://github.com/aiekick/ImGuiFileDialog.git
 	branch = Lib_Only
+[submodule "engine/3rdparty/vk-bootstrap"]
+	path = engine/3rdparty/vk-bootstrap
+	url = https://github.com/APassbyDreg/vk-bootstrap.git
