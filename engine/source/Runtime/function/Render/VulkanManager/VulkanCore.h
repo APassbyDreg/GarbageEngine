@@ -3,6 +3,7 @@
 #include "GE_pch.h"
 
 #include "VulkanCommon.h"
+#include "VulkanCreateInfoBuilder.h"
 
 #include "GLFW/glfw3.h" // GLFW must be included after Vulkan
 #include "VkBootstrap.h"
@@ -13,6 +14,15 @@
 
 namespace GE
 {
+    struct VkSupportStatus
+    {
+        bool hasComputeQueue               = false;
+        bool hasTransferQueue              = false;
+        bool hasDiscriteComputeQueue       = false;
+        bool hasDiscriteTransferQueue      = false;
+        bool isComputeAndTransferSameQueue = true;
+    };
+
     class VulkanCore : public Singleton<VulkanCore>
     {
     public:
@@ -48,13 +58,43 @@ namespace GE
         }
         static inline uint32_t GetVkComputeQueueFamilyIndex(bool& support)
         {
-            support = GetInstance().ensure_ready().m_supportCompute;
+            support = GetInstance().ensure_ready().m_supportStatus.hasComputeQueue;
             return support ? GetInstance().ensure_ready().m_computeQueueFamilyIndex : 0;
         }
         static inline uint32_t GetVkTransferQueueFamilyIndex(bool& support)
         {
-            support = GetInstance().ensure_ready().m_supportTransfer;
+            support = GetInstance().ensure_ready().m_supportStatus.hasTransferQueue;
             return support ? GetInstance().ensure_ready().m_transferQueueFamilyIndex : 0;
+        }
+        static inline VkCommandBuffer GetGraphicsCmdBuffer()
+        {
+            return GetInstance().ensure_ready().m_graphicsCommandBuffer;
+        }
+        static inline VkCommandPool GetGraphicsCmdPool() { return GetInstance().ensure_ready().m_graphicsCommandPool; }
+        static inline VkCommandBuffer GetComputeCmdBuffer(bool& support)
+        {
+            support = GetInstance().ensure_ready().m_supportStatus.hasTransferQueue;
+            return support ? GetInstance().ensure_ready().m_computeCommandBuffer : 0;
+        }
+        static inline VkCommandPool GetComputeCmdPool(bool& support)
+        {
+            support = GetInstance().ensure_ready().m_supportStatus.hasTransferQueue;
+            return support ? GetInstance().ensure_ready().m_computeCommandPool : 0;
+        }
+
+        static inline VkFence CreateVkFence()
+        {
+            VkFence           fence;
+            VkFenceCreateInfo info = VkInit::GetFenceCreateInfo();
+            vkCreateFence(GetVkDevice(), &info, nullptr, &fence);
+            return fence;
+        }
+        static inline VkSemaphore CreateVkSemaphore(VkSemaphoreCreateFlags flags = 0)
+        {
+            VkSemaphore           semaphore;
+            VkSemaphoreCreateInfo info = VkInit::GetSemaphoreCreateInfo(flags);
+            vkCreateSemaphore(GetVkDevice(), &info, nullptr, &semaphore);
+            return semaphore;
         }
 
     private:
@@ -73,18 +113,21 @@ namespace GE
     private:
         bool m_ready = false;
 
-        /* ---------------------- vulkan core resources --------------------- */
+        std::vector<std::function<void()>> m_destroyActionStack;
 
+        /* ---------------------- vulkan core resources --------------------- */
+        VkSupportStatus          m_supportStatus;
         VkInstance               m_instance;
         VkDebugUtilsMessengerEXT m_debugMessenger;
         VkPhysicalDevice         m_physicalDevice;
         VkDevice                 m_device;
-        bool                     m_supportCompute, m_supportTransfer;
         VkQueue                  m_graphicsQueue, m_presentQueue;
         VkQueue                  m_computeQueue, m_transferQueue;
         uint32_t                 m_graphicsQueueFamilyIndex, m_presentQueueFamilyIndex;
         uint32_t                 m_computeQueueFamilyIndex, m_transferQueueFamilyIndex;
         VkSurfaceKHR             m_surface;
+        VkCommandPool            m_graphicsCommandPool, m_computeCommandPool;
+        VkCommandBuffer          m_graphicsCommandBuffer, m_computeCommandBuffer;
 
         /* -------------------------- vkb variables ------------------------- */
         vkb::Instance       m_vkbInstance;

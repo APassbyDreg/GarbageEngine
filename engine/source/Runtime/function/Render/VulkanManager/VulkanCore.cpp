@@ -102,15 +102,20 @@ namespace GE
 #endif
             VKB_CHECK_RETURN(builder.build(), m_vkbInstance);
             m_instance = m_vkbInstance.instance;
-
+            m_destroyActionStack.push_back([this]() { vkb::destroy_instance(m_vkbInstance); });
 #ifdef GE_DEBUG
             m_debugMessenger = m_vkbInstance.debug_messenger;
+            m_destroyActionStack.push_back(
+                [this]() { vkb::destroy_debug_utils_messenger(m_instance, m_debugMessenger); });
 #endif
         }
 
         // Create Surface
         {
             GE_VK_ASSERT(glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface));
+
+            // add destroy action
+            m_destroyActionStack.push_back([this]() { vkb::destroy_surface(m_vkbInstance, m_surface); });
         }
 
         // Choose and create device
@@ -138,24 +143,62 @@ namespace GE
             {
                 VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute), m_computeQueue);
                 VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute), m_computeQueueFamilyIndex);
-                m_supportCompute = true;
+                m_supportStatus.hasComputeQueue = true;
             }
             catch (const std::exception& e)
             {
                 GE_CORE_ERROR("Failed to get compute queue: {}", e.what());
-                m_supportCompute = false;
             }
 
             try
             {
                 VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::transfer), m_transferQueue);
                 VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::transfer), m_transferQueueFamilyIndex);
-                m_supportTransfer = true;
+                m_supportStatus.hasTransferQueue = true;
             }
             catch (const std::exception& e)
             {
                 GE_CORE_ERROR("Failed to get transfer queue: {}", e.what());
-                m_supportTransfer = false;
+            }
+
+            // write support status
+            m_supportStatus.isComputeAndTransferSameQueue = m_computeQueue == m_transferQueue;
+            m_supportStatus.hasDiscriteComputeQueue =
+                m_computeQueue != m_graphicsQueue && m_computeQueue != m_transferQueue;
+            m_supportStatus.hasDiscriteTransferQueue =
+                m_transferQueue != m_graphicsQueue && m_transferQueue != m_computeQueue;
+
+            // add destroy action
+            m_destroyActionStack.push_back([&]() { vkb::destroy_device(m_vkbDevice); });
+        }
+
+        // Create CMD Pool and Buffer
+        {
+            {
+                VkCommandPoolCreateInfo create_info = VkInit::GetCommandPoolCreateInfo(m_graphicsQueueFamilyIndex);
+                vkCreateCommandPool(m_device, &create_info, nullptr, &m_graphicsCommandPool);
+                VkCommandBufferAllocateInfo alloc_info = VkInit::GetCommandBufferAllocateInfo(m_graphicsCommandPool);
+                vkAllocateCommandBuffers(m_device, &alloc_info, &m_graphicsCommandBuffer);
+
+                // add destroy action
+                m_destroyActionStack.push_back([this]() {
+                    vkFreeCommandBuffers(m_device, m_graphicsCommandPool, 1, &m_graphicsCommandBuffer);
+                    vkDestroyCommandPool(m_device, m_graphicsCommandPool, nullptr);
+                });
+            }
+
+            if (m_supportStatus.hasComputeQueue)
+            {
+                VkCommandPoolCreateInfo create_info = VkInit::GetCommandPoolCreateInfo(m_computeQueueFamilyIndex);
+                vkCreateCommandPool(m_device, &create_info, nullptr, &m_computeCommandPool);
+                VkCommandBufferAllocateInfo alloc_info = VkInit::GetCommandBufferAllocateInfo(m_computeCommandPool);
+                vkAllocateCommandBuffers(m_device, &alloc_info, &m_computeCommandBuffer);
+
+                // add destroy action
+                m_destroyActionStack.push_back([this]() {
+                    vkFreeCommandBuffers(m_device, m_computeCommandPool, 1, &m_computeCommandBuffer);
+                    vkDestroyCommandPool(m_device, m_computeCommandPool, nullptr);
+                });
             }
         }
     }
@@ -164,16 +207,11 @@ namespace GE
     {
         GE_VK_ASSERT(vkDeviceWaitIdle(m_device));
 
-        vkb::destroy_device(m_vkbDevice);
-
-        vkb::destroy_surface(m_vkbInstance, m_surface);
-
-#ifdef GE_DEBUG
-        vkb::destroy_debug_utils_messenger(m_instance, m_debugMessenger);
-#endif
-
-        vkDestroyInstance(m_instance, nullptr);
-        // vkb::destroy_instance(m_vkbInstance);
+        // run destroy stack back to front
+        for (int i = m_destroyActionStack.size() - 1; i >= 0; i--)
+        {
+            m_destroyActionStack[i]();
+        }
     }
 
     void VulkanCore::init_vma()

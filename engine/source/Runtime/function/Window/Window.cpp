@@ -70,9 +70,12 @@ namespace GE
 
     void Window::__imgui_render_frame(ImDrawData* draw_data)
     {
-        VkDevice vk_device         = VulkanCore::GetVkDevice();
-        VkQueue  vk_graphics_queue = VulkanCore::GetVkGraphicsQueue();
+        VkDevice        vk_device              = VulkanCore::GetVkDevice();
+        VkQueue         vk_graphics_queue      = VulkanCore::GetVkGraphicsQueue();
+        VkCommandBuffer vk_graphics_cmd_buffer = VulkanCore::GetGraphicsCmdBuffer();
+        VkCommandPool   vk_graphics_cmd_pool   = VulkanCore::GetGraphicsCmdPool();
 
+        VkSemaphore viewport_complete_semaphore = m_renderFinishedSemaphores[m_imguiWindow.FrameIndex];
         VkSemaphore image_acquired_semaphore =
             m_imguiWindow.FrameSemaphores[m_imguiWindow.SemaphoreIndex].ImageAcquiredSemaphore;
         VkSemaphore render_complete_semaphore =
@@ -96,26 +99,51 @@ namespace GE
 
             GE_VK_ASSERT(vkResetFences(vk_device, 1, &fd->Fence));
         }
-        {
-            GE_VK_ASSERT(vkResetCommandPool(vk_device, fd->CommandPool, 0));
-            VkCommandBufferBeginInfo info = {};
-            info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            GE_VK_ASSERT(vkBeginCommandBuffer(fd->CommandBuffer, &info));
-        }
 
         /* -------------------------- renderer pass ------------------------- */
         {
+            {
+                GE_VK_ASSERT(vkResetCommandPool(vk_device, vk_graphics_cmd_pool, 0));
+                VkCommandBufferBeginInfo info = {};
+                info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+                GE_VK_ASSERT(vkBeginCommandBuffer(vk_graphics_cmd_buffer, &info));
+            }
+
             TestBasicDrawData data            = {};
             data.clear_color.color.float32[0] = 0.2f;
             data.clear_color.color.float32[1] = 0.2f;
             data.clear_color.color.float32[2] = 0.2f;
             data.clear_color.color.float32[3] = 1.0f;
-            m_renderRoutine.DrawFrame(data, m_imguiWindow.FrameIndex, fd->CommandBuffer);
+            m_renderRoutine.DrawFrame(data, m_imguiWindow.FrameIndex, vk_graphics_cmd_buffer);
+
+            {
+                VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                VkSubmitInfo         info       = {};
+                info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                info.waitSemaphoreCount         = 1;
+                info.pWaitSemaphores            = &image_acquired_semaphore;
+                info.pWaitDstStageMask          = &wait_stage;
+                info.commandBufferCount         = 1;
+                info.pCommandBuffers            = &vk_graphics_cmd_buffer;
+                info.signalSemaphoreCount       = 1;
+                info.pSignalSemaphores          = &viewport_complete_semaphore;
+
+                GE_VK_ASSERT(vkEndCommandBuffer(vk_graphics_cmd_buffer));
+                GE_VK_ASSERT(vkQueueSubmit(vk_graphics_queue, 1, &info, fd->Fence));
+            }
         }
 
         /* --------------------------- imgui pass --------------------------- */
         {
+            {
+                GE_VK_ASSERT(vkResetCommandPool(vk_device, fd->CommandPool, 0));
+                VkCommandBufferBeginInfo info = {};
+                info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+                GE_VK_ASSERT(vkBeginCommandBuffer(fd->CommandBuffer, &info));
+            }
+
             {
                 VkRenderPassBeginInfo info    = {};
                 info.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -126,13 +154,17 @@ namespace GE
                 info.clearValueCount          = 1;
                 info.pClearValues             = &m_imguiWindow.ClearValue;
                 vkCmdBeginRenderPass(fd->CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+
+                // Record dear imgui primitives into command buffer
+                ImGui_ImplVulkan_RenderDrawData(draw_data, fd->CommandBuffer);
+
+                // Submit command buffer
+                vkCmdEndRenderPass(fd->CommandBuffer);
             }
 
-            // Record dear imgui primitives into command buffer
-            ImGui_ImplVulkan_RenderDrawData(draw_data, fd->CommandBuffer);
-
-            // Submit command buffer
-            vkCmdEndRenderPass(fd->CommandBuffer);
+            // Wait till render is complete
+            GE_VK_ASSERT(vkWaitForFences(vk_device, 1, &fd->Fence, VK_TRUE, UINT64_MAX));
+            GE_VK_ASSERT(vkResetFences(vk_device, 1, &fd->Fence));
 
             {
                 VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -145,6 +177,8 @@ namespace GE
                 info.pCommandBuffers            = &fd->CommandBuffer;
                 info.signalSemaphoreCount       = 1;
                 info.pSignalSemaphores          = &render_complete_semaphore;
+                info.waitSemaphoreCount         = 1;
+                info.pWaitSemaphores            = &viewport_complete_semaphore;
 
                 GE_VK_ASSERT(vkEndCommandBuffer(fd->CommandBuffer));
                 GE_VK_ASSERT(vkQueueSubmit(vk_graphics_queue, 1, &info, fd->Fence));
@@ -391,16 +425,16 @@ namespace GE
         // setup descriptor pool
         {
             VkDescriptorPoolSize       pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
-                                                 {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
+                                                       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
             VkDescriptorPoolCreateInfo pool_info    = {};
             pool_info.sType                         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
             pool_info.flags                         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -508,6 +542,13 @@ namespace GE
 
         // setup render routine
         m_renderRoutine.Init(m_imguiWindow.ImageCount);
+
+        // setup semaphores
+        for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
+        {
+            auto semaphore = VulkanCore::CreateVkSemaphore();
+            m_renderFinishedSemaphores.push_back(semaphore);
+        }
 
         // viewport sampler & image
         VkSamplerCreateInfo info = {};

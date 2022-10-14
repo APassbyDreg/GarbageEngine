@@ -8,6 +8,41 @@ namespace GE
 {
     namespace VkInit
     {
+        inline VkCommandPoolCreateInfo GetCommandPoolCreateInfo(uint32_t queue_family_index, VkCommandPoolCreateFlags flags = 0)
+        {
+            VkCommandPoolCreateInfo info = {};
+            info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+            info.queueFamilyIndex = queue_family_index;
+            info.flags = flags;
+            return info;
+        }
+
+        inline VkCommandBufferAllocateInfo GetCommandBufferAllocateInfo(VkCommandPool cmd_pool, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY, uint32_t num_buffer = 1)
+        {
+            VkCommandBufferAllocateInfo info = {};
+            info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            info.commandPool = cmd_pool;
+            info.level = level;
+            info.commandBufferCount = num_buffer;
+            return info;
+        }
+
+        inline VkFenceCreateInfo GetFenceCreateInfo(VkFenceCreateFlags flags = 0)
+        {
+            VkFenceCreateInfo fenceCreateInfo = {};
+            fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+            fenceCreateInfo.flags = flags;
+            return fenceCreateInfo;
+        }
+
+        inline VkSemaphoreCreateInfo GetSemaphoreCreateInfo(VkSemaphoreCreateFlags flags = 0)
+        {
+            VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+            semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+            semaphoreCreateInfo.flags = flags;
+            return semaphoreCreateInfo;
+        }
+
         inline VkAttachmentDescription GetAttachmentDescription(VkFormat              format = VK_FORMAT_R8G8B8A8_UNORM,
                                                                 VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT)
         {
