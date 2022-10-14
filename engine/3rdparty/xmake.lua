@@ -38,22 +38,13 @@ end
 
 
 -------------------------------- imgui --------------------------------
-target("GE_imgui")
-    set_kind("static")
-
-    GE_link_vulkan()
-    GE_link_glfw()
-    add_includedirs(rel_local_path("imgui"))
-
-    add_files("imgui/*.cpp")
-    add_files("imgui/backends/imgui_impl_glfw.cpp")
-    add_files("imgui/backends/imgui_impl_vulkan.cpp")
-
-
 function GE_link_imgui() 
     add_includedirs(rel_local_path("imgui"))
     add_includedirs(rel_local_path("imgui/backends"))
-    add_deps("GE_imgui") 
+
+    add_files(rel_local_path("imgui/*.cpp"))
+    add_files(rel_local_path("imgui/backends/imgui_impl_glfw.cpp"))
+    add_files(rel_local_path("imgui/backends/imgui_impl_vulkan.cpp"))
 end
 
 
@@ -91,16 +82,9 @@ end
 
 
 -------------------------------- miniz --------------------------------
-target("GE_miniz")
-    set_kind("static")
-
-    add_includedirs(rel_local_path("miniz"))
-
-    add_files(rel_local_path("miniz/**.cpp"))
-
 function GE_link_miniz() 
     add_includedirs(rel_local_path("miniz"))
-    add_deps("GE_miniz")
+    add_files(rel_local_path("miniz/**.cpp"))
 end
 
 
