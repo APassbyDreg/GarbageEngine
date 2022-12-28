@@ -17,7 +17,7 @@ namespace GE
     {
         vkb::Swapchain        swapchain;
         vkb::SwapchainBuilder builder {
-            VulkanCore::GetVkPhysicalDevice(), VulkanCore::GetVkDevice(), VulkanCore::GetVkSurface()};
+            VulkanCore::GetPhysicalDevice(), VulkanCore::GetDevice(), VulkanCore::GetSurface()};
         builder.set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
             .set_desired_format({VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
             .set_desired_extent(m_swapchainExtent.width, m_swapchainExtent.height);
@@ -37,7 +37,7 @@ namespace GE
             semaphore_info.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
             VkSemaphore image_available_semaphore;
             GE_VK_ASSERT(
-                vkCreateSemaphore(VulkanCore::GetVkDevice(), &semaphore_info, nullptr, &image_available_semaphore));
+                vkCreateSemaphore(VulkanCore::GetDevice(), &semaphore_info, nullptr, &image_available_semaphore));
             m_imageAvailableSemaphores.push_back(image_available_semaphore);
         }
 
@@ -48,9 +48,9 @@ namespace GE
     {
         for (auto& imageView : m_swapchainImageViews)
         {
-            vkDestroyImageView(VulkanCore::GetVkDevice(), imageView, nullptr);
+            vkDestroyImageView(VulkanCore::GetDevice(), imageView, nullptr);
         }
-        vkDestroySwapchainKHR(VulkanCore::GetVkDevice(), m_swapchain, nullptr);
+        vkDestroySwapchainKHR(VulkanCore::GetDevice(), m_swapchain, nullptr);
 
         m_ready = false;
     }

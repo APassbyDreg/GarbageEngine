@@ -4,6 +4,8 @@
 
 #include "Math.h"
 
+#include "Transforms.h"
+
 namespace GE
 {
 #define GETTER(selector, dim_name, dim_idx) \
@@ -18,6 +20,12 @@ namespace GE
             return 0; \
         } \
     }
+
+    template<int dim>
+    class TransformTypeOf
+    {
+        using ttype = float4x4;
+    };
 
     template<typename TStorage, typename TBase, int dim>
     class Bounds
@@ -37,6 +45,8 @@ namespace GE
         GETTER(max, X, 0);
         GETTER(max, Y, 1);
         GETTER(max, Z, 2);
+        TStorage& Min() { return minimuns; }
+        TStorage& Max() { return maximuns; }
 
         /* ---------------------------- operators --------------------------- */
         // Union
@@ -78,4 +88,45 @@ namespace GE
     typedef Bounds<int3, int, 3>     Bounds3i;
     typedef Bounds<int2, int, 2>     Bounds2i;
 
+    inline Bounds3f Transform(Bounds3f box, float4x4 mat)
+    {
+        const std::vector<float3> directions = {
+            {1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 0}, {1, 0, 1}, {0, 1, 1}, {1, 1, 1}};
+        const float3 v      = box.Max() - box.Min();
+        const float3 b      = box.Min();
+        Bounds3f     result = Bounds3f(Math::HomogeneousTransform(b, mat));
+        for (auto&& dir : directions)
+        {
+            result += Math::HomogeneousTransform(b + v * dir, mat);
+        }
+        return result;
+    }
+
+    inline Bounds2f Transform(Bounds2f box, float3x3 mat)
+    {
+        const std::vector<float2> directions = {{1, 0}, {0, 1}, {1, 1}};
+        const float2              v          = box.Max() - box.Min();
+        const float2              b          = box.Min();
+        Bounds2f                  result     = Bounds2f(Math::HomogeneousTransform(b, mat));
+        for (auto&& dir : directions)
+        {
+            result += Math::HomogeneousTransform(b + v * dir, mat);
+        }
+        return result;
+    }
+
+    template<typename TBounds, typename TTransform>
+    class TransformedBounds
+    {
+    public:
+        TBounds    bounds;
+        TTransform transform;
+
+        operator TBounds() const { return Transform(bounds, transform); }
+
+        inline TBounds GetMergedBounds() { return Transform(bounds, transform); }
+    };
+
+    typedef TransformedBounds<Bounds3f, float4x4> TransformedBounds3f;
+    typedef TransformedBounds<Bounds2f, float3x3> TransformedBounds2f;
 } // namespace GE

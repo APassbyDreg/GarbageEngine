@@ -14,13 +14,17 @@ namespace GE
     class TestBasicFrameData
     {
     public:
-        GpuImage      m_image;
-        VkFramebuffer m_framebuffer;
-        ~TestBasicFrameData()
+        GpuImage                     m_image;
+        VkFramebuffer                m_framebuffer;
+        VkCommandPool                m_graphicsPool, m_computePool;
+        std::vector<VkCommandBuffer> m_graphicsCmdBuffer, m_computeCmdBuffer;
+
+        ~TestBasicFrameData() { DestroyFrameBuffer(); };
+        void DestroyFrameBuffer()
         {
             if (m_framebuffer != VK_NULL_HANDLE)
-                vkDestroyFramebuffer(VulkanCore::GetVkDevice(), m_framebuffer, nullptr);
-        };
+                vkDestroyFramebuffer(VulkanCore::GetDevice(), m_framebuffer, nullptr);
+        }
     };
 
     struct TestBasicDrawData
@@ -37,7 +41,12 @@ namespace GE
         TestBasicRoutine(uint n_frames);
         ~TestBasicRoutine();
 
-        void DrawFrame(TestBasicDrawData& draw_data, uint index, VkCommandBuffer cmd);
+        void DrawFrame(uint         index,
+                       VkSemaphore* wait_semaphores        = nullptr,
+                       uint         wait_semaphore_count   = 0,
+                       VkSemaphore* signal_semaphores      = nullptr,
+                       uint         signal_semaphore_count = 0,
+                       VkFence      fence                  = VK_NULL_HANDLE);
 
         void Init(uint n_frames);
 

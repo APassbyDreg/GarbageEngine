@@ -9,11 +9,13 @@ namespace GE
         Alloc(image_info, alloc_info);
     }
 
-    GpuImage::~GpuImage()
+    GpuImage::~GpuImage() { Delete(); }
+
+    void GpuImage::Delete()
     {
         if (m_alloced)
         {
-            vkDestroyImageView(VulkanCore::GetVkDevice(), m_imageView, nullptr);
+            vkDestroyImageView(VulkanCore::GetDevice(), m_imageView, nullptr);
 
             vmaDestroyImage(VulkanCore::GetAllocator(), m_image, m_allocation);
 
@@ -23,6 +25,8 @@ namespace GE
 
     void GpuImage::Alloc(VkImageCreateInfo image_info, VmaAllocationCreateInfo alloc_info)
     {
+        Delete();
+
         m_imageInfo = image_info;
         m_allocInfo = alloc_info;
 
@@ -30,12 +34,18 @@ namespace GE
             vmaCreateImage(VulkanCore::GetAllocator(), &image_info, &alloc_info, &m_image, &m_allocation, nullptr));
 
         VkImageViewCreateInfo info = VkInit::GetVkImageViewCreateInfo(m_image, image_info);
-        GE_VK_ASSERT(vkCreateImageView(VulkanCore::GetVkDevice(), &info, nullptr, &m_imageView));
+        GE_VK_ASSERT(vkCreateImageView(VulkanCore::GetDevice(), &info, nullptr, &m_imageView));
 
         m_alloced = true;
     }
 
-    void GpuImage::Upload(void* data, size_t& size) {}
+    void GpuImage::Upload(void* data, size_t& size)
+    {
+        GE_CORE_ASSERT(false, "[GpuImage::Upload] has not been implemented");
+    }
 
-    void GpuImage::Download(void* data, size_t& size) {}
+    void GpuImage::Download(void* data, size_t& size)
+    {
+        GE_CORE_ASSERT(false, "[GpuImage::Download] has not been implemented");
+    }
 } // namespace GE

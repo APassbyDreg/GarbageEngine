@@ -18,17 +18,21 @@ namespace GE
         if (width != m_viewportSize.width || height != m_viewportSize.height)
         {
             // wait all old frames to finish
-            vkQueueWaitIdle(VulkanCore::GetVkGraphicsQueue());
+            vkQueueWaitIdle(VulkanCore::GetGraphicsQueue());
 
             m_viewportSize.width  = width;
             m_viewportSize.height = height;
 
             // recreate framedata
-            m_frameData.clear();
             for (size_t i = 0; i < m_frameCnt; i++)
             {
-                std::shared_ptr<TestBasicFrameData> fd = std::make_shared<TestBasicFrameData>();
+                if (m_frameData.size() <= i)
+                {
+                    m_frameData.push_back(std::make_shared<TestBasicFrameData>());
+                }
+                auto fd = m_frameData[i];
 
+                // (re)create image
                 VkImageCreateInfo image_info       = {};
                 image_info.sType                   = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
                 image_info.imageType               = VK_IMAGE_TYPE_2D;
@@ -46,6 +50,8 @@ namespace GE
                 VmaAllocationCreateInfo alloc_info = {};
                 fd->m_image.Alloc(image_info, alloc_info);
 
+                // (re)create framebuffer
+                fd->DestroyFrameBuffer();
                 VkFramebufferCreateInfo framebuffer_info = {};
                 VkImageView             img_views[]      = {fd->m_image.GetImageView()};
                 framebuffer_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -56,8 +62,7 @@ namespace GE
                 framebuffer_info.height                  = m_viewportSize.height;
                 framebuffer_info.layers                  = 1;
                 GE_VK_ASSERT(
-                    vkCreateFramebuffer(VulkanCore::GetVkDevice(), &framebuffer_info, nullptr, &fd->m_framebuffer));
-                m_frameData.emplace_back(fd);
+                    vkCreateFramebuffer(VulkanCore::GetDevice(), &framebuffer_info, nullptr, &fd->m_framebuffer));
             }
         }
     }
@@ -71,6 +76,16 @@ namespace GE
         m_basicMeshPass.Init();
 
         Resize(1280, 720);
+
+        /* ------------------------ create frame data ----------------------- */
+        for (size_t i = 0; i < n_frames; i++)
+        {
+            m_frameData[i]->m_graphicsPool = VulkanCore::CreateGrahicsCmdPool();
+            m_frameData[i]->m_computePool  = VulkanCore::CreateComputeCmdPool();
+
+            m_frameData[i]->m_graphicsCmdBuffer = VulkanCore::CreateCmdBuffer(m_frameData[i]->m_graphicsPool, 8);
+            m_frameData[i]->m_computeCmdBuffer  = VulkanCore::CreateCmdBuffer(m_frameData[i]->m_computePool, 8);
+        }
 
         /* ------------- create default vertex and index buffer ------------- */
         {
@@ -109,12 +124,22 @@ namespace GE
         }
     }
 
-    void TestBasicRoutine::DrawFrame(TestBasicDrawData& draw_data, uint index, VkCommandBuffer cmd)
+    void TestBasicRoutine::DrawFrame(uint         index,
+                                     VkSemaphore* wait_semaphores,
+                                     uint         wait_semaphore_count,
+                                     VkSemaphore* signal_semaphores,
+                                     uint         signal_semaphore_count,
+                                     VkFence      fence)
     {
         std::shared_ptr<TestBasicFrameData> fd = m_frameData[index];
 
-        draw_data.passid = 1;
-        if (draw_data.passid == 0)
+        VulkanCore::ResetCmdPool(fd->m_graphicsPool);
+        VulkanCore::ResetCmdPool(fd->m_computePool);
+
+        int          passid      = 1;
+        VkClearValue clear_value = {};
+        clear_value.color        = {0.2f, 0.2f, 0.6f, 1.0f};
+        if (passid == 0)
         {
             VkRenderPassBeginInfo info = {};
             info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -123,11 +148,11 @@ namespace GE
             info.renderArea.offset     = {0, 0};
             info.renderArea.extent     = m_viewportSize;
             info.clearValueCount       = 1;
-            info.pClearValues          = &draw_data.clear_color;
+            info.pClearValues          = &clear_value;
 
-            m_basicTrianglePass.Run(info, cmd);
+            m_basicTrianglePass.Run(info, fd->m_graphicsCmdBuffer[0]);
         }
-        else if (draw_data.passid == 1)
+        else if (passid == 1)
         {
             VkRenderPassBeginInfo info = {};
             info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -136,9 +161,24 @@ namespace GE
             info.renderArea.offset     = {0, 0};
             info.renderArea.extent     = m_viewportSize;
             info.clearValueCount       = 1;
-            info.pClearValues          = &draw_data.clear_color;
+            info.pClearValues          = &clear_value;
 
-            m_basicMeshPass.Run(m_viewportSize, info, cmd, m_vertexBuffer, m_indexBuffer, 6);
+            m_basicMeshPass.Run(m_viewportSize, info, fd->m_graphicsCmdBuffer[0], m_vertexBuffer, m_indexBuffer, 6);
+        }
+
+        {
+            VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            VkSubmitInfo         info       = {};
+            info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            info.waitSemaphoreCount         = wait_semaphore_count;
+            info.pWaitSemaphores            = wait_semaphores;
+            info.pWaitDstStageMask          = &wait_stage;
+            info.commandBufferCount         = 1;
+            info.pCommandBuffers            = &fd->m_graphicsCmdBuffer[0];
+            info.signalSemaphoreCount       = signal_semaphore_count;
+            info.pSignalSemaphores          = signal_semaphores;
+
+            VulkanCore::SubmitToGraphicsQueue(info, fence);
         }
     }
 } // namespace GE

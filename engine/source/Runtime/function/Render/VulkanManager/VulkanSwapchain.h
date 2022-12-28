@@ -32,7 +32,7 @@ namespace GE
             GE_CORE_ASSERT(m_ready, "swapchain not ready");
             uint idx;
             bool success;
-            GE_VK_CHECK_RESULT(vkAcquireNextImageKHR(VulkanCore::GetVkDevice(),
+            GE_VK_CHECK_RESULT(vkAcquireNextImageKHR(VulkanCore::GetDevice(),
                                                      m_swapchain,
                                                      1000,
                                                      m_imageAvailableSemaphores[m_currentIndex],

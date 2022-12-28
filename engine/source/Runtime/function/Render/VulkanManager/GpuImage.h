@@ -20,6 +20,7 @@ namespace GE
         inline VkImageView GetImageView() { return m_imageView; }
 
         void Alloc(VkImageCreateInfo image_info, VmaAllocationCreateInfo alloc_info);
+        void Delete();
         void Upload(void* data, size_t& size);
         void Download(void* data, size_t& size);
 

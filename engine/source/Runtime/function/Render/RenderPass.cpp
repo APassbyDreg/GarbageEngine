@@ -9,7 +9,7 @@ namespace GE
     {
         if (m_ready)
         {
-            vkDestroyRenderPass(VulkanCore::GetVkDevice(), m_renderPass, nullptr);
+            vkDestroyRenderPass(VulkanCore::GetDevice(), m_renderPass, nullptr);
             m_ready = false;
         }
     }
@@ -53,7 +53,7 @@ namespace GE
         {
             VkRenderPassCreateInfo info =
                 VkInit::GetRenderPassCreateInfo(m_flattenAttachments, m_subpasses, m_dependencies);
-            GE_VK_ASSERT(vkCreateRenderPass(VulkanCore::GetVkDevice(), &info, nullptr, &m_renderPass));
+            GE_VK_ASSERT(vkCreateRenderPass(VulkanCore::GetDevice(), &info, nullptr, &m_renderPass));
             m_ready = true;
         }
     }

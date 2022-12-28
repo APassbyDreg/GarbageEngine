@@ -8,38 +8,67 @@ namespace GE
 {
     namespace VkInit
     {
-        inline VkCommandPoolCreateInfo GetCommandPoolCreateInfo(uint32_t queue_family_index, VkCommandPoolCreateFlags flags = 0)
+        inline VkDescriptorSetLayoutBinding GetDescriptorSetLayoutBinding(VkDescriptorType   type,
+                                                                          VkShaderStageFlags stage_flags,
+                                                                          uint32_t           binding,
+                                                                          uint32_t           count = 1)
         {
-            VkCommandPoolCreateInfo info = {};
-            info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-            info.queueFamilyIndex = queue_family_index;
-            info.flags = flags;
+            VkDescriptorSetLayoutBinding layout_binding = {};
+            layout_binding.descriptorType               = type;
+            layout_binding.stageFlags                   = stage_flags;
+            layout_binding.binding                      = binding;
+            layout_binding.descriptorCount              = count;
+            return layout_binding;
+        }
+
+        inline VkDescriptorSetLayoutCreateInfo
+        GetDescriptorSetLayoutCreateInfo(std::vector<VkDescriptorSetLayoutBinding>& bindings,
+                                         VkDescriptorSetLayoutCreateFlags           flags = 0)
+        {
+            VkDescriptorSetLayoutCreateInfo info = {};
+            info.sType                           = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            info.bindingCount                    = bindings.size();
+            info.pBindings                       = bindings.data();
+            info.flags                           = flags;
             return info;
         }
 
-        inline VkCommandBufferAllocateInfo GetCommandBufferAllocateInfo(VkCommandPool cmd_pool, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY, uint32_t num_buffer = 1)
+        inline VkCommandPoolCreateInfo GetCommandPoolCreateInfo(uint32_t                 queue_family_index,
+                                                                VkCommandPoolCreateFlags flags = 0)
+        {
+            VkCommandPoolCreateInfo info = {};
+            info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+            info.queueFamilyIndex        = queue_family_index;
+            info.flags                   = flags;
+            return info;
+        }
+
+        inline VkCommandBufferAllocateInfo
+        GetCommandBufferAllocateInfo(VkCommandPool        cmd_pool,
+                                     VkCommandBufferLevel level      = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+                                     uint32_t             num_buffer = 1)
         {
             VkCommandBufferAllocateInfo info = {};
-            info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            info.commandPool = cmd_pool;
-            info.level = level;
-            info.commandBufferCount = num_buffer;
+            info.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            info.commandPool                 = cmd_pool;
+            info.level                       = level;
+            info.commandBufferCount          = num_buffer;
             return info;
         }
 
         inline VkFenceCreateInfo GetFenceCreateInfo(VkFenceCreateFlags flags = 0)
         {
             VkFenceCreateInfo fenceCreateInfo = {};
-            fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-            fenceCreateInfo.flags = flags;
+            fenceCreateInfo.sType             = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+            fenceCreateInfo.flags             = flags;
             return fenceCreateInfo;
         }
 
         inline VkSemaphoreCreateInfo GetSemaphoreCreateInfo(VkSemaphoreCreateFlags flags = 0)
         {
             VkSemaphoreCreateInfo semaphoreCreateInfo = {};
-            semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-            semaphoreCreateInfo.flags = flags;
+            semaphoreCreateInfo.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+            semaphoreCreateInfo.flags                 = flags;
             return semaphoreCreateInfo;
         }
 
@@ -357,6 +386,24 @@ namespace GE
             info.pSubpasses      = subpasses.data();
             info.dependencyCount = dependencies.size();
             info.pDependencies   = dependencies.data();
+
+            return info;
+        }
+
+        inline VkComputePipelineCreateInfo GetComputePipelineCreateInfo(VkPipelineLayout                pipelineLayout,
+                                                                        VkPipelineShaderStageCreateInfo shaderStage,
+                                                                        VkPipeline basePipelineHandle = VK_NULL_HANDLE,
+                                                                        int32_t    basePipelineIndex  = -1)
+        {
+            VkComputePipelineCreateInfo info = {};
+
+            info.sType              = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+            info.pNext              = nullptr;
+            info.flags              = 0;
+            info.stage              = shaderStage;
+            info.layout             = pipelineLayout;
+            info.basePipelineHandle = basePipelineHandle;
+            info.basePipelineIndex  = basePipelineIndex;
 
             return info;
         }

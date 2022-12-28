@@ -39,62 +39,112 @@ namespace GE
         static inline VmaAllocator GetAllocator() { return GetInstance().ensure_ready().m_allocator; }
 
         static inline VkInstance       GetVkInstance() { return GetInstance().ensure_ready().m_instance; }
-        static inline VkPhysicalDevice GetVkPhysicalDevice() { return GetInstance().ensure_ready().m_physicalDevice; }
-        static inline VkDevice         GetVkDevice() { return GetInstance().ensure_ready().m_device; }
-        static inline VkSurfaceKHR     GetVkSurface() { return GetInstance().ensure_ready().m_surface; }
+        static inline VkPhysicalDevice GetPhysicalDevice() { return GetInstance().ensure_ready().m_physicalDevice; }
+        static inline VkDevice         GetDevice() { return GetInstance().ensure_ready().m_device; }
+        static inline VkSurfaceKHR     GetSurface() { return GetInstance().ensure_ready().m_surface; }
 
-        static inline VkQueue GetVkGraphicsQueue() { return GetInstance().ensure_ready().m_graphicsQueue; }
-        static inline VkQueue GetVkPresentQueue() { return GetInstance().ensure_ready().m_presentQueue; }
-        static inline VkQueue GetVkComputeQueue() { return GetInstance().ensure_ready().m_computeQueue; }
-        static inline VkQueue GetVkTransferQueue() { return GetInstance().ensure_ready().m_transferQueue; }
+        static inline VkQueue GetGraphicsQueue() { return GetInstance().ensure_ready().m_graphicsQueue; }
+        static inline VkQueue GetPresentQueue() { return GetInstance().ensure_ready().m_presentQueue; }
+        static inline VkQueue GetComputeQueue() { return GetInstance().ensure_ready().m_computeQueue; }
+        static inline VkQueue GetTransferQueue() { return GetInstance().ensure_ready().m_transferQueue; }
 
-        static inline uint32_t GetVkGraphicsQueueFamilyIndex()
+        static inline uint32_t GetGraphicsQueueFamilyIndex()
         {
             return GetInstance().ensure_ready().m_graphicsQueueFamilyIndex;
         }
-        static inline uint32_t GetVkPresentQueueFamilyIndex()
+        static inline uint32_t GetPresentQueueFamilyIndex()
         {
             return GetInstance().ensure_ready().m_presentQueueFamilyIndex;
         }
-        static inline uint32_t GetVkComputeQueueFamilyIndex(bool& support)
+        static inline uint32_t GetComputeQueueFamilyIndex()
         {
-            support = GetInstance().ensure_ready().m_supportStatus.hasComputeQueue;
+            bool support = GetInstance().ensure_ready().m_supportStatus.hasComputeQueue;
             return support ? GetInstance().ensure_ready().m_computeQueueFamilyIndex : 0;
         }
-        static inline uint32_t GetVkTransferQueueFamilyIndex(bool& support)
+        static inline uint32_t GetTransferQueueFamilyIndex()
         {
-            support = GetInstance().ensure_ready().m_supportStatus.hasTransferQueue;
+            bool support = GetInstance().ensure_ready().m_supportStatus.hasTransferQueue;
             return support ? GetInstance().ensure_ready().m_transferQueueFamilyIndex : 0;
         }
-        static inline VkCommandBuffer GetGraphicsCmdBuffer()
+
+        /* ---------------------------- commands ---------------------------- */
+        static inline VkCommandPool CreateGrahicsCmdPool()
         {
-            return GetInstance().ensure_ready().m_graphicsCommandBuffer;
+            VkCommandPoolCreateInfo create_info = VkInit::GetCommandPoolCreateInfo(GetGraphicsQueueFamilyIndex());
+            VkCommandPool           command_pool;
+            vkCreateCommandPool(GetDevice(), &create_info, nullptr, &command_pool);
+            GetInstance().m_destroyActionStack.push_back(
+                [=]() { vkDestroyCommandPool(GetDevice(), command_pool, nullptr); });
+            return command_pool;
         }
-        static inline VkCommandPool GetGraphicsCmdPool() { return GetInstance().ensure_ready().m_graphicsCommandPool; }
-        static inline VkCommandBuffer GetComputeCmdBuffer(bool& support)
+        static inline VkCommandPool CreateComputeCmdPool()
         {
-            support = GetInstance().ensure_ready().m_supportStatus.hasTransferQueue;
-            return support ? GetInstance().ensure_ready().m_computeCommandBuffer : 0;
+            VkCommandPoolCreateInfo create_info = VkInit::GetCommandPoolCreateInfo(GetComputeQueueFamilyIndex());
+            VkCommandPool           command_pool;
+            vkCreateCommandPool(GetDevice(), &create_info, nullptr, &command_pool);
+            GetInstance().m_destroyActionStack.push_back(
+                [=]() { vkDestroyCommandPool(GetDevice(), command_pool, nullptr); });
+            return command_pool;
         }
-        static inline VkCommandPool GetComputeCmdPool(bool& support)
+        static inline std::vector<VkCommandBuffer>
+        CreateCmdBuffer(VkCommandPool        pool,
+                        size_t               count = 1,
+                        VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY)
         {
-            support = GetInstance().ensure_ready().m_supportStatus.hasTransferQueue;
-            return support ? GetInstance().ensure_ready().m_computeCommandPool : 0;
+            VkCommandBufferAllocateInfo  info = VkInit::GetCommandBufferAllocateInfo(pool, level, 1);
+            std::vector<VkCommandBuffer> cmd  = std::vector<VkCommandBuffer>(count);
+            vkAllocateCommandBuffers(GetDevice(), &info, cmd.data());
+            GetInstance().m_destroyActionStack.push_back(
+                [=]() { vkFreeCommandBuffers(GetDevice(), pool, 1, cmd.data()); });
+            return cmd;
+        }
+        static inline void ResetCmdPool(VkCommandPool pool, VkCommandPoolResetFlags flags = 0)
+        {
+            GE_VK_ASSERT(vkResetCommandPool(GetDevice(), pool, flags));
+        }
+        static inline void ResetCmdBuffer(VkCommandBuffer cmd, VkCommandBufferResetFlags flags = 0)
+        {
+            GE_VK_ASSERT(vkResetCommandBuffer(cmd, flags));
         }
 
-        static inline VkFence CreateVkFence()
+        /* ------------------------ synchronizations ------------------------ */
+        static inline VkFence CreateFence()
         {
             VkFence           fence;
             VkFenceCreateInfo info = VkInit::GetFenceCreateInfo();
-            vkCreateFence(GetVkDevice(), &info, nullptr, &fence);
+            vkCreateFence(GetDevice(), &info, nullptr, &fence);
             return fence;
         }
-        static inline VkSemaphore CreateVkSemaphore(VkSemaphoreCreateFlags flags = 0)
+        static inline VkSemaphore CreateSemaphore(VkSemaphoreCreateFlags flags = 0)
         {
             VkSemaphore           semaphore;
             VkSemaphoreCreateInfo info = VkInit::GetSemaphoreCreateInfo(flags);
-            vkCreateSemaphore(GetVkDevice(), &info, nullptr, &semaphore);
+            vkCreateSemaphore(GetDevice(), &info, nullptr, &semaphore);
             return semaphore;
+        }
+        static inline void WaitForFence(VkFence fence, bool waitAll = true, uint64_t timeout = UINT64_MAX)
+        {
+            VkBool32 waitFlag = waitAll ? VK_TRUE : VK_FALSE;
+            GE_VK_CHECK(vkWaitForFences(GetDevice(), 1, &fence, waitFlag, timeout));
+            GE_VK_CHECK(vkResetFences(GetDevice(), 1, &fence));
+        }
+
+        /* --------------------------- descriptors -------------------------- */
+        static inline VkDescriptorSetLayout CreateVkDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo info)
+        {
+            VkDescriptorSetLayout layout;
+            GE_VK_ASSERT(vkCreateDescriptorSetLayout(GetDevice(), &info, nullptr, &layout));
+            return layout;
+        }
+
+        /* ----------------------------- submit ----------------------------- */
+        static inline void SubmitToGraphicsQueue(VkSubmitInfo info, VkFence fence = VK_NULL_HANDLE)
+        {
+            GE_VK_ASSERT(vkQueueSubmit(GetGraphicsQueue(), 1, &info, fence));
+        }
+        static inline void SubmitToComputeQueue(VkSubmitInfo info, VkFence fence = VK_NULL_HANDLE)
+        {
+            GE_VK_ASSERT(vkQueueSubmit(GetComputeQueue(), 1, &info, fence));
         }
 
     private:

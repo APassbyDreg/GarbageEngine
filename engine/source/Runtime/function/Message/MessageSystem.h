@@ -8,7 +8,6 @@
 
 namespace GE
 {
-
     /**
      * @brief
      *
@@ -16,7 +15,7 @@ namespace GE
      * @tparam MsgResult a subclass of MsgResultBase
      */
     template<typename MsgBody, typename MsgResult>
-    class GE_API MessageDispatcher : public Singleton<MessageDispatcher<MsgBody, MsgResult>>
+    class GE_API MessageDispatcher
     {
     public:
         using ListenerFn  = std::function<std::shared_ptr<MsgResult>(MsgBody)>;
@@ -58,4 +57,10 @@ namespace GE
         std::vector<ListenerFn> m_listeners;
         std::vector<int>        m_priorities;
     };
+
+    template<typename MsgBody, typename MsgResult>
+    class GE_API GlobalMessageDispatcher
+        : public MessageDispatcher<typename MsgBody, typename MsgResult>,
+          public Singleton<GlobalMessageDispatcher<typename MsgBody, typename MsgResult>>
+    {};
 } // namespace GE

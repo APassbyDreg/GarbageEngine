@@ -52,6 +52,13 @@ namespace GE
 
     void TestBasicTrianglePass::Run(VkRenderPassBeginInfo& rp_info, VkCommandBuffer& cmd)
     {
+        {
+            VkCommandBufferBeginInfo info = {};
+            info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+            GE_VK_ASSERT(vkBeginCommandBuffer(cmd, &info));
+        }
+
         vkCmdBeginRenderPass(cmd, &rp_info, VK_SUBPASS_CONTENTS_INLINE);
 
         {
@@ -60,5 +67,9 @@ namespace GE
         }
 
         vkCmdEndRenderPass(cmd);
+
+        {
+            GE_VK_ASSERT(vkEndCommandBuffer(cmd));
+        }
     }
 } // namespace GE

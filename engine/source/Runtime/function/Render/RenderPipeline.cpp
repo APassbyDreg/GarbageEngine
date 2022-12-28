@@ -10,8 +10,8 @@ namespace GE
     {
         if (m_ready)
         {
-            vkDestroyPipelineLayout(VulkanCore::GetVkDevice(), m_pipelineLayout, nullptr);
-            vkDestroyPipeline(VulkanCore::GetVkDevice(), m_pipeline, nullptr);
+            vkDestroyPipelineLayout(VulkanCore::GetDevice(), m_pipelineLayout, nullptr);
+            vkDestroyPipeline(VulkanCore::GetDevice(), m_pipeline, nullptr);
             m_ready = false;
         }
     }
@@ -26,7 +26,7 @@ namespace GE
 
         // layout
         auto layout_info = VkInit::GetPipelineLayoutCreateInfo(m_descriptorSetLayout, m_pushConstantRanges);
-        GE_VK_ASSERT(vkCreatePipelineLayout(VulkanCore::GetVkDevice(), &layout_info, nullptr, &m_pipelineLayout));
+        GE_VK_ASSERT(vkCreatePipelineLayout(VulkanCore::GetDevice(), &layout_info, nullptr, &m_pipelineLayout));
 
         // pipeline
         auto info = VkInit::GetGraphicsPipelineCreateInfo(m_pipelineLayout,
@@ -42,8 +42,31 @@ namespace GE
                                                           &m_colorBlendState,
                                                           &m_dynamicState);
         GE_VK_ASSERT(
-            vkCreateGraphicsPipelines(VulkanCore::GetVkDevice(), VK_NULL_HANDLE, 1, &info, nullptr, &m_pipeline));
+            vkCreateGraphicsPipelines(VulkanCore::GetDevice(), VK_NULL_HANDLE, 1, &info, nullptr, &m_pipeline));
 
         m_ready = true;
+    }
+
+    ComputeRenderPipeline::~ComputeRenderPipeline()
+    {
+        if (m_ready)
+        {
+            vkDestroyPipelineLayout(VulkanCore::GetDevice(), m_pipelineLayout, nullptr);
+            vkDestroyPipeline(VulkanCore::GetDevice(), m_pipeline, nullptr);
+            m_ready = false;
+        }
+    }
+
+    void ComputeRenderPipeline::Build(VkRenderPass pass, VkPipelineCache cache)
+    {
+        // layout
+        auto layout_info = VkInit::GetPipelineLayoutCreateInfo(m_descriptorSetLayout, m_pushConstantRanges);
+        GE_VK_ASSERT(vkCreatePipelineLayout(VulkanCore::GetDevice(), &layout_info, nullptr, &m_pipelineLayout));
+
+        // pipeline
+        auto info = VkInit::GetComputePipelineCreateInfo(m_pipelineLayout, m_shader->GetShaderStage());
+
+        GE_VK_ASSERT(
+            vkCreateComputePipelines(VulkanCore::GetDevice(), VK_NULL_HANDLE, 1, &info, nullptr, &m_pipeline));
     }
 } // namespace GE

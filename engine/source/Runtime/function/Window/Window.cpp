@@ -70,10 +70,9 @@ namespace GE
 
     void Window::__imgui_render_frame(ImDrawData* draw_data)
     {
-        VkDevice        vk_device              = VulkanCore::GetVkDevice();
-        VkQueue         vk_graphics_queue      = VulkanCore::GetVkGraphicsQueue();
-        VkCommandBuffer vk_graphics_cmd_buffer = VulkanCore::GetGraphicsCmdBuffer();
-        VkCommandPool   vk_graphics_cmd_pool   = VulkanCore::GetGraphicsCmdPool();
+        VkDevice vk_device         = VulkanCore::GetDevice();
+        VkQueue  vk_graphics_queue = VulkanCore::GetGraphicsQueue();
+        VkQueue  vk_compute_queue  = VulkanCore::GetComputeQueue();
 
         VkSemaphore viewport_complete_semaphore = m_renderFinishedSemaphores[m_imguiWindow.FrameIndex];
         VkSemaphore image_acquired_semaphore =
@@ -94,44 +93,12 @@ namespace GE
         GE_VK_ASSERT(res);
 
         ImGui_ImplVulkanH_Frame* fd = &m_imguiWindow.Frames[m_imguiWindow.FrameIndex];
-        {
-            GE_VK_ASSERT(vkWaitForFences(vk_device, 1, &fd->Fence, VK_TRUE, UINT64_MAX));
-
-            GE_VK_ASSERT(vkResetFences(vk_device, 1, &fd->Fence));
-        }
+        VulkanCore::WaitForFence(fd->Fence);
 
         /* -------------------------- renderer pass ------------------------- */
         {
-            {
-                GE_VK_ASSERT(vkResetCommandPool(vk_device, vk_graphics_cmd_pool, 0));
-                VkCommandBufferBeginInfo info = {};
-                info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-                info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-                GE_VK_ASSERT(vkBeginCommandBuffer(vk_graphics_cmd_buffer, &info));
-            }
-
-            TestBasicDrawData data            = {};
-            data.clear_color.color.float32[0] = 0.2f;
-            data.clear_color.color.float32[1] = 0.2f;
-            data.clear_color.color.float32[2] = 0.2f;
-            data.clear_color.color.float32[3] = 1.0f;
-            m_renderRoutine.DrawFrame(data, m_imguiWindow.FrameIndex, vk_graphics_cmd_buffer);
-
-            {
-                VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                VkSubmitInfo         info       = {};
-                info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                info.waitSemaphoreCount         = 1;
-                info.pWaitSemaphores            = &image_acquired_semaphore;
-                info.pWaitDstStageMask          = &wait_stage;
-                info.commandBufferCount         = 1;
-                info.pCommandBuffers            = &vk_graphics_cmd_buffer;
-                info.signalSemaphoreCount       = 1;
-                info.pSignalSemaphores          = &viewport_complete_semaphore;
-
-                GE_VK_ASSERT(vkEndCommandBuffer(vk_graphics_cmd_buffer));
-                GE_VK_ASSERT(vkQueueSubmit(vk_graphics_queue, 1, &info, fd->Fence));
-            }
+            m_renderRoutine.DrawFrame(
+                m_imguiWindow.FrameIndex, &image_acquired_semaphore, 1, &viewport_complete_semaphore, 1, fd->Fence);
         }
 
         /* --------------------------- imgui pass --------------------------- */
@@ -160,11 +127,13 @@ namespace GE
 
                 // Submit command buffer
                 vkCmdEndRenderPass(fd->CommandBuffer);
+
+                // End command buffer
+                GE_VK_ASSERT(vkEndCommandBuffer(fd->CommandBuffer));
             }
 
             // Wait till render is complete
-            GE_VK_ASSERT(vkWaitForFences(vk_device, 1, &fd->Fence, VK_TRUE, UINT64_MAX));
-            GE_VK_ASSERT(vkResetFences(vk_device, 1, &fd->Fence));
+            VulkanCore::WaitForFence(fd->Fence);
 
             {
                 VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -179,9 +148,7 @@ namespace GE
                 info.pSignalSemaphores          = &render_complete_semaphore;
                 info.waitSemaphoreCount         = 1;
                 info.pWaitSemaphores            = &viewport_complete_semaphore;
-
-                GE_VK_ASSERT(vkEndCommandBuffer(fd->CommandBuffer));
-                GE_VK_ASSERT(vkQueueSubmit(vk_graphics_queue, 1, &info, fd->Fence));
+                VulkanCore::SubmitToGraphicsQueue(info, fd->Fence);
             }
         }
 
@@ -195,8 +162,8 @@ namespace GE
             return;
         }
 
-        VkDevice vk_device         = VulkanCore::GetVkDevice();
-        VkQueue  vk_graphics_queue = VulkanCore::GetVkGraphicsQueue();
+        VkDevice vk_device         = VulkanCore::GetDevice();
+        VkQueue  vk_graphics_queue = VulkanCore::GetGraphicsQueue();
 
         VkSemaphore render_complete_semaphore =
             m_imguiWindow.FrameSemaphores[m_imguiWindow.SemaphoreIndex].RenderCompleteSemaphore;
@@ -223,9 +190,9 @@ namespace GE
     void Window::__imgui_rebuild_swapchain()
     {
         VkInstance       vk_instance             = VulkanCore::GetVkInstance();
-        VkPhysicalDevice vk_physical_device      = VulkanCore::GetVkPhysicalDevice();
-        VkDevice         vk_device               = VulkanCore::GetVkDevice();
-        uint32_t         vk_graphics_queue_index = VulkanCore::GetVkGraphicsQueueFamilyIndex();
+        VkPhysicalDevice vk_physical_device      = VulkanCore::GetPhysicalDevice();
+        VkDevice         vk_device               = VulkanCore::GetDevice();
+        uint32_t         vk_graphics_queue_index = VulkanCore::GetGraphicsQueueFamilyIndex();
 
         int width, height;
         glfwGetFramebufferSize(m_glfwWindow, &width, &height);
@@ -371,11 +338,11 @@ namespace GE
     void Window::__init_imgui(int2 size)
     {
         VkInstance       vk_instance             = VulkanCore::GetVkInstance();
-        VkSurfaceKHR     vk_surface              = VulkanCore::GetVkSurface();
-        VkPhysicalDevice vk_physical_device      = VulkanCore::GetVkPhysicalDevice();
-        VkDevice         vk_device               = VulkanCore::GetVkDevice();
-        VkQueue          vk_graphics_queue       = VulkanCore::GetVkGraphicsQueue();
-        uint32_t         vk_graphics_queue_index = VulkanCore::GetVkGraphicsQueueFamilyIndex();
+        VkSurfaceKHR     vk_surface              = VulkanCore::GetSurface();
+        VkPhysicalDevice vk_physical_device      = VulkanCore::GetPhysicalDevice();
+        VkDevice         vk_device               = VulkanCore::GetDevice();
+        VkQueue          vk_graphics_queue       = VulkanCore::GetGraphicsQueue();
+        uint32_t         vk_graphics_queue_index = VulkanCore::GetGraphicsQueueFamilyIndex();
 
         m_imguiWindow.Surface = vk_surface;
 
@@ -517,8 +484,7 @@ namespace GE
 
     void Window::__cleanup_imgui()
     {
-        ImGui_ImplVulkanH_DestroyWindow(
-            VulkanCore::GetVkInstance(), VulkanCore::GetVkDevice(), &m_imguiWindow, nullptr);
+        ImGui_ImplVulkanH_DestroyWindow(VulkanCore::GetVkInstance(), VulkanCore::GetDevice(), &m_imguiWindow, nullptr);
     }
 
     void Window::__init(const WindowProperties& props)
@@ -546,7 +512,7 @@ namespace GE
         // setup semaphores
         for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
         {
-            auto semaphore = VulkanCore::CreateVkSemaphore();
+            auto semaphore = VulkanCore::CreateSemaphore();
             m_renderFinishedSemaphores.push_back(semaphore);
         }
 
@@ -559,7 +525,7 @@ namespace GE
         info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        GE_VK_ASSERT(vkCreateSampler(VulkanCore::GetVkDevice(), &info, nullptr, &m_viewportSampler));
+        GE_VK_ASSERT(vkCreateSampler(VulkanCore::GetDevice(), &info, nullptr, &m_viewportSampler));
 
         for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
         {
@@ -575,7 +541,7 @@ namespace GE
         __cleanup_imgui();
         __cleanup_glfw();
 
-        vkDestroySampler(VulkanCore::GetVkDevice(), m_viewportSampler, nullptr);
+        vkDestroySampler(VulkanCore::GetDevice(), m_viewportSampler, nullptr);
     }
 
     void Window::__viewport_resize(ImVec2 size)

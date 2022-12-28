@@ -9,12 +9,14 @@ namespace GE
     class WatchedValue
     {
         typedef std::function<void(const T, const T)> UpdateCallbackFn;
-        static void                                   DefaultCallback(const T val_new, const T val_old) {}
+
+        static void DefaultCallback(const T val_new, const T val_old) {}
 
     public:
         WatchedValue(UpdateCallbackFn cb = DefaultCallback) : m_updatedCallback(cb) {}
         WatchedValue(WatchedValue&& v) : m_updatedCallback(v.m_updatedCallback), m_value(v.m_value) {}
 
+        inline void SetCallback(UpdateCallbackFn cb) { m_updatedCallback = cb; }
         inline T    GetValue() const { return m_value; }
         inline void SetValue(T val)
         {

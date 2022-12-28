@@ -141,8 +141,9 @@ namespace GE
 
             try
             {
-                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute), m_computeQueue);
-                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute), m_computeQueueFamilyIndex);
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute, false), m_computeQueue);
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute, false),
+                                 m_computeQueueFamilyIndex);
                 m_supportStatus.hasComputeQueue = true;
             }
             catch (const std::exception& e)
@@ -170,36 +171,6 @@ namespace GE
 
             // add destroy action
             m_destroyActionStack.push_back([&]() { vkb::destroy_device(m_vkbDevice); });
-        }
-
-        // Create CMD Pool and Buffer
-        {
-            {
-                VkCommandPoolCreateInfo create_info = VkInit::GetCommandPoolCreateInfo(m_graphicsQueueFamilyIndex);
-                vkCreateCommandPool(m_device, &create_info, nullptr, &m_graphicsCommandPool);
-                VkCommandBufferAllocateInfo alloc_info = VkInit::GetCommandBufferAllocateInfo(m_graphicsCommandPool);
-                vkAllocateCommandBuffers(m_device, &alloc_info, &m_graphicsCommandBuffer);
-
-                // add destroy action
-                m_destroyActionStack.push_back([this]() {
-                    vkFreeCommandBuffers(m_device, m_graphicsCommandPool, 1, &m_graphicsCommandBuffer);
-                    vkDestroyCommandPool(m_device, m_graphicsCommandPool, nullptr);
-                });
-            }
-
-            if (m_supportStatus.hasComputeQueue)
-            {
-                VkCommandPoolCreateInfo create_info = VkInit::GetCommandPoolCreateInfo(m_computeQueueFamilyIndex);
-                vkCreateCommandPool(m_device, &create_info, nullptr, &m_computeCommandPool);
-                VkCommandBufferAllocateInfo alloc_info = VkInit::GetCommandBufferAllocateInfo(m_computeCommandPool);
-                vkAllocateCommandBuffers(m_device, &alloc_info, &m_computeCommandBuffer);
-
-                // add destroy action
-                m_destroyActionStack.push_back([this]() {
-                    vkFreeCommandBuffers(m_device, m_computeCommandPool, 1, &m_computeCommandBuffer);
-                    vkDestroyCommandPool(m_device, m_computeCommandPool, nullptr);
-                });
-            }
         }
     }
 
