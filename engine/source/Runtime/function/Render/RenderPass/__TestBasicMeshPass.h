@@ -17,13 +17,11 @@ namespace GE
         float4   debugColor;
     };
 
-    class TestBasicMeshPass : public RenderPass
+    class TestBasicMeshPass : public GraphicsPass
     {
     public:
         TestBasicMeshPass() {};
         ~TestBasicMeshPass() {};
-
-        void Init();
 
         void Run(VkExtent2D&                viewport_size,
                  VkRenderPassBeginInfo&     rp_info,
@@ -31,6 +29,8 @@ namespace GE
                  std::shared_ptr<GpuBuffer> vertex_buffer,
                  std::shared_ptr<GpuBuffer> index_buffer,
                  uint                       vertex_cnt);
+    protected:
+        virtual void InitInternal() override;
     };
 
 } // namespace GE

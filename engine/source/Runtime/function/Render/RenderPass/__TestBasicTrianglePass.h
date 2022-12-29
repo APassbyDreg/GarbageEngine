@@ -6,14 +6,15 @@
 
 namespace GE
 {
-    class TestBasicTrianglePass : public RenderPass
+    class TestBasicTrianglePass : public GraphicsPass
     {
     public:
         TestBasicTrianglePass() {};
         ~TestBasicTrianglePass() {};
 
-        void Init();
-
         void Run(VkRenderPassBeginInfo& rp_info, VkCommandBuffer& cmd);
+        
+    protected:
+        virtual void InitInternal() override;
     };
 } // namespace GE

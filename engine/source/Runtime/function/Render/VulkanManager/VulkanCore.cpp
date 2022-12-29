@@ -172,6 +172,29 @@ namespace GE
             // add destroy action
             m_destroyActionStack.push_back([&]() { vkb::destroy_device(m_vkbDevice); });
         }
+
+        // create global descriptor pool
+        {
+            VkDescriptorPoolSize       pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
+            VkDescriptorPoolCreateInfo pool_info    = {};
+            pool_info.sType                         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            pool_info.flags                         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+            pool_info.maxSets                       = 1000 * 11;
+            pool_info.poolSizeCount                 = 11;
+            pool_info.pPoolSizes                    = pool_sizes;
+            GE_VK_ASSERT(vkCreateDescriptorPool(m_device, &pool_info, nullptr, &m_descriptorPool));
+            m_destroyActionStack.push_back([this]() { vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr); });
+        }
     }
 
     void VulkanCore::destroy_vulkan()

@@ -112,14 +112,17 @@ namespace GE
         {
             VkFence           fence;
             VkFenceCreateInfo info = VkInit::GetFenceCreateInfo();
-            vkCreateFence(GetDevice(), &info, nullptr, &fence);
+            GE_VK_ASSERT(vkCreateFence(GetDevice(), &info, nullptr, &fence));
+            GetInstance().m_destroyActionStack.push_back([=]() { vkDestroyFence(GetDevice(), fence, nullptr); });
             return fence;
         }
         static inline VkSemaphore CreateSemaphore(VkSemaphoreCreateFlags flags = 0)
         {
             VkSemaphore           semaphore;
             VkSemaphoreCreateInfo info = VkInit::GetSemaphoreCreateInfo(flags);
-            vkCreateSemaphore(GetDevice(), &info, nullptr, &semaphore);
+            GE_VK_ASSERT(vkCreateSemaphore(GetDevice(), &info, nullptr, &semaphore));
+            GetInstance().m_destroyActionStack.push_back(
+                [=]() { vkDestroySemaphore(GetDevice(), semaphore, nullptr); });
             return semaphore;
         }
         static inline void WaitForFence(VkFence fence, bool waitAll = true, uint64_t timeout = UINT64_MAX)
@@ -130,11 +133,24 @@ namespace GE
         }
 
         /* --------------------------- descriptors -------------------------- */
-        static inline VkDescriptorSetLayout CreateVkDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo info)
+        static inline VkDescriptorPool GetGlobalDescriptorPool()
+        {
+            return GetInstance().ensure_ready().m_descriptorPool;
+        }
+        static inline VkDescriptorSetLayout CreateDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo info)
         {
             VkDescriptorSetLayout layout;
             GE_VK_ASSERT(vkCreateDescriptorSetLayout(GetDevice(), &info, nullptr, &layout));
+            GetInstance().m_destroyActionStack.push_back(
+                [=]() { vkDestroyDescriptorSetLayout(GetDevice(), layout, nullptr); });
             return layout;
+        }
+        static inline VkDescriptorSet AllocDescriptorSet(VkDescriptorSetAllocateInfo info)
+        {
+            VkDescriptorSet set;
+            info.descriptorPool = GetGlobalDescriptorPool();
+            GE_VK_ASSERT(vkAllocateDescriptorSets(GetDevice(), &info, &set));
+            return set;
         }
 
         /* ----------------------------- submit ----------------------------- */
@@ -176,8 +192,7 @@ namespace GE
         uint32_t                 m_graphicsQueueFamilyIndex, m_presentQueueFamilyIndex;
         uint32_t                 m_computeQueueFamilyIndex, m_transferQueueFamilyIndex;
         VkSurfaceKHR             m_surface;
-        VkCommandPool            m_graphicsCommandPool, m_computeCommandPool;
-        VkCommandBuffer          m_graphicsCommandBuffer, m_computeCommandBuffer;
+        VkDescriptorPool         m_descriptorPool;
 
         /* -------------------------- vkb variables ------------------------- */
         vkb::Instance       m_vkbInstance;

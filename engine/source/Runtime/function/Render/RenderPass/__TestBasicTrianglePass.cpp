@@ -6,18 +6,15 @@
 
 namespace GE
 {
-    void TestBasicTrianglePass::Init()
+    void TestBasicTrianglePass::InitInternal()
     {
         m_name = "TestBasicTrianglePass";
 
         /* ------------------------- setup resources ------------------------ */
-        RenderPassResource output = {};
+        GraphicsPassResource output = {};
         output.desc.finalLayout   = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         m_output.push_back(output);
         __update_resource();
-
-        /* ------------------------ setup render pass ----------------------- */
-        Build();
 
         /* ------------------------- setup pipeline ------------------------- */
         {
@@ -44,10 +41,7 @@ namespace GE
 
         m_pipeline.m_colorBlendState = VkInit::GetPipelineColorBlendStateCreateInfo(m_flattenAttachmentBlendStates);
 
-        std::vector<VkDynamicState> dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-        m_pipeline.m_dynamicState                  = VkInit::GetPipelineDynamicStateCreateInfo(dynamic_states);
-
-        m_pipeline.Build(m_renderPass, 0);
+        m_pipeline.m_dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
     }
 
     void TestBasicTrianglePass::Run(VkRenderPassBeginInfo& rp_info, VkCommandBuffer& cmd)

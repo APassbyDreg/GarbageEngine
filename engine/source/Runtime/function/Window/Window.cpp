@@ -485,6 +485,7 @@ namespace GE
     void Window::__cleanup_imgui()
     {
         ImGui_ImplVulkanH_DestroyWindow(VulkanCore::GetVkInstance(), VulkanCore::GetDevice(), &m_imguiWindow, nullptr);
+        vkDestroyDescriptorPool(VulkanCore::GetDevice(), m_imguiDescriptorPool, nullptr);
     }
 
     void Window::__init(const WindowProperties& props)

@@ -41,7 +41,8 @@ namespace GE
         VkPipelineMultisampleStateCreateInfo   m_multisampleState   = {};
         VkPipelineDepthStencilStateCreateInfo  m_depthStencilState  = {};
         VkPipelineColorBlendStateCreateInfo    m_colorBlendState    = {};
-        VkPipelineDynamicStateCreateInfo       m_dynamicState       = {};
+
+        std::vector<VkDynamicState> m_dynamicStates;
 
         std::vector<VkDescriptorSetLayout> m_descriptorSetLayout;
         std::vector<VkPushConstantRange>   m_pushConstantRanges;
@@ -58,19 +59,19 @@ namespace GE
     public:
         ~ComputeRenderPipeline();
 
-        void Build(VkRenderPass pass, VkPipelineCache cache = VK_NULL_HANDLE);
+        void Build(VkPipelineCache cache = VK_NULL_HANDLE);
 
         inline bool IsReady() { return m_ready; }
 
         inline VkPipeline GetPipeline()
         {
-            GE_CORE_ASSERT(m_ready, "GraphicsRenderPipeline::GetPipeline: Pipeline is not ready!");
+            GE_CORE_ASSERT(m_ready, "ComputeRenderPipeline::GetPipeline: Pipeline is not ready!");
             return m_pipeline;
         }
 
         inline VkPipelineLayout GetPipelineLayout()
         {
-            GE_CORE_ASSERT(m_ready, "GraphicsRenderPipeline::GetPipelineLayout: Pipeline is not ready!");
+            GE_CORE_ASSERT(m_ready, "ComputeRenderPipeline::GetPipelineLayout: Pipeline is not ready!");
             return m_pipelineLayout;
         }
 

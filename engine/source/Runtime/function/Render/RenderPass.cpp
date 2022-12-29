@@ -5,7 +5,7 @@
 
 namespace GE
 {
-    RenderPass::~RenderPass()
+    GraphicsPass::~GraphicsPass()
     {
         if (m_ready)
         {
@@ -14,11 +14,11 @@ namespace GE
         }
     }
 
-    void RenderPass::Build()
+    void GraphicsPass::BuildInternal()
     {
         if (m_ready)
         {
-            GE_CORE_WARN("RenderPass [{}] is built repeatedly!", m_name);
+            GE_CORE_WARN("GraphicsPass [{}] is built repeatedly!", m_name);
             return;
         }
 
@@ -56,9 +56,11 @@ namespace GE
             GE_VK_ASSERT(vkCreateRenderPass(VulkanCore::GetDevice(), &info, nullptr, &m_renderPass));
             m_ready = true;
         }
+
+        m_pipeline.Build(m_renderPass);
     }
 
-    void RenderPass::__update_resource()
+    void GraphicsPass::__update_resource()
     {
         /* ------- make references and flatten attachment descriptions ------ */
         int ref_idx = 0;
@@ -89,6 +91,25 @@ namespace GE
             m_depthReference.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             m_flattenAttachments.push_back(m_depthAttachment);
         }
+    }
+
+    ComputePass::~ComputePass()
+    {
+        if (m_ready)
+        {
+            m_ready = false;
+        }
+    }
+
+    void ComputePass::BuildInternal()
+    {
+        if (m_ready)
+        {
+            GE_CORE_WARN("ComputePass [{}] is built repeatedly!", m_name);
+            return;
+        }
+
+        m_pipeline.Build();
     }
 
 } // namespace GE

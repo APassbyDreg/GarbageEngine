@@ -10,10 +10,42 @@
 
 namespace GE
 {
-    class RenderPassResource
+    class RenderPassBase
     {
     public:
-        RenderPassResource()
+        template<typename... TArgs>
+        void Draw(std::vector<VkSemaphore> waitSemaphores,
+                  std::vector<VkSemaphore> signalSemaphores,
+                  VkFence                  fence,
+                  VkCommandBuffer          cmd,
+                  TArgs&&... args)
+        {
+            DrawInternal(cmd, waitSemaphores, signalSemaphores, fence, std::forward<TArgs>(args)...);
+        }
+
+        void Init()
+        {
+            m_signalSemaphore = VulkanCore::CreateSemaphore();
+            InitInternal();
+            BuildInternal();
+        }
+
+        inline VkSemaphore GetSignaledSemaphore() { return m_signalSemaphore; }
+
+    protected:
+        virtual void InitInternal()  = 0; // Override by final class
+        virtual void BuildInternal() = 0; // Override by different pass type
+
+    protected:
+        std::string m_name            = "";
+        bool        m_ready           = false;
+        VkSemaphore m_signalSemaphore = VK_NULL_HANDLE;
+    };
+
+    class GraphicsPassResource
+    {
+    public:
+        GraphicsPassResource()
         {
             desc   = VkInit::GetAttachmentDescription();
             blend  = VkInit::GetPipelineColorBlendAttachmentState();
@@ -27,24 +59,21 @@ namespace GE
     /**
      * @brief warper for vulkan render pass, defaults to have only one subpass
      */
-    class RenderPass
+    class GraphicsPass : public RenderPassBase
     {
     public:
-        ~RenderPass();
-
-        virtual void Build();
+        ~GraphicsPass();
 
         inline VkRenderPass     GetRenderPass() { return m_renderPass; }
         inline VkPipeline       GetPipeline() { return m_pipeline.GetPipeline(); }
         inline VkPipelineLayout GetPipelineLayout() { return m_pipeline.GetPipelineLayout(); }
 
     protected:
+        virtual void BuildInternal() override;
         void __update_resource();
 
     public:
-        std::vector<RenderPassResource> m_input, m_output;
-
-        std::string m_name;
+        std::vector<GraphicsPassResource> m_input, m_output;
 
     protected:
         VkRenderPass m_renderPass;
@@ -64,5 +93,20 @@ namespace GE
         GraphicsRenderPipeline m_pipeline;
 
         VkExtent2D m_extent = {1920, 1080};
+    };
+
+    class ComputePass : public RenderPassBase
+    {
+    public:
+        ~ComputePass();
+
+        inline VkPipeline       GetPipeline() { return m_pipeline.GetPipeline(); }
+        inline VkPipelineLayout GetPipelineLayout() { return m_pipeline.GetPipelineLayout(); }
+
+    protected:
+        virtual void BuildInternal() override;
+
+    protected:
+        ComputeRenderPipeline m_pipeline;
     };
 } // namespace GE
