@@ -5,7 +5,7 @@
 #include "../RenderPass/__TestBasicMeshPass.h"
 #include "../RenderPass/__TestBasicTrianglePass.h"
 
-#include "../VulkanManager/GpuBuffer.h"
+#include "../VulkanManager/AutoGpuBuffer.h"
 #include "../VulkanManager/GpuImage.h"
 #include "../VulkanManager/VulkanSwapchain.h"
 
@@ -58,8 +58,8 @@ namespace GE
         TestBasicTrianglePass m_basicTrianglePass;
         TestBasicMeshPass     m_basicMeshPass;
 
-        std::shared_ptr<GpuBuffer> m_vertexBuffer;
-        std::shared_ptr<GpuBuffer> m_indexBuffer;
+        std::shared_ptr<AutoGpuBuffer> m_vertexBuffer;
+        std::shared_ptr<AutoGpuBuffer> m_indexBuffer;
 
         VkExtent2D m_viewportSize = {0, 0};
 

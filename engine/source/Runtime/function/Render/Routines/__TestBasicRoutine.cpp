@@ -104,8 +104,8 @@ namespace GE
             VmaAllocationCreateInfo alloc_info = {};
             alloc_info.usage                   = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-            m_vertexBuffer = std::make_shared<GpuBuffer>(buffer_info, alloc_info);
-            m_vertexBuffer->Upload(vertices, vertices_size);
+            m_vertexBuffer = std::make_shared<AutoGpuBuffer>(buffer_info, alloc_info);
+            m_vertexBuffer->Upload((byte*)vertices, vertices_size);
         }
         {
             uint32_t indices[]    = {0, 1, 2, 2, 3, 0};
@@ -119,8 +119,8 @@ namespace GE
             VmaAllocationCreateInfo alloc_info = {};
             alloc_info.usage                   = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-            m_indexBuffer = std::make_shared<GpuBuffer>(buffer_info, alloc_info);
-            m_indexBuffer->Upload(indices, indices_size);
+            m_indexBuffer = std::make_shared<AutoGpuBuffer>(buffer_info, alloc_info);
+            m_indexBuffer->Upload((byte*)indices, indices_size);
         }
     }
 

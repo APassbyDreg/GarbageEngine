@@ -60,4 +60,38 @@ namespace GE
         }
     };
 
+    /* --------------------------- basic concepts --------------------------- */
+    template<typename T>
+    concept Linear = requires(std::remove_reference_t<T> a, std::remove_reference_t<T> b)
+    {
+        a + b;
+        a - b;
+        a * 1.0;
+        b * 1.0;
+    };
+
+    /* ------------------------------ basic ops ----------------------------- */
+    template<std::equality_comparable T>
+    inline T Clamp(T value, T min, T max)
+    {
+        return value < min ? min : value > max ? max : value;
+    }
+
+    template<std::equality_comparable T>
+    inline T Min(T a, T b)
+    {
+        return a < b ? a : b;
+    }
+
+    template<std::equality_comparable T>
+    inline T Max(T a, T b)
+    {
+        return a > b ? a : b;
+    }
+
+    template<Linear T>
+    inline T Lerp(T a, T b, double t)
+    {
+        return a + (b - a) * t;
+    }
 } // namespace GE

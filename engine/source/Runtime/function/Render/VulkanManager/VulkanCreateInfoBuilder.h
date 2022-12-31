@@ -72,6 +72,17 @@ namespace GE
             return semaphoreCreateInfo;
         }
 
+        inline VkPushConstantRange GetPushConstantRange(VkShaderStageFlags stage_flags,
+                                                        uint32_t           size,
+                                                        uint32_t           offset = 0)
+        {
+            VkPushConstantRange push_constant_range = {};
+            push_constant_range.stageFlags          = stage_flags;
+            push_constant_range.size                = size;
+            push_constant_range.offset              = offset;
+            return push_constant_range;
+        }
+
         inline VkAttachmentDescription GetAttachmentDescription(VkFormat              format = VK_FORMAT_R8G8B8A8_UNORM,
                                                                 VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT)
         {

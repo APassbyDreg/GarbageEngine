@@ -1,7 +1,6 @@
 #include "__TestBasicMeshPass.h"
 
 #include "Runtime/function/Render/ShaderManager/GLSLCompiler.h"
-#include "Runtime/function/Render/ShaderManager/HLSLCompiler.h"
 
 namespace GE
 {
@@ -17,11 +16,12 @@ namespace GE
 
         /* ------------------------- setup pipeline ------------------------- */
         {
-            fs::path     fullpath   = fs::path(Config::shader_dir) / "Passes/__test02_simple_mesh/test.hlsl";
-            HLSLCompiler vscompiler = {ShaderType::VERTEX};
-            HLSLCompiler fscompiler = {ShaderType::FRAGMENT};
-            m_pipeline.m_shaders.push_back(vscompiler.Compile(fullpath.string(), "vert"));
-            m_pipeline.m_shaders.push_back(fscompiler.Compile(fullpath.string(), "frag"));
+            fs::path     fspath     = fs::path(Config::shader_dir) / "Passes/__test02_simple_mesh/test.frag";
+            fs::path     vspath     = fs::path(Config::shader_dir) / "Passes/__test02_simple_mesh/test.vert";
+            GLSLCompiler fscompiler = {ShaderType::FRAGMENT};
+            GLSLCompiler vscompiler = {ShaderType::VERTEX};
+            m_pipeline.m_shaders.push_back(vscompiler.Compile(vspath.string()));
+            m_pipeline.m_shaders.push_back(fscompiler.Compile(fspath.string()));
         }
 
         static VertexInputDescription input_desc = Vertex::GetVertexInputDesc();
@@ -42,19 +42,17 @@ namespace GE
 
         m_pipeline.m_dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
-        VkPushConstantRange push_constant = {};
-        push_constant.offset              = 0;
-        push_constant.size                = sizeof(TestBasicMeshPushConstants);
-        push_constant.stageFlags          = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        auto push_constant = VkInit::GetPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                                                          sizeof(TestBasicMeshPushConstants));
         m_pipeline.m_pushConstantRanges.push_back(push_constant);
     }
 
-    void TestBasicMeshPass::Run(VkExtent2D&                viewport_size,
-                                VkRenderPassBeginInfo&     rp_info,
-                                VkCommandBuffer&           cmd,
-                                std::shared_ptr<GpuBuffer> vertex_buffer,
-                                std::shared_ptr<GpuBuffer> index_buffer,
-                                uint                       vertex_cnt)
+    void TestBasicMeshPass::Run(VkExtent2D&                    viewport_size,
+                                VkRenderPassBeginInfo&         rp_info,
+                                VkCommandBuffer&               cmd,
+                                std::shared_ptr<AutoGpuBuffer> vertex_buffer,
+                                std::shared_ptr<AutoGpuBuffer> index_buffer,
+                                uint                           vertex_cnt)
     {
         {
             VkCommandBufferBeginInfo info = {};

@@ -22,7 +22,8 @@ namespace GE
         {
             T old_val = m_value;
             m_value   = val;
-            m_updatedCallback(val, old_val);
+            if (m_updatedCallback)
+                m_updatedCallback(val, old_val);
         }
 
         /* --------------------------- convertions -------------------------- */
