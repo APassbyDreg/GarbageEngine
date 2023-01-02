@@ -8,6 +8,28 @@ namespace GE
 {
     namespace VkInit
     {
+        inline VkBufferCreateInfo GetBufferCreateInfo(VkDeviceSize       size,
+                                                      VkBufferUsageFlags usage,
+                                                      VkSharingMode      sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+                                                      VkBufferCreateFlags flags = 0)
+        {
+            VkBufferCreateInfo info = {};
+            info.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            info.size               = size;
+            info.usage              = usage;
+            info.sharingMode        = sharing_mode;
+            info.flags              = flags;
+            return info;
+        }
+
+        inline VmaAllocationCreateInfo GetAllocationCreateInfo(VmaMemoryUsage usage, VmaAllocationCreateFlags flags = 0)
+        {
+            VmaAllocationCreateInfo info = {};
+            info.usage                   = usage;
+            info.flags                   = flags;
+            return info;
+        }
+
         inline VkDescriptorSetLayoutBinding GetDescriptorSetLayoutBinding(VkDescriptorType   type,
                                                                           VkShaderStageFlags stage_flags,
                                                                           uint32_t           binding,

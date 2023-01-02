@@ -4,34 +4,15 @@ namespace GE
 {
     void AutoGpuBuffer::Upload(byte* data, size_t size, size_t offset, bool resize)
     {
-        if (resize && size + offset > m_currentSize)
+        if (resize)
         {
-            Resize(size + offset, 0, offset);
+            Resize(size + offset, 0, m_usedSize);
         }
         m_buffer.Upload(data, size, offset, false);
         m_usedSize = size;
     }
 
-    template<typename T>
-    void AutoGpuBuffer::UploadAs(std::vector<T>& data, size_t offset, bool resize)
-    {
-        const size_t size_in_bytes   = data.size() * sizeof(T);
-        const size_t offset_in_bytes = offset * sizeof(T);
-        if (resize && size_in_bytes + offset_in_bytes > m_currentSize)
-        {
-            Resize(size_in_bytes + offset_in_bytes, 0, offset_in_bytes);
-        }
-        m_buffer.Upload((byte*)data.data(), size_in_bytes, offset, false);
-        m_usedSize = size_in_bytes;
-    }
-
     void AutoGpuBuffer::Download(byte* data, size_t size, size_t offset) { m_buffer.Download(data, size, offset); }
-
-    template<typename T>
-    std::vector<T> AutoGpuBuffer::DownloadAs(size_t count, size_t offset)
-    {
-        return m_buffer.DownloadAs<T>(count, offset);
-    }
 
     void AutoGpuBuffer::Copy(GpuBuffer&               src_buffer,
                              size_t                   size,
@@ -86,6 +67,9 @@ namespace GE
         {
             m_buffer.Resize(new_size, retain_start, retain_size);
             m_currentSize = new_size;
+        }
+        if (size_in_bytes > m_usedSize)
+        {
             m_tLastAdjust = Time::CurrentTime();
         }
         m_usedSize = size_in_bytes;

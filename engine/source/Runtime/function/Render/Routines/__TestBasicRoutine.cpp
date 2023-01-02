@@ -96,13 +96,11 @@ namespace GE
             vertices[3].position = {0.5f, -0.5f, 0.0f};
             uint vertices_size   = sizeof(vertices);
 
-            VkBufferCreateInfo buffer_info = {};
-            buffer_info.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-            buffer_info.size               = vertices_size;
-            buffer_info.usage              = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            VkBufferCreateInfo buffer_info =
+                VkInit::GetBufferCreateInfo(vertices_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
-            VmaAllocationCreateInfo alloc_info = {};
-            alloc_info.usage                   = VMA_MEMORY_USAGE_CPU_TO_GPU;
+            auto alloc_info = VkInit::GetAllocationCreateInfo(VMA_MEMORY_USAGE_AUTO,
+                                                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 
             m_vertexBuffer = std::make_shared<AutoGpuBuffer>(buffer_info, alloc_info);
             m_vertexBuffer->Upload((byte*)vertices, vertices_size);
@@ -111,13 +109,11 @@ namespace GE
             uint32_t indices[]    = {0, 1, 2, 2, 3, 0};
             uint     indices_size = sizeof(indices);
 
-            VkBufferCreateInfo buffer_info = {};
-            buffer_info.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-            buffer_info.size               = indices_size;
-            buffer_info.usage              = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+            VkBufferCreateInfo buffer_info =
+                VkInit::GetBufferCreateInfo(indices_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
-            VmaAllocationCreateInfo alloc_info = {};
-            alloc_info.usage                   = VMA_MEMORY_USAGE_CPU_TO_GPU;
+            auto alloc_info = VkInit::GetAllocationCreateInfo(VMA_MEMORY_USAGE_AUTO,
+                                                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 
             m_indexBuffer = std::make_shared<AutoGpuBuffer>(buffer_info, alloc_info);
             m_indexBuffer->Upload((byte*)indices, indices_size);

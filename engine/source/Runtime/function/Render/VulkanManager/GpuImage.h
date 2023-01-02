@@ -8,7 +8,7 @@
 
 namespace GE
 {
-    class GpuImage
+    class GE_API GpuImage
     {
     public:
         GpuImage() {};

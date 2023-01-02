@@ -65,7 +65,7 @@ namespace GE
     {
         GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
 
-        if (resize)
+        if (resize && size + offset > GetSize())
         {
             Resize(size + offset, 0, offset);
         }
@@ -79,25 +79,6 @@ namespace GE
         vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
     }
 
-    template<typename T>
-    void GpuBuffer::UploadAs(std::vector<T>& data, size_t offset, bool resize)
-    {
-        GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
-
-        const size_t size_in_bytes   = data.size() * sizeof(T);
-        const size_t offset_in_bytes = offset * sizeof(T);
-
-        if (resize)
-        {
-            Resize(offset_in_bytes + size_in_bytes, 0, offset_in_bytes);
-        }
-
-        T* mapped;
-        GE_VK_ASSERT(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, (void**)&mapped));
-        memcpy(mapped + offset, data.data(), size_in_bytes);
-        vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
-    }
-
     void GpuBuffer::Download(byte* data, size_t size, size_t offset)
     {
         GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
@@ -107,23 +88,6 @@ namespace GE
         GE_VK_ASSERT(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, (void**)&mapped));
         memcpy(data, mapped + offset, size);
         vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
-    }
-
-    template<typename T>
-    std::vector<T> GpuBuffer::DownloadAs(size_t count, size_t offset)
-    {
-        GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
-        WaitLastAction();
-
-        std::vector<T> result;
-        result.resize(count);
-
-        T* mapped;
-        GE_VK_ASSERT(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, (void**)&mapped));
-        memcpy(result.data(), mapped + offset, count * sizeof(T));
-        vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
-
-        return result;
     }
 
     void GpuBuffer::Copy(GpuBuffer&               src_buffer,

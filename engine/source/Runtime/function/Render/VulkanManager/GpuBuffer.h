@@ -4,11 +4,9 @@
 
 #include "VulkanCore.h"
 
-#include "vma/vk_mem_alloc.h"
-
 namespace GE
 {
-    class GpuBuffer
+    class GE_API GpuBuffer
     {
         const uint64_t c_waitTimeout = 100000000; // 0.1s
 
@@ -22,12 +20,42 @@ namespace GE
         void Setup();
 
         void Upload(byte* data, size_t size, size_t offset = 0, bool resize = true);
-        template<typename T>
-        void UploadAs(std::vector<T>& data, size_t offset = 0, bool resize = true);
-
         void Download(byte* data, size_t size, size_t offset = 0);
+
         template<typename T>
-        std::vector<T> DownloadAs(size_t count, size_t offset = 0);
+        void UploadAs(std::vector<T>& data, size_t offset = 0, bool resize = true)
+        {
+            GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
+
+            const size_t size_in_bytes   = data.size() * sizeof(T);
+            const size_t offset_in_bytes = offset * sizeof(T);
+
+            if (resize && offset_in_bytes + size_in_bytes > GetSize())
+            {
+                Resize(offset_in_bytes + size_in_bytes, 0, offset_in_bytes);
+            }
+
+            T* mapped;
+            GE_VK_ASSERT(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, (void**)&mapped));
+            memcpy(mapped + offset, data.data(), size_in_bytes);
+            vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
+        }
+        template<typename T>
+        std::vector<T> DownloadAs(size_t count, size_t offset = 0)
+        {
+            GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
+            WaitLastAction();
+
+            std::vector<T> result;
+            result.resize(count);
+
+            T* mapped;
+            GE_VK_ASSERT(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, (void**)&mapped));
+            memcpy(result.data(), mapped + offset, count * sizeof(T));
+            vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
+
+            return result;
+        }
 
         void Copy(GpuBuffer&               src_buffer,
                   size_t                   size             = 0,

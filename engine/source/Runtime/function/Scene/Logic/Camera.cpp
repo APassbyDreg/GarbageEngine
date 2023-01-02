@@ -1,4 +1,4 @@
-#include "CameraLogic.h"
+#include "Camera.h"
 
 namespace GE
 {
@@ -8,7 +8,7 @@ namespace GE
         int eid     = e.GetEntityID();
         // check cache
         auto v_cache = m_VMatrixCache.find(eid);
-        if (v_cache == m_VMatrixCache.end() && v_cache->second.version == version)
+        if (v_cache != m_VMatrixCache.end() && v_cache->second.version == version)
         {
             return v_cache->second.value;
         }
@@ -25,7 +25,7 @@ namespace GE
         int  eid     = e.GetEntityID();
         // check cache
         auto p_cache = m_PMatrixCache.find(eid);
-        if (p_cache == m_PMatrixCache.end() && p_cache->second.version == version)
+        if (p_cache != m_PMatrixCache.end() && p_cache->second.version == version)
         {
             return p_cache->second.value;
         }
@@ -42,7 +42,7 @@ namespace GE
         int  eid     = e.GetEntityID();
         // check cache
         auto vp_cache = m_VPMatrixCache.find(eid);
-        if (vp_cache == m_VPMatrixCache.end() && vp_cache->second.version == version)
+        if (vp_cache != m_VPMatrixCache.end() && vp_cache->second.version == version)
         {
             return vp_cache->second.value;
         }

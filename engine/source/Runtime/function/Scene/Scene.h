@@ -23,10 +23,28 @@ namespace GE
 
         inline entt::registry& GetRegistry() { return m_registry; }
 
+        /* -------------------------- create entity ------------------------- */
         std::shared_ptr<Entity>
         CreateEntity(uint eid, std::string tagname = "unnamed entity", int layer = 0, int tag = 0);
         std::shared_ptr<Entity> CreateEntity(std::string tagname = "unnamed entity", int layer = 0, int tag = 0);
+
+        /* -------------------------- remove entity ------------------------- */
+        void RemoveEntity(uint eid);
+
+        /* --------------------------- get entity --------------------------- */
         std::shared_ptr<Entity> GetEntityByID(int eid);
+        std::shared_ptr<Entity> GetEntityByName(std::string name);
+        template<class... T>
+        std::vector<std::shared_ptr<Entity>> GetEntitiesByComponent()
+        {
+            std::vector<std::shared_ptr<Entity>> entities;
+            auto                                 view = m_registry.view<T...>();
+            for (auto e : view)
+            {
+                entities.push_back(m_entities[m_entityToID[e]]);
+            }
+            return entities;
+        }
 
         void InspectStructure();
         void InspectFocusedEntity();
@@ -43,6 +61,7 @@ namespace GE
     protected:
         entt::registry                          m_registry;
         std::map<uint, std::shared_ptr<Entity>> m_entities;
+        std::map<entt::entity, uint>            m_entityToID;
 
         std::string m_name = "GE_scene";
         char        m_nameBuffer[256];

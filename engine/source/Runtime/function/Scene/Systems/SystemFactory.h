@@ -22,7 +22,7 @@ namespace GE
             m_systemMap[name] = [](Entity& e) { e.AddSystem<T>(); };
         }
 
-#define REGISTER_TYPE(typename) RegisterComponent<typename>(#typename);
+#define REGISTER_TYPE(typename) RegisterSystem<typename>(#typename);
         inline void EnsureInit()
         {
             if (!m_initialized)

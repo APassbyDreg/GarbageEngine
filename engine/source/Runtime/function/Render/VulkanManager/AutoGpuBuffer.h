@@ -8,7 +8,7 @@
 
 namespace GE
 {
-    class AutoGpuBuffer
+    class GE_API AutoGpuBuffer
     {
         const double c_tCheckInterval = 2.0;
         // If the buffer the size is not enlarged for about 5s, its size will be reduced to the used size, which is
@@ -37,12 +37,8 @@ namespace GE
             m_updateThread             = std::thread(&AutoGpuBuffer::Update, this);
         }
 
-        void Upload(byte* data, size_t size, size_t offset = 0, bool resize = true);
-        template<typename T>
-        void UploadAs(std::vector<T>& data, size_t offset = 0, bool resize = true);
-        void Download(byte* data, size_t size, size_t offset = 0);
-        template<typename T>
-        std::vector<T> DownloadAs(size_t count, size_t offset = 0);
+        void           Upload(byte* data, size_t size, size_t offset = 0, bool resize = true);
+        void           Download(byte* data, size_t size, size_t offset = 0);
         void           Copy(GpuBuffer&               src_buffer,
                             size_t                   size             = 0,
                             size_t                   src_offset       = 0,
@@ -59,6 +55,24 @@ namespace GE
                             bool                     resize_if_needed = true);
         void           Alloc(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info);
         void           Resize(size_t sizeInBytes, size_t retain_start = 0, size_t retain_size = 0);
+
+        template<typename T>
+        void UploadAs(std::vector<T>& data, size_t offset = 0, bool resize = true)
+        {
+            const size_t size_in_bytes   = data.size() * sizeof(T);
+            const size_t offset_in_bytes = offset * sizeof(T);
+            if (resize)
+            {
+                Resize(size_in_bytes + offset_in_bytes, 0, m_usedSize);
+            }
+            m_buffer.Upload((byte*)data.data(), size_in_bytes, offset, false);
+            m_usedSize = size_in_bytes;
+        }
+        template<typename T>
+        std::vector<T> DownloadAs(size_t count, size_t offset = 0)
+        {
+            return m_buffer.DownloadAs<T>(count, offset);
+        }
 
         inline size_t                  GetSize() { return m_usedSize; }
         inline VkBuffer                GetBuffer() { return m_buffer.GetBuffer(); }

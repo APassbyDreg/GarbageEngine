@@ -8,22 +8,23 @@ namespace GE
     template<typename T>
     class WatchedValue
     {
-        typedef std::function<void(const T, const T)> UpdateCallbackFn;
-
-        static void DefaultCallback(const T val_new, const T val_old) {}
+        using UpdateCallbackFn = std::function<void()>; // old values are get by GetLastValue()
 
     public:
-        WatchedValue(UpdateCallbackFn cb = DefaultCallback) : m_updatedCallback(cb) {}
-        WatchedValue(WatchedValue&& v) : m_updatedCallback(v.m_updatedCallback), m_value(v.m_value) {}
+        WatchedValue() {}
+        WatchedValue(WatchedValue&& v) :
+            m_updatedCallbacks(v.m_updatedCallbacks), m_value(v.m_value), m_lastValue(v.m_lastValue)
+        {}
 
-        inline void SetCallback(UpdateCallbackFn cb) { m_updatedCallback = cb; }
+        inline void AddCallback(UpdateCallbackFn cb) { m_updatedCallbacks.push_back(cb); }
         inline T    GetValue() const { return m_value; }
+        inline T    GetLastValue() const { return m_lastValue; }
         inline void SetValue(T val)
         {
-            T old_val = m_value;
-            m_value   = val;
-            if (m_updatedCallback)
-                m_updatedCallback(val, old_val);
+            m_lastValue = m_value;
+            m_value     = val;
+            for (auto&& cb : m_updatedCallbacks)
+                cb();
         }
 
         /* --------------------------- convertions -------------------------- */
@@ -41,7 +42,8 @@ namespace GE
         operator T() const { return GetValue(); }
 
     private:
-        T                m_value;
-        UpdateCallbackFn m_updatedCallback;
+        T                             m_value;
+        T                             m_lastValue;
+        std::vector<UpdateCallbackFn> m_updatedCallbacks;
     };
 } // namespace GE

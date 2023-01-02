@@ -195,6 +195,14 @@ namespace GE
             GE_VK_ASSERT(vkCreateDescriptorPool(m_device, &pool_info, nullptr, &m_descriptorPool));
             m_destroyActionStack.push_back([this]() { vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr); });
         }
+
+        // create global transfer command pool
+        if (m_supportStatus.hasTransferQueue)
+        {
+            auto info = VkInit::GetCommandPoolCreateInfo(m_transferQueueFamilyIndex);
+            GE_VK_ASSERT(vkCreateCommandPool(m_device, &info, nullptr, &m_transferCmdPool));
+            m_destroyActionStack.push_back([this]() { vkDestroyCommandPool(m_device, m_transferCmdPool, nullptr); });
+        }
     }
 
     void VulkanCore::destroy_vulkan()

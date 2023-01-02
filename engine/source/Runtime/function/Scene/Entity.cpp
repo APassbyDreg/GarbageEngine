@@ -11,6 +11,8 @@ namespace GE
         m_registryID = m_srcReg.create();
     }
 
+    Entity::~Entity() { m_srcReg.destroy(m_registryID); }
+
     json Entity::Serialize() const
     {
         json components;
@@ -45,7 +47,6 @@ namespace GE
         }
         m_entityID = data["id"].get<int>();
         m_parentID = data["parent"].get<int>();
-        MarkChanged();
     }
 
     void Entity::OnUpdate(double dt)
@@ -54,7 +55,6 @@ namespace GE
         {
             system->OnUpdate(dt);
         }
-        MarkChanged();
     }
 
     void Entity::IterateComponent(ComponentIteratorFunc f)
@@ -63,7 +63,6 @@ namespace GE
         {
             iter(f);
         }
-        MarkChanged();
     }
 
     void Entity::IterateComponentConst(ComponentConstIteratorFunc f) const
@@ -106,6 +105,7 @@ namespace GE
     void Entity::MarkChanged()
     {
         m_version = (m_version + 1) % (2 << 30);
+        // mark all children changed
         for (auto&& child : m_children)
         {
             child->MarkChanged();

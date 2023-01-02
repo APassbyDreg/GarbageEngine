@@ -1,4 +1,4 @@
-#include "TransformLogic.h"
+#include "Transform.h"
 
 #include "../Components/Transform.h"
 
@@ -10,7 +10,7 @@ namespace GE
         int  eid     = e.GetEntityID();
         // check cache
         auto v_cache = m_AbsTransMatrixCache.find(eid);
-        if (v_cache == m_AbsTransMatrixCache.end() && v_cache->second.version == version)
+        if (v_cache != m_AbsTransMatrixCache.end() && v_cache->second.version == version)
         {
             return v_cache->second.value;
         }

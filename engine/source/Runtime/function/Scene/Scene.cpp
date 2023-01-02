@@ -6,6 +6,7 @@ namespace GE
 {
     std::shared_ptr<Entity> Scene::CreateEntity(uint eid, std::string tagname, int layer, int tag)
     {
+        GE_CORE_ASSERT(eid >= 0, "Entity ID must be greater than or equal to 0");
         if (m_entities.find(eid) != m_entities.end())
         {
             while (m_entities.find(m_availableEntityID) != m_entities.end())
@@ -16,6 +17,7 @@ namespace GE
         auto e = std::make_shared<Entity>(*this, eid);
         e->AddComponent<TagComponent>(tagname, layer, tag);
         m_entities[eid] = e;
+        m_entityToID[e->m_registryID] = eid;
         return e;
     }
 
@@ -31,6 +33,16 @@ namespace GE
         return e;
     }
 
+    void Scene::RemoveEntity(uint eid)
+    {
+        auto found = m_entities.find(eid);
+        if (found != m_entities.end())
+        {
+            m_entityToID.erase(found->second->m_registryID);
+            m_entities.erase(found);
+        }
+    }
+
     std::shared_ptr<Entity> Scene::GetEntityByID(int eid)
     {
         auto found = m_entities.find(eid);
@@ -43,6 +55,19 @@ namespace GE
             return found->second;
         }
     };
+
+    std::shared_ptr<Entity> Scene::GetEntityByName(std::string name)
+    {
+        for (auto&& [eid, e] : m_entities)
+        {
+            TagComponent& tag = e->GetComponent<TagComponent>();
+            if (tag.GetCoreValues().name == name)
+            {
+                return e;
+            }
+        }
+        return nullptr;
+    }
 
     void Scene::InspectStructure()
     {

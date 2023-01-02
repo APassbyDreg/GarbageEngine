@@ -14,7 +14,7 @@
 
 namespace GE
 {
-    struct VkSupportStatus
+    struct GE_API VkSupportStatus
     {
         bool hasComputeQueue               = false;
         bool hasTransferQueue              = false;
@@ -23,7 +23,7 @@ namespace GE
         bool isComputeAndTransferSameQueue = true;
     };
 
-    class VulkanCore : public Singleton<VulkanCore>
+    class GE_API VulkanCore : public Singleton<VulkanCore>
     {
     public:
         VulkanCore();
@@ -105,6 +105,32 @@ namespace GE
         static inline void ResetCmdBuffer(VkCommandBuffer cmd, VkCommandBufferResetFlags flags = 0)
         {
             GE_VK_ASSERT(vkResetCommandBuffer(cmd, flags));
+        }
+        static inline VkCommandBuffer BeginTransferCmd()
+        {
+            VkCommandBuffer          cmd        = CreateCmdBuffer(GetInstance().m_transferCmdPool)[0];
+            VkCommandBufferBeginInfo begin_info = {};
+            begin_info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            begin_info.flags                    = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+            vkBeginCommandBuffer(cmd, &begin_info);
+            return cmd;
+        }
+        static inline void EndTransferCmd(VkCommandBuffer          cmd,
+                                          std::vector<VkSemaphore> wait_semaphores   = {},
+                                          std::vector<VkSemaphore> signal_semaphores = {},
+                                          VkFence                  fence             = VK_NULL_HANDLE)
+        {
+            vkEndCommandBuffer(cmd);
+            VkSubmitInfo submit_info         = {};
+            submit_info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submit_info.commandBufferCount   = 1;
+            submit_info.pCommandBuffers      = &cmd;
+            submit_info.waitSemaphoreCount   = wait_semaphores.size();
+            submit_info.pWaitSemaphores      = wait_semaphores.data();
+            submit_info.signalSemaphoreCount = signal_semaphores.size();
+            submit_info.pSignalSemaphores    = signal_semaphores.data();
+            vkQueueSubmit(GetTransferQueue(), 1, &submit_info, fence);
+            vkFreeCommandBuffers(GetDevice(), GetInstance().m_transferCmdPool, 1, &cmd);
         }
 
         /* ------------------------ synchronizations ------------------------ */
@@ -193,6 +219,7 @@ namespace GE
         uint32_t                 m_computeQueueFamilyIndex, m_transferQueueFamilyIndex;
         VkSurfaceKHR             m_surface;
         VkDescriptorPool         m_descriptorPool;
+        VkCommandPool            m_transferCmdPool;
 
         /* -------------------------- vkb variables ------------------------- */
         vkb::Instance       m_vkbInstance;

@@ -2,6 +2,8 @@
 
 #include "OBJ_Loader.h"
 
+#include "Runtime/function/Render/VulkanManager/VulkanCreateInfoBuilder.h"
+
 namespace GE
 {
     void MeshResource::Load()
@@ -41,6 +43,7 @@ namespace GE
 
         // postprocess
         CalculateBBox();
+        ToGpu();
 
         m_valid = true;
     }
@@ -97,6 +100,11 @@ namespace GE
                      m_data.vertices.size(),
                      m_data.indices.size(),
                      file.string());
+
+        // postprocess
+        CalculateBBox();
+        ToGpu();
+
         m_valid = true;
     }
 
@@ -110,5 +118,21 @@ namespace GE
         {
             m_bbox += Bounds3f(vertices[i].position);
         }
+    }
+
+    void MeshResource::ToGpu()
+    {
+        auto alloc_info = VkInit::GetAllocationCreateInfo(VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+                                                          VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+        auto vertex_info =
+            VkInit::GetBufferCreateInfo(sizeof(Vertex) * m_data.vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+        auto index_info =
+            VkInit::GetBufferCreateInfo(sizeof(uint32_t) * m_data.indices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+
+        m_vertexBuffer.Alloc(vertex_info, alloc_info);
+        m_indexBuffer.Alloc(index_info, alloc_info);
+
+        m_vertexBuffer.UploadAs(m_data.vertices);
+        m_indexBuffer.UploadAs(m_data.indices);
     }
 } // namespace GE

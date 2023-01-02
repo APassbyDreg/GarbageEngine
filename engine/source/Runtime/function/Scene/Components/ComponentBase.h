@@ -32,15 +32,34 @@ namespace GE
     }
 
     class Entity;
+    using EntityCallback = std::function<void(Entity&)>;
 
 #define GE_COMPONENT_COMMON(comp) \
 public: \
-    std::string        GetName() const override { return #comp; } \
-    static std::string GetNameStatic() { return #comp; } \
-    comp(std::shared_ptr<Entity> e, const json& data) : ComponentBase(e) { Deserialize(data); } \
-    comp(std::shared_ptr<Entity> e) : ComponentBase(e) {} \
-    comp##Core               GetCoreValues() { return m_core.GetValue(); } \
-    WatchedValue<comp##Core> m_core;
+    inline std::string GetName() const override \
+    { \
+        return #comp; \
+    } \
+    inline static std::string GetNameStatic() \
+    { \
+        return #comp; \
+    } \
+    inline void AddUpdatedCallback(EntityCallback cb) \
+    { \
+        m_core.AddCallback([=]() { cb(*(this->m_entity)); }); \
+    } \
+    comp(std::shared_ptr<Entity> e, const json& data) : ComponentBase(e) \
+    { \
+        Deserialize(data); \
+    } \
+    comp(std::shared_ptr<Entity> e) : ComponentBase(e) \
+    {} \
+    inline comp##Core GetCoreValues() \
+    { \
+        return m_core.GetValue(); \
+    } \
+    WatchedValue<comp##Core> m_core; \
+    using CoreType = comp##Core;
 
     class ComponentBase
     {
@@ -52,7 +71,9 @@ public: \
         virtual json        Serialize() const             = 0;
         virtual std::string GetName() const               = 0;
 
-    private:
+        inline std::shared_ptr<Entity> GetEntity() { return m_entity; }
+
+    protected:
         std::shared_ptr<Entity> m_entity;
     };
 } // namespace GE

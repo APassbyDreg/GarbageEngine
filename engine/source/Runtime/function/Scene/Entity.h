@@ -12,6 +12,36 @@
 namespace GE
 {
     class Scene;
+    class Entity;
+
+    using EntityCallback = std::function<void(Entity&)>;
+
+    template<std::derived_from<ComponentBase> T>
+    class ComponentHook : Singleton<ComponentHook<T>>
+    {
+    public:
+        static void AddConstructHook(EntityCallback hook)
+        {
+            ComponentHook<T>::GetInstance().m_constructHooks.push_back(hook);
+        }
+        static void AddDestructHook(EntityCallback hook)
+        {
+            ComponentHook<T>::GetInstance().m_destructHooks.push_back(hook);
+        }
+        static void CallConstructHooks(Entity& e)
+        {
+            for (auto& hook : ComponentHook<T>::GetInstance().m_constructHooks)
+                hook(e);
+        }
+        static void CallDestructHooks(Entity& e)
+        {
+            for (auto& hook : ComponentHook<T>::GetInstance().m_destructHooks)
+                hook(e);
+        }
+
+    private:
+        std::vector<EntityCallback> m_constructHooks, m_destructHooks;
+    };
 
     class GE_API Entity : public std::enable_shared_from_this<Entity>
     {
@@ -19,6 +49,7 @@ namespace GE
 
     public:
         Entity(Scene& sc, int eid);
+        ~Entity();
 
         json Serialize() const;
         void Deserialize(const json& data);
@@ -37,16 +68,26 @@ namespace GE
                 return;
             }
 
+            /* ---------------------- create component ---------------------- */
             m_srcReg.emplace<T>(m_registryID, shared_from_this(), std::forward<TArgs>(args)...);
-            m_compIters[T::GetNameStatic()] = [&, this](ComponentIteratorFunc f) {
-                T& comp = GetComponent<T>();
-                f(comp, *this);
-            };
-            m_compConstIters[T::GetNameStatic()] = [&, this](ComponentConstIteratorFunc f) {
-                const T& comp = GetComponent<T>();
-                f(comp, *this);
-            };
-            MarkChanged();
+            ComponentHook<T>::CallConstructHooks(*this);
+
+            T&          comp = GetComponent<T>();
+            std::string name = T::GetNameStatic();
+
+            /* ---------------------- updated callbacks --------------------- */
+            comp.AddUpdatedCallback([&, this](Entity& e) { MarkChanged(); });
+            if (m_changedCallbacks.find(name) != m_changedCallbacks.end())
+            {
+                for (auto& f : m_changedCallbacks[name])
+                {
+                    comp.AddUpdatedCallback(f);
+                }
+            }
+
+            /* --------------------- register iterators --------------------- */
+            m_compIters[name]      = [&, this](ComponentIteratorFunc f) { f(comp, *this); };
+            m_compConstIters[name] = [&, this](ComponentConstIteratorFunc f) { f(comp, *this); };
         }
 
         template<std::derived_from<ComponentBase> T>
@@ -57,10 +98,12 @@ namespace GE
                 GE_CORE_WARN("[Entity::RemoveComponent] Component '{}' not found, doing nothing", T::GetNameStatic());
                 return;
             }
+
+            ComponentHook<T>::CallDestructHooks(*this);
             m_srcReg.remove<T>(m_registryID);
+
             m_compIters.erase(T::GetNameStatic());
             m_compConstIters.erase(T::GetNameStatic());
-            MarkChanged();
         }
 
         template<std::derived_from<ComponentBase> T>
@@ -73,7 +116,6 @@ namespace GE
         T& GetComponent()
         {
             GE_CORE_ASSERT(HasComponent<T>(), "[Entity::GetComponent] Component '{}' not found", T::GetNameStatic());
-            MarkChanged(); // NOTE: conservatively increament version
             return m_srcReg.get<T>(m_registryID);
         }
 
@@ -82,6 +124,16 @@ namespace GE
         {
             GE_CORE_ASSERT(HasComponent<T>(), "[Entity::GetComponent] Component '{}' not found", T::GetNameStatic());
             return m_srcReg.get<T>(m_registryID);
+        }
+
+        template<std::derived_from<ComponentBase> T>
+        inline void AddChangedCallback(EntityCallback f)
+        {
+            m_changedCallbacks[T::GetNameStatic()].push_back(f);
+            if (HasComponent<T>())
+            {
+                GetComponent<T>().AddUpdatedCallback(f);
+            }
         }
 
         void IterateComponent(ComponentIteratorFunc f);
@@ -113,7 +165,7 @@ namespace GE
             return GetComponent<T>();
         }
 
-        inline void MarkChanged();
+        void MarkChanged();
 
         Scene&                               m_scene;
         uint                                 m_version  = 0;
@@ -125,6 +177,7 @@ namespace GE
         entt::registry&                                                        m_srcReg;
         std::map<std::string, std::function<void(ComponentIteratorFunc)>>      m_compIters;
         std::map<std::string, std::function<void(ComponentConstIteratorFunc)>> m_compConstIters;
+        std::map<std::string, std::vector<EntityCallback>>                     m_changedCallbacks;
         std::vector<std::shared_ptr<SystemBase>>                               m_systems;
         entt::entity                                                           m_registryID;
     };
