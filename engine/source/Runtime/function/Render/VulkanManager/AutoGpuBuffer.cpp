@@ -2,6 +2,16 @@
 
 namespace GE
 {
+    AutoGpuBuffer::~AutoGpuBuffer()
+    {
+        {
+            std::lock_guard<std::mutex> lock(m_cvMutex);
+            m_shouldExit = true;
+        }
+        m_cv.notify_all();
+        m_updateThread.join();
+    }
+
     void AutoGpuBuffer::Upload(byte* data, size_t size, size_t offset, bool resize)
     {
         if (resize)
@@ -77,9 +87,12 @@ namespace GE
 
     void AutoGpuBuffer::Update()
     {
-        while (true)
+        std::unique_lock<std::mutex> lk(m_cvMutex);
+        bool                         exit = false;
+        while (!exit)
         {
-            Time::Sleep(c_tCheckInterval);
+            exit = m_cv.wait_for(lk, c_tCheckInterval, [this] { return m_shouldExit; });
+            GE_CORE_TRACE("AutoGpuBuffer::Update");
             if (m_buffer.IsValid() && Time::CurrentTime() - m_tLastAdjust > c_tInactive && m_currentSize > m_usedSize)
             {
                 Resize(m_usedSize, 0, m_usedSize);

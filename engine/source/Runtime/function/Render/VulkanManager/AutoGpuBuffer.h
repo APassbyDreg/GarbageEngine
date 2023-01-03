@@ -10,7 +10,7 @@ namespace GE
 {
     class GE_API AutoGpuBuffer
     {
-        const double c_tCheckInterval = 2.0;
+        const Time::Seconds c_tCheckInterval = Time::Seconds(2);
         // If the buffer the size is not enlarged for about 5s, its size will be reduced to the used size, which is
         // implemented by a guard thread.
         const Time::Seconds c_tInactive = Time::Seconds(5);
@@ -18,6 +18,7 @@ namespace GE
         const Time::Seconds c_tActive = Time::Miliseconds(50);
 
     public:
+        ~AutoGpuBuffer();
         AutoGpuBuffer()
         {
             m_tLastAdjust  = Time::CurrentTime();
@@ -90,6 +91,9 @@ namespace GE
 
         Time::TimeStamp m_tLastAdjust;
 
-        std::thread m_updateThread;
+        std::thread             m_updateThread;
+        std::condition_variable m_cv;
+        std::mutex              m_cvMutex;
+        bool                    m_shouldExit = false;
     };
 } // namespace GE

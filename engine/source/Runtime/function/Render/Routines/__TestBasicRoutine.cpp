@@ -110,7 +110,7 @@ namespace GE
             uint     indices_size = sizeof(indices);
 
             VkBufferCreateInfo buffer_info =
-                VkInit::GetBufferCreateInfo(indices_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+                VkInit::GetBufferCreateInfo(indices_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
             auto alloc_info = VkInit::GetAllocationCreateInfo(VMA_MEMORY_USAGE_AUTO,
                                                               VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
