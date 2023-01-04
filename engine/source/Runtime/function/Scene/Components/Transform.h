@@ -67,7 +67,12 @@ namespace GE
             ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&scale));
             ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&euler));
             rotation = glm::quat(glm::radians(euler));
-            m_core   = {position, scale, rotation};
+
+            auto [old_position, old_scale, old_rotation] = m_core.GetValue();
+            if (position != old_position || scale != old_scale || rotation != old_rotation)
+            {
+                m_core = {position, scale, rotation};
+            }
         }
 
         /* ----------------------------- helpers ---------------------------- */

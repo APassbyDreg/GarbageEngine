@@ -42,8 +42,7 @@ namespace GE
         operator T() const { return GetValue(); }
 
     private:
-        T                             m_value;
-        T                             m_lastValue;
+        T                             m_value, m_lastValue;
         std::vector<UpdateCallbackFn> m_updatedCallbacks;
     };
 } // namespace GE

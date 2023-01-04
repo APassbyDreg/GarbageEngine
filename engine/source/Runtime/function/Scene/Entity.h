@@ -9,39 +9,14 @@
 #include "Components/ComponentFactory.h"
 #include "Systems/SystemBase.h"
 
+#include "Hooks.h"
+
 namespace GE
 {
     class Scene;
     class Entity;
 
     using EntityCallback = std::function<void(Entity&)>;
-
-    template<std::derived_from<ComponentBase> T>
-    class ComponentHook : Singleton<ComponentHook<T>>
-    {
-    public:
-        static void AddConstructHook(EntityCallback hook)
-        {
-            ComponentHook<T>::GetInstance().m_constructHooks.push_back(hook);
-        }
-        static void AddDestructHook(EntityCallback hook)
-        {
-            ComponentHook<T>::GetInstance().m_destructHooks.push_back(hook);
-        }
-        static void CallConstructHooks(Entity& e)
-        {
-            for (auto& hook : ComponentHook<T>::GetInstance().m_constructHooks)
-                hook(e);
-        }
-        static void CallDestructHooks(Entity& e)
-        {
-            for (auto& hook : ComponentHook<T>::GetInstance().m_destructHooks)
-                hook(e);
-        }
-
-    private:
-        std::vector<EntityCallback> m_constructHooks, m_destructHooks;
-    };
 
     class GE_API Entity : public std::enable_shared_from_this<Entity>
     {
@@ -70,20 +45,14 @@ namespace GE
 
             /* ---------------------- create component ---------------------- */
             m_srcReg.emplace<T>(m_registryID, shared_from_this(), std::forward<TArgs>(args)...);
-            ComponentHook<T>::CallConstructHooks(*this);
+            ComponentHook<T>::CallConstructHooks(*this, m_sceneName);
 
             T&          comp = GetComponent<T>();
             std::string name = T::GetNameStatic();
 
             /* ---------------------- updated callbacks --------------------- */
-            comp.AddUpdatedCallback([&, this](Entity& e) { MarkChanged(); });
-            if (m_changedCallbacks.find(name) != m_changedCallbacks.end())
-            {
-                for (auto& f : m_changedCallbacks[name])
-                {
-                    comp.AddUpdatedCallback(f);
-                }
-            }
+            comp.AddUpdatedCallback([&, this]() { MarkChanged(); });
+            comp.AddUpdatedCallback([&, this]() { ComponentHook<T>::CallChangedHooks(*this, m_sceneName); });
 
             /* --------------------- register iterators --------------------- */
             m_compIters[name]      = [&, this](ComponentIteratorFunc f) { f(comp, *this); };
@@ -99,7 +68,7 @@ namespace GE
                 return;
             }
 
-            ComponentHook<T>::CallDestructHooks(*this);
+            ComponentHook<T>::CallDestructHooks(*this, m_sceneName);
             m_srcReg.remove<T>(m_registryID);
 
             m_compIters.erase(T::GetNameStatic());
@@ -126,16 +95,6 @@ namespace GE
             return m_srcReg.get<T>(m_registryID);
         }
 
-        template<std::derived_from<ComponentBase> T>
-        inline void AddChangedCallback(EntityCallback f)
-        {
-            m_changedCallbacks[T::GetNameStatic()].push_back(f);
-            if (HasComponent<T>())
-            {
-                GetComponent<T>().AddUpdatedCallback(f);
-            }
-        }
-
         void IterateComponent(ComponentIteratorFunc f);
         void IterateComponentConst(ComponentConstIteratorFunc f) const;
 
@@ -151,8 +110,10 @@ namespace GE
         void OnUpdate(const double dt);
 
         /* ------------------------ entity basic info ----------------------- */
-        inline uint GetVersion() const { return m_version; }
-        inline int  GetEntityID() const { return m_entityID; }
+        inline uint                    GetVersion() const { return m_version; }
+        inline int                     GetEntityID() const { return m_entityID; }
+        inline const entt::registry&   GetRegistry() const { return m_srcReg; }
+        inline std::shared_ptr<Entity> AsPtr() { return shared_from_this(); }
 
         inline Scene&           GetScene() { return m_scene; }
         std::shared_ptr<Entity> GetParent();
@@ -168,6 +129,7 @@ namespace GE
         void MarkChanged();
 
         Scene&                               m_scene;
+        std::string&                         m_sceneName;
         uint                                 m_version  = 0;
         int                                  m_entityID = -1; // valid entity id has to be greater than zero
         int                                  m_parentID = -1; // negative value indecates no parent

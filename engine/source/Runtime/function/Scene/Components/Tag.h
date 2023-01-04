@@ -18,8 +18,7 @@ namespace GE
         GE_COMPONENT_COMMON(TagComponent);
 
     public:
-        TagComponent(std::shared_ptr<Entity> e, std::string name = "unnamed entity", int layer = 0, int tag = 0) :
-            ComponentBase(e)
+        TagComponent(std::shared_ptr<Entity> e, std::string name, int layer, int tag) : ComponentBase(e)
         {
             m_core = {name, layer, tag};
         }
@@ -49,7 +48,12 @@ namespace GE
             ImGui::InputInt("Layer", &layer);
             ImGui::InputInt("Tag", &tag);
             name   = nameBuffer;
-            m_core = {name, layer, tag};
+
+            auto [old_name, old_layer, old_tag] = m_core.GetValue();
+            if (name != old_name || layer != old_layer || tag != old_tag)
+            {
+                m_core = {name, layer, tag};
+            }
         }
     };
 } // namespace GE

@@ -15,7 +15,8 @@ namespace GE
     /* layout:
      * 0  - 7  : version
      * 8  - 15 : vertex count
-     * 16 - 24 : index count
+     * 16 - 23 : index count
+     * 24 - 47 : bbox
      * [vertex plain data]
      * [index plain data]
      */
@@ -43,10 +44,11 @@ namespace GE
         void ToGpu();
 
     private:
-        const int64 VERSION_OFFSET    = 0;
-        const int64 VERTEX_CNT_OFFSET = VERSION_OFFSET + sizeof(uint64);
-        const int64 IDXEX_CNT_OFFSET  = VERTEX_CNT_OFFSET + sizeof(uint64);
-        const int64 VERTEX_OFFSET     = IDXEX_CNT_OFFSET + sizeof(uint64);
+        const int64 c_versionOffset     = 0;
+        const int64 c_vertexCountOffset = c_versionOffset + sizeof(uint64);
+        const int64 c_indexCountOffset  = c_vertexCountOffset + sizeof(uint64);
+        const int64 c_bboxOffset        = c_indexCountOffset + sizeof(uint64);
+        const int64 c_vertexOffset      = c_bboxOffset + sizeof(Bounds3f);
 
         uint64       m_version = 0;
         Bounds3f     m_bbox;

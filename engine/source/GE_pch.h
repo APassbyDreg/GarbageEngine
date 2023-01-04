@@ -17,6 +17,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <streambuf>

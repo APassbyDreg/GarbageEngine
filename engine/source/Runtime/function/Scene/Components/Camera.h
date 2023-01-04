@@ -68,7 +68,12 @@ namespace GE
                 clip.y    = tmp;
             }
             cam_type = __camera_id2type(m_typeid);
-            m_core   = {aspect, fov, clip, cam_type};
+
+            auto [old_aspect, old_fov, old_clip, old_cam_type] = m_core.GetValue();
+            if (old_aspect != aspect || old_fov != fov || old_clip != clip || old_cam_type != cam_type)
+            {
+                m_core = {aspect, fov, clip, cam_type};
+            }
         }
 
         inline float4x4 GetProjectionMatrix() const

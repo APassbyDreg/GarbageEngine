@@ -4,6 +4,26 @@
 
 namespace GE
 {
+    Scene::Scene() : m_meshManager(*this)
+    {
+        m_name = std::format("GE_scene_{}", std::rand() % (1 << 16));
+        m_meshManager.Setup();
+    }
+
+    Scene::Scene(const json& data) : m_meshManager(*this)
+    {
+        m_meshManager.Setup();
+        Deserialize(data);
+    }
+
+    Scene::Scene(const fs::path path) : m_meshManager(*this)
+    {
+        m_meshManager.Setup();
+        Load(path);
+    }
+
+    Scene::~Scene() {}
+
     std::shared_ptr<Entity> Scene::CreateEntity(uint eid, std::string tagname, int layer, int tag)
     {
         GE_CORE_ASSERT(eid >= 0, "Entity ID must be greater than or equal to 0");
@@ -108,10 +128,10 @@ namespace GE
                 ImGui::OpenPopup("ge_add_component_popup");
             if (ImGui::BeginPopup("ge_add_component_popup"))
             {
-                for (auto [name, factory] : ComponentFactory::GetInstance().GetFactoriesMap())
+                for (auto&& name : ComponentFactory::GetInstance().GetSupportedComponents())
                 {
                     if (ImGui::Selectable(name.c_str()))
-                        factory({}, *focused_entity);
+                        ComponentFactory::GetInstance().AttachComponent(name, *focused_entity);
                 }
                 ImGui::EndPopup();
             }

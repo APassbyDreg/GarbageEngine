@@ -23,7 +23,11 @@ namespace GE
         if (e.HasComponent<InstancedMeshComponent>())
         {
             auto&& mesh = e.GetComponent<InstancedMeshComponent>();
-            aabb        = mesh.GetCoreValues()->BBox();
+            auto   resource = mesh.GetCoreValues();
+            if (resource != nullptr)
+            {
+                aabb = resource->BBox();
+            }
         }
         float4x4 transform = TransformLogic::GetInstance().GetAbsoluteTransformMatrix(e);
         return Transform(aabb, transform);

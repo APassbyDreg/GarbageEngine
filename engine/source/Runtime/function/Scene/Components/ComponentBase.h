@@ -11,28 +11,8 @@
 
 namespace GE
 {
-    template<typename T>
-    json SerializeComponent(const T& component)
-    {
-        return component.Serialize();
-    }
-
-    template<typename T>
-    T DeserializeComponent(const json& data)
-    {
-        T component;
-        component.Deserialize(data);
-        return component;
-    }
-
-    template<typename T>
-    void InspectComponent(T& component)
-    {
-        component.Inspect();
-    }
-
     class Entity;
-    using EntityCallback = std::function<void(Entity&)>;
+    using UpdateCallback = std::function<void()>;
 
 #define GE_COMPONENT_COMMON(comp) \
 public: \
@@ -44,9 +24,9 @@ public: \
     { \
         return #comp; \
     } \
-    inline void AddUpdatedCallback(EntityCallback cb) \
+    inline void AddUpdatedCallback(UpdateCallback cb) \
     { \
-        m_core.AddCallback([=]() { cb(*(this->m_entity)); }); \
+        m_core.AddCallback([=]() { cb(); }); \
     } \
     comp(std::shared_ptr<Entity> e, const json& data) : ComponentBase(e) \
     { \
@@ -76,4 +56,24 @@ public: \
     protected:
         std::shared_ptr<Entity> m_entity;
     };
+
+    template<typename T>
+    json SerializeComponent(const T& component)
+    {
+        return component.Serialize();
+    }
+
+    template<typename T>
+    T DeserializeComponent(const json& data)
+    {
+        T component;
+        component.Deserialize(data);
+        return component;
+    }
+
+    template<typename T>
+    void InspectComponent(T& component)
+    {
+        component.Inspect();
+    }
 } // namespace GE

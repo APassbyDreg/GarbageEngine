@@ -17,13 +17,22 @@ namespace GE
     class GE_API ComponentFactory : public Singleton<ComponentFactory>
     {
     public:
+        inline void AttachComponent(std::string name, Entity& e)
+        {
+            EnsureInit();
+            GE_CORE_ASSERT(m_componentEmptyFactories.find(name) != m_componentEmptyFactories.end(),
+                           "[ComponentFactory::AttachComponent] component {} not registered",
+                           name);
+            m_componentEmptyFactories[name](e);
+        }
+
         inline void AttachComponent(std::string name, const json& data, Entity& e)
         {
             EnsureInit();
-            GE_CORE_ASSERT(m_componentFactories.find(name) != m_componentFactories.end(),
+            GE_CORE_ASSERT(m_componentJsonFactories.find(name) != m_componentJsonFactories.end(),
                            "[ComponentFactory::AttachComponent] component {} not registered",
                            name);
-            m_componentFactories[name](data, e);
+            m_componentJsonFactories[name](data, e);
         }
 
         inline void DetachComponent(std::string name, Entity& e)
@@ -35,22 +44,19 @@ namespace GE
             m_componentRemovers[name](e);
         }
 
-        inline std::map<std::string, std::function<void(const json&, Entity&)>>& GetFactoriesMap()
+        inline const std::vector<std::string>& GetSupportedComponents()
         {
             EnsureInit();
-            return m_componentFactories;
-        }
-        inline std::map<std::string, std::function<void(Entity&)>>& GetRemoversMap()
-        {
-            EnsureInit();
-            return m_componentRemovers;
+            return m_supportedComponents;
         }
 
     private:
         void EnsureInit();
 
-        std::map<std::string, std::function<void(const json&, Entity&)>> m_componentFactories = {};
-        std::map<std::string, std::function<void(Entity&)>>              m_componentRemovers  = {};
-        bool                                                             m_initialized        = false;
+        std::map<std::string, std::function<void(Entity&)>>              m_componentEmptyFactories = {};
+        std::map<std::string, std::function<void(const json&, Entity&)>> m_componentJsonFactories  = {};
+        std::map<std::string, std::function<void(Entity&)>>              m_componentRemovers       = {};
+        std::vector<std::string>                                         m_supportedComponents     = {};
+        bool                                                             m_initialized             = false;
     };
 } // namespace GE

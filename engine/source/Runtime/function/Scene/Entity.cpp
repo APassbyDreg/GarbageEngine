@@ -6,12 +6,16 @@
 
 namespace GE
 {
-    Entity::Entity(Scene& sc, int eid) : m_scene(sc), m_entityID(eid), m_srcReg(sc.m_registry)
+    Entity::Entity(Scene& sc, int eid) : m_scene(sc), m_entityID(eid), m_srcReg(sc.m_registry), m_sceneName(sc.m_name)
     {
         m_registryID = m_srcReg.create();
     }
 
-    Entity::~Entity() { m_srcReg.destroy(m_registryID); }
+    Entity::~Entity()
+    {
+        GE_CORE_TRACE("destroy {}", m_entityID);
+        m_srcReg.destroy(m_registryID);
+    }
 
     json Entity::Serialize() const
     {

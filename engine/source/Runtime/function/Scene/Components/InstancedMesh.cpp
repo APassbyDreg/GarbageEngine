@@ -8,16 +8,29 @@ namespace GE
 {
     inline void InstancedMeshComponent::HandleOpenFile()
     {
-    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        std::string filepath = "";
+        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
         {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
-                std::string                   filepath = ImGuiFileDialog::Instance()->GetFilePathName();
-                std::shared_ptr<MeshResource> m_source =
-                    ResourceManager::GetInstance().GetResource<MeshResource>(filepath);
-                m_core = m_source;
+                filepath = ImGuiFileDialog::Instance()->GetFilePathName();
             }
             ImGuiFileDialog::Instance()->Close();
+        }
+
+        if (filepath.ends_with(".obj"))
+        {
+            std::string savepath = filepath.substr(0, filepath.size() - 4) + ".ge.mesh";
+            auto        resource = ResourceManager::GetInstance().GetResource<MeshResource>(savepath);
+            resource->FromObj(filepath);
+            resource->Save();
+            m_core = resource;
+            GE_CORE_INFO("Mesh {} saved to {}", filepath, savepath);
+        }
+        else if (filepath.ends_with(".ge.mesh"))
+        {
+            m_core = ResourceManager::GetInstance().GetResource<MeshResource>(filepath);
+            GE_CORE_INFO("Opened mesh {}", filepath);
         }
     }
 

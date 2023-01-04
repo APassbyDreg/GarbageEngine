@@ -9,6 +9,8 @@
 #include "Runtime/resource/Managers/ResourceManager.h"
 #include "Runtime/resource/ResourceTypes/JsonResource.h"
 
+#include "Manager/MeshManager.h"
+
 namespace GE
 {
     class GE_API Scene
@@ -16,10 +18,10 @@ namespace GE
         friend class Entity;
 
     public:
-        Scene() {}
-        Scene(const json& data) { Deserialize(data); }
-        Scene(const fs::path path) { Load(path); }
-        ~Scene() {}
+        Scene();
+        Scene(const json& data);
+        Scene(const fs::path path);
+        ~Scene();
 
         inline entt::registry& GetRegistry() { return m_registry; }
 
@@ -59,6 +61,8 @@ namespace GE
         void Load(const fs::path path);
 
     protected:
+        MeshManager m_meshManager;
+
         entt::registry                          m_registry;
         std::map<uint, std::shared_ptr<Entity>> m_entities;
         std::map<entt::entity, uint>            m_entityToID;

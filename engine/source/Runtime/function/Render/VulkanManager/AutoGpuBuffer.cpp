@@ -92,7 +92,6 @@ namespace GE
         while (!exit)
         {
             exit = m_cv.wait_for(lk, c_tCheckInterval, [this] { return m_shouldExit; });
-            GE_CORE_TRACE("AutoGpuBuffer::Update");
             if (m_buffer.IsValid() && Time::CurrentTime() - m_tLastAdjust > c_tInactive && m_currentSize > m_usedSize)
             {
                 Resize(m_usedSize, 0, m_usedSize);
