@@ -13,9 +13,21 @@
 
 namespace GE
 {
+#define DEFINE_SCENE_MANAGER(name) \
+public: \
+    name& Get##name() \
+    { \
+        return m_##name; \
+    } \
+\
+private: \
+    name m_##name;
+
     class GE_API Scene
     {
         friend class Entity;
+
+        DEFINE_SCENE_MANAGER(MeshManager)
 
     public:
         Scene();
@@ -61,8 +73,6 @@ namespace GE
         void Load(const fs::path path);
 
     protected:
-        MeshManager m_meshManager;
-
         entt::registry                          m_registry;
         std::map<uint, std::shared_ptr<Entity>> m_entities;
         std::map<entt::entity, uint>            m_entityToID;
@@ -77,4 +87,6 @@ namespace GE
 
         void SetupEntityInheritance();
     };
+
+#undef DEFINE_SCENE_MANAGER
 } // namespace GE

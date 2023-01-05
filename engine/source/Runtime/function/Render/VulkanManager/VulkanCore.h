@@ -171,12 +171,12 @@ namespace GE
                 [=]() { vkDestroyDescriptorSetLayout(GetDevice(), layout, nullptr); });
             return layout;
         }
-        static inline VkDescriptorSet AllocDescriptorSet(VkDescriptorSetAllocateInfo info)
+        static inline std::vector<VkDescriptorSet> AllocDescriptorSets(VkDescriptorSetAllocateInfo info)
         {
-            VkDescriptorSet set;
+            std::vector<VkDescriptorSet> sets(info.descriptorSetCount);
             info.descriptorPool = GetGlobalDescriptorPool();
-            GE_VK_ASSERT(vkAllocateDescriptorSets(GetDevice(), &info, &set));
-            return set;
+            GE_VK_ASSERT(vkAllocateDescriptorSets(GetDevice(), &info, sets.data()));
+            return sets;
         }
 
         /* ----------------------------- submit ----------------------------- */

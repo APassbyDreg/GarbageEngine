@@ -95,6 +95,10 @@ namespace GE
         const float3 v      = box.Max() - box.Min();
         const float3 b      = box.Min();
         Bounds3f     result = Bounds3f(Math::HomogeneousTransform(b, mat));
+        if (v.x == 0 && v.y == 0 && v.z == 0)
+        {
+            return result;
+        }
         for (auto&& dir : directions)
         {
             result += Math::HomogeneousTransform(b + v * dir, mat);
@@ -129,4 +133,40 @@ namespace GE
 
     typedef TransformedBounds<Bounds3f, float4x4> TransformedBounds3f;
     typedef TransformedBounds<Bounds2f, float3x3> TransformedBounds2f;
+
+    enum class AABBFrustrumIntersection
+    {
+        INSIDE,
+        INTERSECT,
+        OUTSIDE
+    };
+
+    inline AABBFrustrumIntersection FrustrumAABBIntersection(float4x4& vp, Bounds3f aabb)
+    {
+        aabb = Transform(aabb, vp);
+
+        const std::vector<float2> directions = {{0, 0}, {1, 0}, {0, 1}, {1, 1}};
+        const float2              b          = aabb.Min();
+        const float2              v          = aabb.Max() - aabb.Min();
+
+        int inside_cnt = 0;
+        for (auto&& dir : directions)
+        {
+            float2 p = b + dir * v;
+            if (p.x >= -1 && p.x <= 1 && p.y >= -1 && p.y <= 1)
+            {
+                inside_cnt++;
+            }
+        }
+
+        switch (inside_cnt)
+        {
+            case 4:
+                return AABBFrustrumIntersection::INSIDE;
+            case 0:
+                return AABBFrustrumIntersection::OUTSIDE;
+            default:
+                return AABBFrustrumIntersection::INTERSECT;
+        }
+    }
 } // namespace GE

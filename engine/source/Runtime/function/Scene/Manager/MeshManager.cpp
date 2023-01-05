@@ -4,6 +4,7 @@
 #include "../Scene.h"
 
 #include "../Components/InstancedMesh.h"
+#include "../Components/Renderer.h"
 #include "../Components/Transform.h"
 
 #define BIND_CLASS_FN(fn) std::bind(&MeshManager::fn, this, std::placeholders::_1)
@@ -12,7 +13,8 @@ namespace GE
 {
     inline bool IsManagable(Entity& e)
     {
-        return e.HasComponent<InstancedMeshComponent>() && e.HasComponent<TransformComponent>();
+        return e.HasComponent<InstancedMeshComponent>() && e.HasComponent<TransformComponent>() &&
+               e.HasComponent<RendererComponent>();
     }
 
     void SceneOctreeNode::RemoveElement(int eid, bool is_leaf)

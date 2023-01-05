@@ -17,21 +17,24 @@ namespace GE
         float4   debugColor;
     };
 
+    struct TestBasicMeshPassData
+    {
+        std::shared_ptr<AutoGpuBuffer> vertex_buffer;
+        std::shared_ptr<AutoGpuBuffer> index_buffer;
+        uint                           vertex_cnt;
+        VkExtent2D&                    viewport_size;
+    };
+
     class TestBasicMeshPass : public GraphicsPass
     {
     public:
         TestBasicMeshPass() {};
         ~TestBasicMeshPass() {};
 
-        void Run(VkExtent2D&                    viewport_size,
-                 VkRenderPassBeginInfo&         rp_info,
-                 VkCommandBuffer&               cmd,
-                 std::shared_ptr<AutoGpuBuffer> vertex_buffer,
-                 std::shared_ptr<AutoGpuBuffer> index_buffer,
-                 uint                           vertex_cnt);
+        void Run(RenderPassRunData run_data, TestBasicMeshPassData pass_data);
 
     protected:
-        virtual void InitInternal() override;
+        virtual void InitInternal(uint frame_cnt) override;
     };
 
 } // namespace GE

@@ -39,6 +39,23 @@ namespace GE
         Setup();
     }
 
+    GpuBuffer::GpuBuffer(GpuBuffer&& src)
+    {
+        m_alloced = src.m_alloced;
+        if (m_alloced)
+        {
+            m_bufferInfo = src.m_bufferInfo;
+            m_allocInfo  = src.m_allocInfo;
+            m_buffer     = src.m_buffer;
+            m_allocation = src.m_allocation;
+
+            src.WaitLastAction();
+            m_hasAction               = false;
+            m_actionCompleteFence     = src.m_actionCompleteFence;
+            m_actionCompleteSemaphore = src.m_actionCompleteSemaphore;
+        }
+    }
+
     GpuBuffer::~GpuBuffer() { Destroy(); }
 
     void GpuBuffer::Alloc(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)

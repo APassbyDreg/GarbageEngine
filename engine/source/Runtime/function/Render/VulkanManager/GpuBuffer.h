@@ -13,6 +13,7 @@ namespace GE
     public:
         GpuBuffer() { Setup(); }
         GpuBuffer(GpuBuffer& src);
+        GpuBuffer(GpuBuffer&& src);
         GpuBuffer(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info);
 
         ~GpuBuffer();

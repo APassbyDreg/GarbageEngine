@@ -3,7 +3,6 @@
 #include "GE_pch.h"
 
 #include "../RenderPass/__TestBasicMeshPass.h"
-#include "../RenderPass/__TestBasicTrianglePass.h"
 
 #include "../VulkanManager/AutoGpuBuffer.h"
 #include "../VulkanManager/GpuImage.h"
@@ -27,13 +26,6 @@ namespace GE
         }
     };
 
-    struct TestBasicDrawData
-    {
-        VkClearValue               clear_color   = {0.0f, 0.0f, 0.0f, 1.0f};
-        std::shared_ptr<GpuBuffer> vertex_buffer = nullptr;
-        uint                       passid;
-    };
-
     class TestBasicRoutine
     {
     public:
@@ -41,12 +33,10 @@ namespace GE
         TestBasicRoutine(uint n_frames);
         ~TestBasicRoutine();
 
-        void DrawFrame(uint         index,
-                       VkSemaphore* wait_semaphores        = nullptr,
-                       uint         wait_semaphore_count   = 0,
-                       VkSemaphore* signal_semaphores      = nullptr,
-                       uint         signal_semaphore_count = 0,
-                       VkFence      fence                  = VK_NULL_HANDLE);
+        void DrawFrame(uint                     index,
+                       std::vector<VkSemaphore> wait_semaphores   = {},
+                       std::vector<VkSemaphore> signal_semaphores = {},
+                       VkFence                  fence             = VK_NULL_HANDLE);
 
         void Init(uint n_frames);
 
@@ -55,7 +45,6 @@ namespace GE
         inline std::shared_ptr<TestBasicFrameData> GetFrameData(uint idx) { return m_frameData[idx]; }
 
     private:
-        TestBasicTrianglePass m_basicTrianglePass;
         TestBasicMeshPass     m_basicMeshPass;
 
         std::shared_ptr<AutoGpuBuffer> m_vertexBuffer;

@@ -4,7 +4,7 @@
 
 namespace GE
 {
-    void TestBasicMeshPass::InitInternal()
+    void TestBasicMeshPass::InitInternal(uint frame_cnt)
     {
         m_name = "TestBasicMeshPass";
 
@@ -47,22 +47,22 @@ namespace GE
         m_pipeline.m_pushConstantRanges.push_back(push_constant);
     }
 
-    void TestBasicMeshPass::Run(VkExtent2D&                    viewport_size,
-                                VkRenderPassBeginInfo&         rp_info,
-                                VkCommandBuffer&               cmd,
-                                std::shared_ptr<AutoGpuBuffer> vertex_buffer,
-                                std::shared_ptr<AutoGpuBuffer> index_buffer,
-                                uint                           vertex_cnt)
+    void TestBasicMeshPass::Run(RenderPassRunData run_data, TestBasicMeshPassData pass_data)
     {
+        // unpack data
+        auto&& [frame_idx, cmd, rp_info, wait_semaphores, signal_semaphores, fence] = run_data;
+        auto&& [vertex_buffer, index_buffer, vertex_cnt, viewport_size]             = pass_data;
+
+        // begin cmd buffer and render pass
         {
             VkCommandBufferBeginInfo info = {};
             info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
             info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
             GE_VK_ASSERT(vkBeginCommandBuffer(cmd, &info));
+            vkCmdBeginRenderPass(cmd, &rp_info, VK_SUBPASS_CONTENTS_INLINE);
         }
 
-        vkCmdBeginRenderPass(cmd, &rp_info, VK_SUBPASS_CONTENTS_INLINE);
-
+        // bind data and draw
         {
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline());
 
@@ -94,10 +94,25 @@ namespace GE
             vkCmdDrawIndexed(cmd, vertex_cnt, 1, 0, 0, 0);
         }
 
-        vkCmdEndRenderPass(cmd);
-
+        // end render pass and cmd buffer
         {
+            vkCmdEndRenderPass(cmd);
             GE_VK_ASSERT(vkEndCommandBuffer(cmd));
+        }
+
+        // submit
+        {
+            VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            VkSubmitInfo         info       = {};
+            info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            info.waitSemaphoreCount         = wait_semaphores.size();
+            info.pWaitSemaphores            = wait_semaphores.data();
+            info.pWaitDstStageMask          = &wait_stage;
+            info.commandBufferCount         = 1;
+            info.pCommandBuffers            = &cmd;
+            info.signalSemaphoreCount       = signal_semaphores.size();
+            info.pSignalSemaphores          = signal_semaphores.data();
+            VulkanCore::SubmitToGraphicsQueue(info, fence);
         }
     }
 } // namespace GE

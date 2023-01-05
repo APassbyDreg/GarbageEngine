@@ -10,34 +10,36 @@
 
 namespace GE
 {
+    struct RenderPassRunData
+    {
+        uint                     frame_idx;
+        VkCommandBuffer          cmd;
+        VkRenderPassBeginInfo&   rp_info;
+        std::vector<VkSemaphore> waitSemaphores;
+        std::vector<VkSemaphore> signalSemaphores;
+        VkFence                  fence;
+    };
+
     class RenderPassBase
     {
     public:
-        template<typename... TArgs>
-        void Draw(std::vector<VkSemaphore> waitSemaphores,
-                  std::vector<VkSemaphore> signalSemaphores,
-                  VkFence                  fence,
-                  VkCommandBuffer          cmd,
-                  TArgs&&... args)
+        void Init(uint frame_cnt)
         {
-            DrawInternal(cmd, waitSemaphores, signalSemaphores, fence, std::forward<TArgs>(args)...);
-        }
-
-        void Init()
-        {
+            m_frameCnt        = frame_cnt;
             m_signalSemaphore = VulkanCore::CreateSemaphore();
-            InitInternal();
+            InitInternal(frame_cnt);
             BuildInternal();
         }
 
         inline VkSemaphore GetSignaledSemaphore() { return m_signalSemaphore; }
 
     protected:
-        virtual void InitInternal()  = 0; // Override by final class
+        virtual void InitInternal(uint frame_cnt) = 0; // Override by final class
         virtual void BuildInternal() = 0; // Override by different pass type
 
     protected:
         std::string m_name            = "";
+        uint        m_frameCnt        = 1;
         bool        m_ready           = false;
         VkSemaphore m_signalSemaphore = VK_NULL_HANDLE;
     };

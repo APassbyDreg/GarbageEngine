@@ -30,6 +30,17 @@ namespace GE
             return info;
         }
 
+        inline VkDescriptorSetAllocateInfo
+        GetDescriptorSetAllocateInfo(std::vector<VkDescriptorSetLayout> layouts, VkDescriptorPool pool = VK_NULL_HANDLE)
+        {
+            VkDescriptorSetAllocateInfo info = {};
+            info.sType                       = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            info.descriptorPool              = pool;
+            info.descriptorSetCount          = layouts.size();
+            info.pSetLayouts                 = layouts.data();
+            return info;
+        }
+
         inline VkDescriptorSetLayoutBinding GetDescriptorSetLayoutBinding(VkDescriptorType   type,
                                                                           VkShaderStageFlags stage_flags,
                                                                           uint32_t           binding,

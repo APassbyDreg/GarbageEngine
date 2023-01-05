@@ -27,6 +27,24 @@ namespace GE
         AutoGpuBuffer(AutoGpuBuffer& src)
         {
             m_buffer.Copy(src.m_buffer);
+            m_currentSize  = src.m_currentSize;
+            m_usedSize     = src.m_usedSize;
+            m_tLastAdjust  = Time::CurrentTime();
+            m_updateThread = std::thread(&AutoGpuBuffer::Update, this);
+        }
+        AutoGpuBuffer(AutoGpuBuffer&& src) : m_buffer(std::move(src.m_buffer))
+        {
+            // exit the update thread
+            {
+                std::lock_guard<std::mutex> lock(src.m_cvMutex);
+                src.m_shouldExit = true;
+            }
+            src.m_cv.notify_all();
+            src.m_updateThread.join();
+
+            // copy info and start a new update thread
+            m_currentSize  = src.m_currentSize;
+            m_usedSize     = src.m_usedSize;
             m_tLastAdjust  = Time::CurrentTime();
             m_updateThread = std::thread(&AutoGpuBuffer::Update, this);
         }

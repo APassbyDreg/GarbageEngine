@@ -55,7 +55,7 @@ namespace GE
                 VkFramebufferCreateInfo framebuffer_info = {};
                 VkImageView             img_views[]      = {fd->m_image.GetImageView()};
                 framebuffer_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-                framebuffer_info.renderPass              = m_basicTrianglePass.GetRenderPass();
+                framebuffer_info.renderPass              = m_basicMeshPass.GetRenderPass();
                 framebuffer_info.attachmentCount         = 1;
                 framebuffer_info.pAttachments            = img_views;
                 framebuffer_info.width                   = m_viewportSize.width;
@@ -72,8 +72,7 @@ namespace GE
         GE_CORE_ASSERT(n_frames > 0, "[TestBasicRoutine::Init] At least one frame is needed.");
         m_frameCnt = n_frames;
 
-        m_basicTrianglePass.Init();
-        m_basicMeshPass.Init();
+        m_basicMeshPass.Init(n_frames);
 
         Resize(1280, 720);
 
@@ -120,35 +119,20 @@ namespace GE
         }
     }
 
-    void TestBasicRoutine::DrawFrame(uint         index,
-                                     VkSemaphore* wait_semaphores,
-                                     uint         wait_semaphore_count,
-                                     VkSemaphore* signal_semaphores,
-                                     uint         signal_semaphore_count,
-                                     VkFence      fence)
+    void TestBasicRoutine::DrawFrame(uint                     index,
+                                     std::vector<VkSemaphore> wait_semaphores,
+                                     std::vector<VkSemaphore> signal_semaphores,
+                                     VkFence                  fence)
     {
+        index                                  = index % m_frameCnt;
         std::shared_ptr<TestBasicFrameData> fd = m_frameData[index];
 
         VulkanCore::ResetCmdPool(fd->m_graphicsPool);
         VulkanCore::ResetCmdPool(fd->m_computePool);
 
-        int          passid      = 1;
         VkClearValue clear_value = {};
         clear_value.color        = {0.2f, 0.2f, 0.6f, 1.0f};
-        if (passid == 0)
-        {
-            VkRenderPassBeginInfo info = {};
-            info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            info.renderPass            = m_basicTrianglePass.GetRenderPass();
-            info.framebuffer           = fd->m_framebuffer;
-            info.renderArea.offset     = {0, 0};
-            info.renderArea.extent     = m_viewportSize;
-            info.clearValueCount       = 1;
-            info.pClearValues          = &clear_value;
 
-            m_basicTrianglePass.Run(info, fd->m_graphicsCmdBuffer[0]);
-        }
-        else if (passid == 1)
         {
             VkRenderPassBeginInfo info = {};
             info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -159,22 +143,11 @@ namespace GE
             info.clearValueCount       = 1;
             info.pClearValues          = &clear_value;
 
-            m_basicMeshPass.Run(m_viewportSize, info, fd->m_graphicsCmdBuffer[0], m_vertexBuffer, m_indexBuffer, 6);
-        }
+            RenderPassRunData run_data = {
+                index, fd->m_graphicsCmdBuffer[0], info, wait_semaphores, signal_semaphores, fence};
+            TestBasicMeshPassData pass_data = {m_vertexBuffer, m_indexBuffer, 6, m_viewportSize};
 
-        {
-            VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            VkSubmitInfo         info       = {};
-            info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            info.waitSemaphoreCount         = wait_semaphore_count;
-            info.pWaitSemaphores            = wait_semaphores;
-            info.pWaitDstStageMask          = &wait_stage;
-            info.commandBufferCount         = 1;
-            info.pCommandBuffers            = &fd->m_graphicsCmdBuffer[0];
-            info.signalSemaphoreCount       = signal_semaphore_count;
-            info.pSignalSemaphores          = signal_semaphores;
-
-            VulkanCore::SubmitToGraphicsQueue(info, fence);
+            m_basicMeshPass.Run(run_data, pass_data);
         }
     }
 } // namespace GE

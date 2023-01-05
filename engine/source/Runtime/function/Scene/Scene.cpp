@@ -4,21 +4,21 @@
 
 namespace GE
 {
-    Scene::Scene() : m_meshManager(*this)
+    Scene::Scene() : m_MeshManager(*this)
     {
         m_name = std::format("GE_scene_{}", std::rand() % (1 << 16));
-        m_meshManager.Setup();
+        m_MeshManager.Setup();
     }
 
-    Scene::Scene(const json& data) : m_meshManager(*this)
+    Scene::Scene(const json& data) : m_MeshManager(*this)
     {
-        m_meshManager.Setup();
+        m_MeshManager.Setup();
         Deserialize(data);
     }
 
-    Scene::Scene(const fs::path path) : m_meshManager(*this)
+    Scene::Scene(const fs::path path) : m_MeshManager(*this)
     {
-        m_meshManager.Setup();
+        m_MeshManager.Setup();
         Load(path);
     }
 

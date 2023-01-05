@@ -98,7 +98,7 @@ namespace GE
         /* -------------------------- renderer pass ------------------------- */
         {
             m_renderRoutine.DrawFrame(
-                m_imguiWindow.FrameIndex, &image_acquired_semaphore, 1, &viewport_complete_semaphore, 1, fd->Fence);
+                m_imguiWindow.FrameIndex, {image_acquired_semaphore}, {viewport_complete_semaphore}, VK_NULL_HANDLE);
         }
 
         /* --------------------------- imgui pass --------------------------- */
@@ -132,15 +132,10 @@ namespace GE
                 GE_VK_ASSERT(vkEndCommandBuffer(fd->CommandBuffer));
             }
 
-            // Wait till render is complete
-            VulkanCore::WaitForFence(fd->Fence);
-
             {
                 VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
                 VkSubmitInfo         info       = {};
                 info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                info.waitSemaphoreCount         = 1;
-                info.pWaitSemaphores            = &image_acquired_semaphore;
                 info.pWaitDstStageMask          = &wait_stage;
                 info.commandBufferCount         = 1;
                 info.pCommandBuffers            = &fd->CommandBuffer;

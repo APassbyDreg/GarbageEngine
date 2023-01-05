@@ -4,12 +4,15 @@ namespace GE
 {
     AutoGpuBuffer::~AutoGpuBuffer()
     {
+        if (!m_shouldExit)
         {
-            std::lock_guard<std::mutex> lock(m_cvMutex);
-            m_shouldExit = true;
+            {
+                std::lock_guard<std::mutex> lock(m_cvMutex);
+                m_shouldExit = true;
+            }
+            m_cv.notify_all();
+            m_updateThread.join();
         }
-        m_cv.notify_all();
-        m_updateThread.join();
     }
 
     void AutoGpuBuffer::Upload(byte* data, size_t size, size_t offset, bool resize)
