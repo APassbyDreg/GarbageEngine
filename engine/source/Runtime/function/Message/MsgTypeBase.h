@@ -4,7 +4,7 @@
 
 namespace GE
 {
-    class MsgResultBase
+    class GE_API MsgResultBase
     {
     public:
         MsgResultBase(bool _success) : success(_success) {}

@@ -8,7 +8,7 @@ namespace GE
     class GE_API AppTickEvent : public Event
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(AppTick, EventCategoryApplication)
+        EVENT_IMPLEMENTATION_COMMON(AppTick, EventCategoryApplication, AppTick)
 
         AppTickEvent() {}
 
@@ -23,7 +23,7 @@ namespace GE
     class GE_API WindowCloseEvent : public Event
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(WindowClose, EventCategoryApplication)
+        EVENT_IMPLEMENTATION_COMMON(WindowClose, EventCategoryApplication, WindowClose)
 
         WindowCloseEvent() {}
 
@@ -38,7 +38,7 @@ namespace GE
     class GE_API WindowResizeEvent : public Event
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(WindowResize, EventCategoryApplication)
+        EVENT_IMPLEMENTATION_COMMON(WindowResize, EventCategoryApplication, WindowResize)
 
         WindowResizeEvent(uint width, uint height) : m_width(width), m_height(height) {}
 
@@ -60,7 +60,7 @@ namespace GE
     class GE_API WindowFocusEvent : public Event
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(WindowFocus, EventCategoryApplication)
+        EVENT_IMPLEMENTATION_COMMON(WindowFocus, EventCategoryApplication, WindowFocus)
 
         WindowFocusEvent() {}
 
@@ -75,7 +75,7 @@ namespace GE
     class GE_API WindowLostFocusEvent : public Event
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(WindowLostFocus, EventCategoryApplication)
+        EVENT_IMPLEMENTATION_COMMON(WindowLostFocus, EventCategoryApplication, WindowLostFocus)
 
         WindowLostFocusEvent() {}
 

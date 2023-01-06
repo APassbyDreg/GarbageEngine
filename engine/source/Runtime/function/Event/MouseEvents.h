@@ -7,7 +7,7 @@ namespace GE
     class GE_API MouseMovedEvent : public Event
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(MouseMoved, EventCategoryMouse);
+        EVENT_IMPLEMENTATION_COMMON(MouseMoved, EventCategoryMouse, MouseMoved);
 
         MouseMovedEvent(float x, float y) : m_xPosition(x), m_yPosition(y) {}
 
@@ -29,7 +29,7 @@ namespace GE
     class GE_API MouseScrolledEvent : public Event
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(MouseScrolled, EventCategoryMouse);
+        EVENT_IMPLEMENTATION_COMMON(MouseScrolled, EventCategoryMouse, MouseScrolled);
 
         MouseScrolledEvent(float xOffset, float yOffset) : m_xOffset(xOffset), m_yOffset(yOffset) {}
 
@@ -61,7 +61,7 @@ namespace GE
     class GE_API MouseButtonPressedEvent : public MouseButtonEvent
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(MouseButtonPressed, EventCategoryMouse | EventCategoryMouseButton);
+        EVENT_IMPLEMENTATION_COMMON(MouseButtonPressed, EventCategoryMouse | EventCategoryMouseButton, MouseButtonPressed);
 
         MouseButtonPressedEvent(int button) : MouseButtonEvent(button) {}
 
@@ -76,7 +76,9 @@ namespace GE
     class GE_API MouseButtonReleasedEvent : public MouseButtonEvent
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(MouseButtonReleased, EventCategoryMouse | EventCategoryMouseButton);
+        EVENT_IMPLEMENTATION_COMMON(MouseButtonReleased,
+                                    EventCategoryMouse | EventCategoryMouseButton,
+                                    MouseButtonReleased);
 
         MouseButtonReleasedEvent(int button) : MouseButtonEvent(button) {}
 

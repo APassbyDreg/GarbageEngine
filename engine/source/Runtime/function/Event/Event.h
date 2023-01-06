@@ -72,9 +72,9 @@ namespace GE
     };
 
 // event final class shorthand macro
-#define EVENT_IMPLEMENTATION_COMMON(type, category) \
+#define EVENT_IMPLEMENTATION_COMMON(type, category, name) \
     static EventType GetStaticType() { return EventType::type; } \
     EventType        GetEventType() const override { return EventType::type; } \
-    const char*      GetName() const override { return #type; } \
+    const char*      GetName() const override { return #name; } \
     int              GetCategoryFlags() const override { return category; }
 } // namespace GE

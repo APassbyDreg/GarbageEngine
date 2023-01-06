@@ -6,13 +6,28 @@
 
 namespace GE
 {
+    class ToggleSceneSettingsEvent : public Event
+    {
+        EVENT_IMPLEMENTATION_COMMON(None, EventCategoryApplication, ToggleSceneSettings);
+        std::string ToString() { return "Menu: ToggleSceneSettings"; }
+    };
+
     class InspectorLayer : public Layer
     {
     public:
         InspectorLayer() : Layer("Inspector") {}
         ~InspectorLayer() {}
 
-        void OnImGuiRender(ImGuiContext* ctx) override
+        inline void OnEvent(Event& e) override
+        {
+            if (e.GetName() == "ToggleSceneSettings")
+            {
+                m_openSceneSettings = !m_openSceneSettings;
+            }
+            e.m_handled = true;
+        }
+
+        inline void OnImGuiRender(ImGuiContext* ctx) override
         {
             ImGui::SetCurrentContext(ctx);
 
@@ -26,6 +41,15 @@ namespace GE
             ImGui::Begin("Entity Inspector");
             sc->InspectFocusedEntity();
             ImGui::End();
+
+            if (m_openSceneSettings)
+            {
+                ImGui::Begin("Scene Settings", &m_openSceneSettings);
+                sc->InspectSettings();
+                ImGui::End();
+            }
         }
+
+        bool m_openSceneSettings = false;
     };
 } // namespace GE

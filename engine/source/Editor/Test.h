@@ -37,14 +37,14 @@ namespace GE
             {
                 Application&            app = Application::GetInstance();
                 std::shared_ptr<Scene>  sc  = app.GetActiveScene();
-                std::shared_ptr<Entity> e   = sc->CreateEntity(std::format("Empty {}", counter), counter);
+                std::shared_ptr<Entity> e   = sc->CreateEntity(std::format("Empty {}", counter), 1);
                 counter++;
             }
             if (ImGui::Button("Add an camera entity"))
             {
                 Application&            app = Application::GetInstance();
                 std::shared_ptr<Scene>  sc  = app.GetActiveScene();
-                std::shared_ptr<Entity> e   = sc->CreateEntity(std::format("Camera {}", counter), counter);
+                std::shared_ptr<Entity> e   = sc->CreateEntity(std::format("Camera {}", counter), 1);
                 e->AddComponent<TransformComponent>();
                 e->AddComponent<CameraComponent>();
                 counter++;

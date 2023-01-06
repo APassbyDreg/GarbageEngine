@@ -5,6 +5,7 @@
 #include "MsgTypes.h"
 
 #include "Runtime/core/Base/Singleton.h"
+#include "Runtime/core/Math/Math.h"
 
 namespace GE
 {
@@ -14,7 +15,7 @@ namespace GE
      * @tparam MsgBody some data
      * @tparam MsgResult a subclass of MsgResultBase
      */
-    template<typename MsgBody, typename MsgResult>
+    template<typename MsgBody, std::derived_from<MsgResultBase> MsgResult>
     class GE_API MessageDispatcher
     {
     public:

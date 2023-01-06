@@ -6,23 +6,29 @@ namespace GE
 {
     Scene::Scene() : m_MeshManager(*this)
     {
+        Setup();
         m_name = std::format("GE_scene_{}", std::rand() % (1 << 16));
-        m_MeshManager.Setup();
     }
 
     Scene::Scene(const json& data) : m_MeshManager(*this)
     {
-        m_MeshManager.Setup();
+        Setup();
         Deserialize(data);
     }
 
     Scene::Scene(const fs::path path) : m_MeshManager(*this)
     {
-        m_MeshManager.Setup();
+        Setup();
         Load(path);
     }
 
     Scene::~Scene() {}
+
+    void Scene::Setup()
+    {
+        m_MeshManager.Setup();
+        SceneSettingsFactory::InitializeSettingsMap(m_sceneSettings);
+    }
 
     std::shared_ptr<Entity> Scene::CreateEntity(uint eid, std::string tagname, int layer, int tag)
     {
@@ -87,6 +93,17 @@ namespace GE
             }
         }
         return nullptr;
+    }
+
+    void Scene::InspectSettings()
+    {
+        for (auto&& [name, setting] : m_sceneSettings)
+        {
+            if (ImGui::CollapsingHeader(name.c_str()))
+            {
+                setting->Inspect();
+            }
+        }
     }
 
     void Scene::InspectStructure()
@@ -203,9 +220,16 @@ namespace GE
             entities.push_back(e->Serialize());
         }
 
+        json settings;
+        for (auto&& [name, val] : m_sceneSettings)
+        {
+            settings[name] = val->Serialize();
+        }
+
         json root;
         root["name"]     = m_name;
         root["entities"] = entities;
+        root["settings"] = settings;
 
         return root;
     }
@@ -213,14 +237,20 @@ namespace GE
     void Scene::Deserialize(const json& data)
     {
         m_name = data["name"].get<std::string>();
+
         for (auto& edata : data["entities"])
         {
             int eid         = edata["id"].get<int>();
             m_entities[eid] = std::make_shared<Entity>(*this, eid);
             m_entities[eid]->Deserialize(edata);
         }
-
         SetupEntityInheritance();
+
+        for (auto&& [sname, sval] : data["settings"].items())
+        {
+            auto setting           = SceneSettingsFactory::CreateSceneSetting(sname, sval);
+            m_sceneSettings[sname] = setting;
+        }
     }
 
     void Scene::Load(fs::path path)

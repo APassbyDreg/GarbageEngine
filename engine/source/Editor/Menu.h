@@ -8,6 +8,8 @@
 
 #include "Editor/Tools/ObjToMeshConverter.h"
 
+#include "Inspector.h"
+
 namespace GE
 {
     class MenuLayer : public Layer
@@ -66,6 +68,20 @@ namespace GE
 
                     layer->SetOnExit([&]() { app.AddPendingAction([&]() { app.PopLayer(layer); }); });
                     app.AddPendingAction([=]() { Application::GetInstance().PushLayer(layer); });
+                }
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Settings"))
+            {
+                if (ImGui::MenuItem("Scene Settings"))
+                {
+                    auto e = ToggleSceneSettingsEvent();
+                    Application::GetInstance().OnEvent(e);
+                }
+                if (ImGui::MenuItem("Project Settings"))
+                {
+                    //
                 }
                 ImGui::EndMenu();
             }

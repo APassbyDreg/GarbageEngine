@@ -18,7 +18,7 @@ namespace GE
     class GE_API KeyPressedEvent : public KeyEvent
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(KeyPressed, EventCategoryKeyboard)
+        EVENT_IMPLEMENTATION_COMMON(KeyPressed, EventCategoryKeyboard, KeyPressed)
 
         KeyPressedEvent(int keyCode, int repeatCount = 0) : KeyEvent(keyCode), m_repeatCount(repeatCount) {}
 
@@ -38,7 +38,7 @@ namespace GE
     class GE_API KeyReleasedEvent : public KeyEvent
     {
     public:
-        EVENT_IMPLEMENTATION_COMMON(KeyReleased, EventCategoryKeyboard)
+        EVENT_IMPLEMENTATION_COMMON(KeyReleased, EventCategoryKeyboard, KeyReleased)
 
         KeyReleasedEvent(int keyCode) : KeyEvent(keyCode) {}
 
