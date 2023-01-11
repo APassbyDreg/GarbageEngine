@@ -8,17 +8,18 @@
 
 namespace GE
 {
-    class GE_API ResourceManager : public Singleton<ResourceManager>
+    class GE_API ResourceManager : public Singleton<ResourceManager, -999>
     {
     public:
         template<std::derived_from<ResourceBase> T, typename... TArgs>
-        std::shared_ptr<T> GetResource(fs::path file, TArgs&&... args)
+        static std::shared_ptr<T> GetResource(fs::path file, TArgs&&... args)
         {
-            if (m_resources.find(file) == m_resources.end())
+            auto& instance = GetInstance();
+            if (instance.m_resources.find(file) == instance.m_resources.end())
             {
-                m_resources[file] = std::make_shared<T>(file, std::forward<TArgs>(args)...);
+                instance.m_resources[file] = std::make_shared<T>(file, std::forward<TArgs>(args)...);
             }
-            return std::dynamic_pointer_cast<T>(m_resources[file]);
+            return std::dynamic_pointer_cast<T>(instance.m_resources[file]);
         }
 
     private:

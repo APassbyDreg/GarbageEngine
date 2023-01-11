@@ -43,17 +43,17 @@ namespace GE
     class GE_API Event
     {
     public:
-        virtual EventType   GetEventType() const     = 0;
-        virtual const char* GetName() const          = 0;
-        virtual int         GetCategoryFlags() const = 0;
-        virtual std::string ToString() const { return ""; }
+        virtual EventType         GetEventType() const     = 0;
+        virtual const std::string GetName() const          = 0;
+        virtual int               GetCategoryFlags() const = 0;
+        virtual std::string       ToString() const { return ""; }
 
         inline bool isInCategory(EventCategory category) { return GetCategoryFlags() & category; }
 
         template<typename OStream>
         friend OStream& operator<<(OStream& os, const Event& c)
         {
-            return os << ToString();
+            return os << c.ToString();
         }
 
     public:
@@ -73,8 +73,20 @@ namespace GE
 
 // event final class shorthand macro
 #define EVENT_IMPLEMENTATION_COMMON(type, category, name) \
-    static EventType GetStaticType() { return EventType::type; } \
-    EventType        GetEventType() const override { return EventType::type; } \
-    const char*      GetName() const override { return #name; } \
-    int              GetCategoryFlags() const override { return category; }
+    static EventType GetStaticType() \
+    { \
+        return EventType::type; \
+    } \
+    EventType GetEventType() const override \
+    { \
+        return EventType::type; \
+    } \
+    const std::string GetName() const override \
+    { \
+        return #name; \
+    } \
+    int GetCategoryFlags() const override \
+    { \
+        return category; \
+    }
 } // namespace GE

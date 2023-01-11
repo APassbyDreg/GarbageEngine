@@ -12,6 +12,7 @@ namespace GE
     {
         SCENE_DESCRIPTION,
         INSTANCED_COMPONENT,
+        MATERIAL,
         UNKNOWN
     };
 
@@ -34,6 +35,8 @@ namespace GE
                     return "SCENE_DESCRIPTION";
                 case JsonIdentifier::INSTANCED_COMPONENT:
                     return "INSTANCED_COMPONENT";
+                case JsonIdentifier::MATERIAL:
+                    return "MATERIAL";
                 default:
                     return "UNKNOWN";
             }
@@ -44,6 +47,8 @@ namespace GE
                 return JsonIdentifier::SCENE_DESCRIPTION;
             else if (id == "INSTANCED_COMPONENT")
                 return JsonIdentifier::INSTANCED_COMPONENT;
+            else if (id == "MATERIAL")
+                return JsonIdentifier::MATERIAL;
             else
                 return JsonIdentifier::UNKNOWN;
         }

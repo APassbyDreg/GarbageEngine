@@ -30,7 +30,7 @@ namespace GE
 
         fs::path obj_path      = fs::path(Config::asset_dir) / "mesh" / "basic" / "cube.obj";
         fs::path resource_path = fs::path(Config::asset_dir) / "test.mesh.ge";
-        auto     resource      = ResourceManager::GetInstance().GetResource<MeshResource>(resource_path);
+        auto     resource      = ResourceManager::GetResource<MeshResource>(resource_path);
         resource->FromObj(obj_path);
         Mesh& mesh = resource->GetData();
         // resource->Save();
@@ -43,7 +43,7 @@ namespace GE
         // }
         // mesh.indices           = {0, 1, 2, 0, 2, 3};
         // fs::path path          = fs::path(Config::asset_dir) / "test.mesh.ge";
-        // auto     mesh_resource = ResourceManager::GetInstance().GetResource<MeshResource>(path);
+        // auto     mesh_resource = ResourceManager::GetResource<MeshResource>(path);
         // mesh_resource->SaveData(mesh);
         // mesh_resource->Invalid();
         // Mesh& loaded_mesh = mesh_resource->GetData();

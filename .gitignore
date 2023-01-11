@@ -8,5 +8,8 @@ vsxmake2022/
 # vscode
 .vscode/
 
+# clangd
+.cache/
 
-
+# engine
+*.ge.*

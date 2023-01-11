@@ -21,19 +21,34 @@ namespace GE
     class ResourceBase
     {
     public:
-        ResourceBase(ResourceType type, fs::path file, bool use_cache = false, bool delayed_load = false) :
-            m_type(type), m_filePath(file), m_cacheEnabled(use_cache)
+        ResourceBase(ResourceType type,
+                     fs::path     file,
+                     bool         init         = false,
+                     bool         use_cache    = false,
+                     bool         delayed_load = false) :
+            m_type(type),
+            m_filePath(file), m_cacheEnabled(use_cache)
         {
             if (!delayed_load)
                 Load();
+            if (init && !m_valid)
+                Initialize();
+        }
+        ~ResourceBase()
+        {
+            if (IsValid())
+            {
+                Save();
+            }
         }
 
         inline fs::path    GetFilePath() { return m_filePath; }
         inline std::string GetExtension() { return m_filePath.extension().string(); }
         inline bool        IsValid() const { return m_valid; }
 
-        virtual void Load() {};
-        virtual void Save() {};
+        virtual void Load() {}
+        virtual void Save() {}
+        virtual void Initialize() { m_valid = true; }
 
     protected:
         fs::path     m_filePath     = "";
@@ -46,7 +61,11 @@ namespace GE
     class Resource : public ResourceBase
     {
     public:
-        Resource(ResourceType type, fs::path file, bool use_cache = false, bool delayed_load = false) :
+        Resource(ResourceType type,
+                 fs::path     file,
+                 bool         init         = false,
+                 bool         use_cache    = false,
+                 bool         delayed_load = false) :
             ResourceBase(type, file, use_cache, delayed_load)
         {}
 
@@ -66,11 +85,14 @@ namespace GE
         }
         inline void Invalid()
         {
-            m_valid = false;
-            m_data  = {};
+            if (m_valid)
+            {
+                m_valid = false;
+                m_data  = {};
+            }
         }
 
     protected:
-        T m_data;
+        T m_data = {};
     };
 } // namespace GE

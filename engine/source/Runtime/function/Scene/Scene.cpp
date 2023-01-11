@@ -259,7 +259,7 @@ namespace GE
         {
             m_resource->SaveData(Serialize());
         }
-        m_resource = ResourceManager::GetInstance().GetResource<JsonResource>(path, JsonIdentifier::SCENE_DESCRIPTION);
+        m_resource = ResourceManager::GetResource<JsonResource>(path, JsonIdentifier::SCENE_DESCRIPTION);
         Deserialize(m_resource->GetData());
     }
 
@@ -276,8 +276,7 @@ namespace GE
 
         if (path != "" && (save_as || m_resource == nullptr)) // save a new file
         {
-            m_resource =
-                ResourceManager::GetInstance().GetResource<JsonResource>(path, JsonIdentifier::SCENE_DESCRIPTION);
+            m_resource = ResourceManager::GetResource<JsonResource>(path, JsonIdentifier::SCENE_DESCRIPTION);
             m_resource->SaveData(data);
             saved = true;
         }

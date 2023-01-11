@@ -23,7 +23,7 @@ namespace GE
         bool isComputeAndTransferSameQueue = true;
     };
 
-    class GE_API VulkanCore : public Singleton<VulkanCore>
+    class GE_API VulkanCore : public Singleton<VulkanCore, -1000>
     {
     public:
         VulkanCore();
