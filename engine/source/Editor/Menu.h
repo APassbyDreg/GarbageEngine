@@ -8,7 +8,9 @@
 
 #include "Editor/Tools/ObjToMeshConverter.h"
 
-#include "Inspector.h"
+#include "MaterialInspector.h"
+#include "SceneInspector.h"
+
 
 namespace GE
 {
@@ -72,16 +74,18 @@ namespace GE
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("Settings"))
+            if (ImGui::BeginMenu("Windows"))
             {
                 if (ImGui::MenuItem("Scene Settings"))
                 {
                     auto e = ToggleSceneSettingsEvent();
                     Application::GetInstance().OnEvent(e);
                 }
-                if (ImGui::MenuItem("Project Settings"))
+
+                if (ImGui::MenuItem("Material"))
                 {
-                    //
+                    auto e = ToggleMaterialInspectorEvent();
+                    Application::GetInstance().OnEvent(e);
                 }
                 ImGui::EndMenu();
             }

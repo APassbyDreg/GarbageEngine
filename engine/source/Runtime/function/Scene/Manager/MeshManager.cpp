@@ -13,8 +13,7 @@ namespace GE
 {
     inline bool IsManagable(Entity& e)
     {
-        return e.HasComponent<InstancedMeshComponent>() && e.HasComponent<TransformComponent>() &&
-               e.HasComponent<RendererComponent>();
+        return e.HasComponent<TransformComponent>() && e.HasComponent<RendererComponent>();
     }
 
     void SceneOctreeNode::RemoveElement(int eid, bool is_leaf)
@@ -175,6 +174,9 @@ namespace GE
         ComponentHook<TransformComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
         ComponentHook<TransformComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
         ComponentHook<TransformComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
+        ComponentHook<RendererComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
+        ComponentHook<RendererComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
+        ComponentHook<RendererComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
     }
 
     void MeshManager::AddEntity(Entity& e)
@@ -182,6 +184,11 @@ namespace GE
         if (!IsManagable(e))
         {
             return;
+        }
+
+        if (m_entityToNode.find(e.GetEntityID()) != m_entityToNode.end())
+        {
+            RemoveEntity(e);
         }
 
         Bounds3f aabb = EntityAABBLogic::GetInstance().GetAABB(e);

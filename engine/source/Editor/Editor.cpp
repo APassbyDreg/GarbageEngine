@@ -2,9 +2,11 @@
 #include "Editor.h"
 
 #include "Explorer.h"
-#include "Inspector.h"
 #include "Menu.h"
 #include "Test.h"
+
+#include "MaterialInspector.h"
+#include "SceneInspector.h"
 
 namespace GE
 {
@@ -18,11 +20,14 @@ namespace GE
         std::shared_ptr<MenuLayer> menu_layer = std::make_shared<MenuLayer>();
         PushLayer(menu_layer);
 
-        std::shared_ptr<InspectorLayer> inspector_layer = std::make_shared<InspectorLayer>();
-        PushLayer(inspector_layer);
-
         std::shared_ptr<ExplorerLayer> explorer_layer = std::make_shared<ExplorerLayer>();
         PushLayer(explorer_layer);
+
+        std::shared_ptr<SceneInspectorLayer> scene_inspector_layer = std::make_shared<SceneInspectorLayer>();
+        PushLayer(scene_inspector_layer);
+
+        std::shared_ptr<MaterialInspectorLayer> material_inspector_layer = std::make_shared<MaterialInspectorLayer>();
+        PushLayer(material_inspector_layer);
     }
 
     Editor::~Editor() {}

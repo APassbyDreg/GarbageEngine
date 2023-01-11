@@ -108,7 +108,7 @@ namespace GE
 
         path = __resolve_path(std::string(requested_source), type == shaderc_include_type_relative);
         GE_CORE_ASSERT(path.length() > 0, "Failed to resolve include path: {}", requested_source);
-        auto resource = ResourceManager::GetInstance().GetResource<TextResource>(path);
+        auto resource = ResourceManager::GetResource<TextResource>(path);
         contents      = resource->GetData();
         GE_CORE_ASSERT(contents.length() > 0, "Failed to load include file: {}", path);
 
@@ -138,7 +138,7 @@ namespace GE
     {
         std::string ext = fs::path(path).extension().string();
 
-        auto                shader_resource = ResourceManager::GetInstance().GetResource<TextResource>(path);
+        auto                shader_resource = ResourceManager::GetResource<TextResource>(path);
         shaderc_shader_kind shader_kind     = __shadertype2kind(m_type);
         std::string         shader_filename = fs::path(path).filename().string();
         std::string         shader_src_code = shader_resource->GetData();

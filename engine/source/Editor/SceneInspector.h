@@ -9,22 +9,22 @@ namespace GE
     class ToggleSceneSettingsEvent : public Event
     {
         EVENT_IMPLEMENTATION_COMMON(None, EventCategoryApplication, ToggleSceneSettings);
-        std::string ToString() { return "Menu: ToggleSceneSettings"; }
+        std::string ToString() { return "Menu: Toggle Scene Settings"; }
     };
 
-    class InspectorLayer : public Layer
+    class SceneInspectorLayer : public Layer
     {
     public:
-        InspectorLayer() : Layer("Inspector") {}
-        ~InspectorLayer() {}
+        SceneInspectorLayer() : Layer("Scene Inspector") {}
+        ~SceneInspectorLayer() {}
 
         inline void OnEvent(Event& e) override
         {
             if (e.GetName() == "ToggleSceneSettings")
             {
                 m_openSceneSettings = !m_openSceneSettings;
+                e.m_handled         = true;
             }
-            e.m_handled = true;
         }
 
         inline void OnImGuiRender(ImGuiContext* ctx) override

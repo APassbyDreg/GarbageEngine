@@ -101,7 +101,7 @@ namespace GE
 
         inline void Convert()
         {
-            auto mesh = ResourceManager::GetInstance().GetResource<MeshResource>(m_meshPath);
+            auto mesh = ResourceManager::GetResource<MeshResource>(m_meshPath);
             mesh->FromObj(m_objPath);
             mesh->Save();
         }
