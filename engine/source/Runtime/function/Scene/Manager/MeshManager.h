@@ -17,11 +17,11 @@ namespace GE
     public:
         const size_t c_splitThres = 128;
 
-        SceneOctreeNode(int                                                           level,
-                        float3                                                        center,
-                        float3                                                        size,
-                        std::map<int, std::vector<std::shared_ptr<SceneOctreeNode>>>& eid2node,
-                        std::shared_ptr<SceneOctreeNode>                              parent = nullptr) :
+        SceneOctreeNode(int                                              level,
+                        float3                                           center,
+                        float3                                           size,
+                        std::map<int, std::shared_ptr<SceneOctreeNode>>& eid2node,
+                        std::shared_ptr<SceneOctreeNode>                 parent = nullptr) :
             level(level),
             center(center), size(size), parent(parent), eid2node(eid2node)
         {}
@@ -51,7 +51,7 @@ namespace GE
         std::vector<std::shared_ptr<Entity>>          elements;
 
     private:
-        std::map<int, std::vector<std::shared_ptr<SceneOctreeNode>>>& eid2node;
+        std::map<int, std::shared_ptr<SceneOctreeNode>>& eid2node;
     };
 
     class MeshManager
@@ -63,17 +63,20 @@ namespace GE
         MeshManager(Scene& sc) : m_scene(sc) {}
         void Setup();
 
-        std::set<std::shared_ptr<Entity>> FrustrumCull(float4x4& vp_matrix);
+        std::vector<std::shared_ptr<Entity>> FrustrumCull(float4x4& vp_matrix);
 
     private:
         void AddEntity(Entity& entity);
         void RemoveEntity(Entity& entity);
         void UpdateEntity(Entity& entity);
 
+        bool Exists(int eid);
+
         const float3 c_baseResolution = {1000.0f, 1000.0f, 100.0f};
 
-        std::map<int, std::vector<std::shared_ptr<SceneOctreeNode>>> m_entityToNode;
-        std::map<TupledInt3, std::shared_ptr<SceneOctreeNode>>       m_root;
+        std::map<int, std::shared_ptr<SceneOctreeNode>>        m_entityToNode;
+        std::map<int, std::shared_ptr<Entity>>                 m_largeEntities;
+        std::map<TupledInt3, std::shared_ptr<SceneOctreeNode>> m_root;
 
         Scene& m_scene;
     };

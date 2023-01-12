@@ -28,15 +28,7 @@ namespace GE
                     break;
                 }
             }
-            auto& nodes = eid2node[eid];
-            for (auto it = nodes.begin(); it != nodes.end(); it++)
-            {
-                if ((*it) == shared_from_this())
-                {
-                    nodes.erase(it);
-                    break;
-                }
-            }
+            eid2node.erase(eid);
         }
 
         if (parent != nullptr)
@@ -53,22 +45,18 @@ namespace GE
 
     void SceneOctreeNode::AddElement(std::shared_ptr<Entity> e)
     {
+        int eid = e->GetEntityID();
+
         // spawn child if needed
         if (children.empty() && elements.size() > c_splitThres)
         {
             SpawnChild();
         }
 
-        // create eid2node entry if needed
-        if (eid2node.find(e->GetEntityID()) == eid2node.end())
-        {
-            eid2node[e->GetEntityID()] = std::vector<std::shared_ptr<SceneOctreeNode>>();
-        }
-
         if (children.empty())
         {
             elements.push_back(e);
-            eid2node[e->GetEntityID()].push_back(shared_from_this());
+            eid2node[eid] = shared_from_this();
         }
         else
         {
@@ -86,7 +74,7 @@ namespace GE
             if (!fit)
             {
                 elements.push_back(e);
-                eid2node[e->GetEntityID()].push_back(shared_from_this());
+                eid2node[e->GetEntityID()] = shared_from_this();
             }
         }
 
@@ -100,16 +88,8 @@ namespace GE
             child->MergeChild();
             for (auto&& e : child->elements)
             {
-                auto node_list = eid2node[e->GetEntityID()];
-                for (int i = 0; i < node_list.size(); i++)
-                {
-                    if (node_list[i] == child)
-                    {
-                        node_list[i] = shared_from_this();
-                        break;
-                    }
-                }
                 elements.push_back(e);
+                eid2node[e->GetEntityID()] = shared_from_this();
             }
         }
         children.clear();
@@ -143,16 +123,7 @@ namespace GE
             {
                 if (child->Fits(aabb))
                 {
-                    auto node_list = eid2node[elem->GetEntityID()];
-                    for (int i = 0; i < node_list.size(); i++)
-                    {
-                        if (node_list[i] == thisp)
-                        {
-                            node_list[i] = child;
-                            break;
-                        }
-                    }
-                    child->elements.push_back(elem);
+                    child->AddElement(elem);
                     fit = true;
                     break;
                 }
@@ -181,12 +152,14 @@ namespace GE
 
     void MeshManager::AddEntity(Entity& e)
     {
+        int eid = e.GetEntityID();
+
         if (!IsManagable(e))
         {
             return;
         }
 
-        if (m_entityToNode.find(e.GetEntityID()) != m_entityToNode.end())
+        if (Exists(eid))
         {
             RemoveEntity(e);
         }
@@ -196,35 +169,43 @@ namespace GE
         int3 min_ids = glm::floor(aabb.Min() / c_baseResolution + 0.5f);
         int3 max_ids = glm::floor(aabb.Max() / c_baseResolution + 0.5f);
         auto pe      = e.AsPtr();
-        for (int ix = min_ids.x; ix <= max_ids.x; ix++)
+        if (min_ids == max_ids)
         {
-            for (int iy = min_ids.y; iy <= max_ids.y; iy++)
+            TupledInt3 loc    = {min_ids.x, min_ids.y, min_ids.z};
+            float3     center = float3(min_ids) * c_baseResolution;
+            if (m_root.find(loc) == m_root.end())
             {
-                for (int iz = min_ids.z; iz <= max_ids.z; iz++)
-                {
-                    TupledInt3 loc    = {ix, iy, iz};
-                    float3     center = float3(ix, iy, iz) * c_baseResolution;
-                    if (m_root.find(loc) == m_root.end())
-                    {
-                        m_root[loc] = std::make_shared<SceneOctreeNode>(0, center, c_baseResolution, m_entityToNode);
-                    }
-                    m_root[loc]->AddElement(pe);
-                }
+                m_root[loc] = std::make_shared<SceneOctreeNode>(0, center, c_baseResolution, m_entityToNode);
             }
+            m_root[loc]->AddElement(pe);
+        }
+        else
+        {
+            m_largeEntities[eid] = pe;
         }
     }
+
     void MeshManager::RemoveEntity(Entity& e)
     {
-        auto eid = e.GetEntityID();
-        for (auto&& node : m_entityToNode[eid])
+        int eid = e.GetEntityID();
+        if (m_entityToNode.find(eid) != m_entityToNode.end())
         {
-            node->RemoveElement(eid);
+            m_entityToNode[eid]->RemoveElement(eid);
         }
+        if (m_largeEntities.find(eid) != m_largeEntities.end())
+        {
+            m_largeEntities.erase(eid);
+        }
+    }
+
+    bool MeshManager::Exists(int eid)
+    {
+        return m_entityToNode.find(eid) != m_entityToNode.end() && m_largeEntities.find(eid) != m_largeEntities.end();
     }
 
     void MeshManager::UpdateEntity(Entity& e)
     {
-        if (IsManagable(e) && m_entityToNode.find(e.GetEntityID()) != m_entityToNode.end())
+        if (IsManagable(e) && Exists(e.GetEntityID()))
         {
             RemoveEntity(e);
             AddEntity(e);
@@ -248,7 +229,7 @@ namespace GE
         }
     }
 
-    std::set<std::shared_ptr<Entity>> MeshManager::FrustrumCull(float4x4& vp)
+    std::vector<std::shared_ptr<Entity>> MeshManager::FrustrumCull(float4x4& vp)
     {
         // do fursturm test on each root node
         std::map<TupledInt3, std::vector<std::shared_ptr<Entity>>> results;
@@ -264,10 +245,14 @@ namespace GE
         }
 
         // merge results
-        std::set<std::shared_ptr<Entity>> final_results = {};
+        std::vector<std::shared_ptr<Entity>> final_results = {};
         for (auto&& [idx, result] : results)
         {
-            final_results.insert(result.begin(), result.end());
+            std::ranges::move(result, std::back_inserter(final_results));
+        }
+        for (auto&& [eid, e] : m_largeEntities)
+        {
+            final_results.push_back(e);
         }
         return final_results;
     }
