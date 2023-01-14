@@ -1,6 +1,6 @@
 #include "UnitTest.h"
 
-#include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/core/Log/LogSystem.h"
 
 #include "function/scene.h"
 #include "function/shader.h"

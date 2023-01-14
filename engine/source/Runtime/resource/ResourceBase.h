@@ -5,7 +5,7 @@
 #include "Runtime/core/Hash.h"
 #include "Runtime/core/Math/Math.h"
 
-#include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/core/Log/LogSystem.h"
 
 namespace GE
 {
@@ -77,22 +77,11 @@ namespace GE
                 GE_CORE_WARN("[Resource::GetData] Resource {0} not loaded", m_filePath.string());
             return m_data;
         }
-        inline void SaveData(const T& data)
-        {
-            m_data  = data;
-            m_valid = true;
-            Save();
-        }
-        inline void Invalid()
-        {
-            if (m_valid)
-            {
-                m_valid = false;
-                m_data  = {};
-            }
-        }
+
+        virtual void SaveData(const T& data) = 0;
+        virtual void Invalid()               = 0;
 
     protected:
-        T m_data = {};
+        T m_data;
     };
 } // namespace GE

@@ -6,5 +6,5 @@
 #include "ResourceTypes/ByteResource.h"
 #include "ResourceTypes/ImageResource.h"
 #include "ResourceTypes/JsonResource.h"
-#include "ResourceTypes/MeshResource.h"
 #include "ResourceTypes/TextResource.h"
+#include "ResourceTypes/TriangleMeshResource.h"

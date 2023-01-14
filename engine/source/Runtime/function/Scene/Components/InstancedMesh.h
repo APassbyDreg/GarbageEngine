@@ -2,11 +2,11 @@
 
 #include "ComponentBase.h"
 
-#include "Runtime/resource/ResourceTypes/MeshResource.h"
+#include "Runtime/resource/ResourceTypes/TriangleMeshResource.h"
 
 namespace GE
 {
-    typedef std::shared_ptr<MeshResource> InstancedMeshComponentCore;
+    typedef std::shared_ptr<TriangleMeshResource> InstancedMeshComponentCore;
 
     class InstancedMeshComponent : public ComponentBase
     {

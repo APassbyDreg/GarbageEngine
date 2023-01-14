@@ -2,7 +2,7 @@
 
 #include "Runtime/function/Settings/SettingsBase.h"
 
-#include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/core/Log/LogSystem.h"
 
 #include "Runtime/core/Base/Singleton.h"
 

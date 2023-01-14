@@ -2,13 +2,14 @@
 
 #include "GE_pch.h"
 
+#include "Runtime/core/Log/LogSystem.h"
 #include "Runtime/function/Event/EventSystem.h"
 #include "Runtime/function/Layer/LayerSystem.h"
-#include "Runtime/function/Log/LogSystem.h"
 #include "Runtime/function/Message/MessageSystem.h"
 #include "Runtime/function/Scene/Scene.h"
 #include "Runtime/function/Window/Window.h"
 #include "Runtime/resource/Managers/ResourceManager.h"
+
 
 namespace GE
 {

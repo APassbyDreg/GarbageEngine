@@ -4,7 +4,7 @@
 
 #include "Runtime/core/ECS.h"
 
-#include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/core/Log/LogSystem.h"
 
 #include "Components/ComponentFactory.h"
 #include "Systems/SystemBase.h"

@@ -2,7 +2,7 @@
 
 #include "GE_pch.h"
 
-#include "../DataStructures/Mesh.h"
+#include "../Mesh/TriangleMesh.h"
 #include "../RenderPass.h"
 #include "../VulkanManager/AutoGpuBuffer.h"
 

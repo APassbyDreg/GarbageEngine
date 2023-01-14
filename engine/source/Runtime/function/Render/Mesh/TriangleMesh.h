@@ -2,19 +2,16 @@
 
 #include "GE_pch.h"
 
+#include "../VulkanManager/GpuBuffer.h"
 #include "../VulkanManager/VulkanCore.h"
 
+#include "Runtime/core/IntervalJob.h"
 #include "Runtime/core/Math/Math.h"
+
+#include "Mesh.h"
 
 namespace GE
 {
-    struct VertexInputDescription
-    {
-        std::vector<VkVertexInputBindingDescription>   bindings;
-        std::vector<VkVertexInputAttributeDescription> attributes;
-
-        VkPipelineVertexInputStateCreateFlags flags = 0;
-    };
 
     struct Vertex
     {
@@ -22,9 +19,8 @@ namespace GE
         float3 normal   = {0.0f, 0.0f, 0.0f};
         float3 tangent  = {0.0f, 0.0f, 0.0f};
         float2 uv0      = {0.0f, 0.0f};
-        uint   flags    = 0;
 
-        static VertexInputDescription GetVertexInputDesc()
+        static inline VertexInputDescription GetVertexInputDesc()
         {
             VertexInputDescription description;
 
@@ -64,27 +60,45 @@ namespace GE
             texcoordAttribute.format                            = VK_FORMAT_R32G32_SFLOAT;
             texcoordAttribute.offset                            = offsetof(Vertex, uv0);
 
-            // flags
-            VkVertexInputAttributeDescription flagsAttribute = {};
-            flagsAttribute.binding                           = 0;
-            flagsAttribute.location                          = 4;
-            flagsAttribute.format                            = VK_FORMAT_R32_UINT;
-            flagsAttribute.offset                            = offsetof(Vertex, flags);
-
             description.attributes.push_back(positionAttribute);
             description.attributes.push_back(normalAttribute);
             description.attributes.push_back(tangentAttribute);
             description.attributes.push_back(texcoordAttribute);
-            description.attributes.push_back(flagsAttribute);
             return description;
         }
     };
 
-    struct Mesh
+    class TriangleMesh : public Mesh
     {
-        std::vector<Vertex>   vertices;
-        std::vector<uint32_t> indices;
+    public:
+        std::vector<Vertex>   m_vertices;
+        std::vector<uint32_t> m_indices;
 
-        inline uint32_t GetTriCount() const { return indices.size() / 3; }
+        inline uint32_t GetTriangleCount() const { return m_indices.size() / 3; }
+        inline uint32_t GetVertexCount() const { return m_vertices.size(); }
+        inline uint32_t GetIndexCount() const { return m_indices.size(); }
+
+        inline VkBuffer GetVertexBuffer() { return m_vertexBuffer.GetBuffer(); }
+        inline VkBuffer GetIndexBuffer() { return m_indexBuffer.GetBuffer(); }
+
+        void SetupPipeline(GraphicsRenderPipeline& pipeline) override;
+        void RunRenderPass(MeshRenderPassData data) override;
+
+        void Activate();
+        void Deactivate();
+        void Clear();
+
+    private:
+        bool Update();
+
+    private:
+        const Time::Miliseconds c_updateInterval = Time::Miliseconds(2000);
+        const Time::Miliseconds c_deactiveThres  = Time::Miliseconds(5000);
+        Time::TimeStamp         m_tLastUsed;
+        IntervalJob             m_updateJob;
+
+        bool      m_uploaded = false;
+        GpuBuffer m_vertexBuffer;
+        GpuBuffer m_indexBuffer;
     };
 } // namespace GE

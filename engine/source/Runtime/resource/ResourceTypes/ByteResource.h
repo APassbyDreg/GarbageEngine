@@ -23,6 +23,20 @@ namespace GE
 
         void Load() override;
         void Save() override;
+        void Invalid() override
+        {
+            if (m_valid)
+            {
+                m_valid = false;
+                m_data  = {};
+            }
+        }
+        void SaveData(const std::vector<byte>& data) override
+        {
+            m_data  = data;
+            m_valid = true;
+            Save();
+        }
 
         /*
          * 0 - UNKNOWN

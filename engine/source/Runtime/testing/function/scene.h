@@ -3,7 +3,7 @@
 #include "GE_pch.h"
 
 #include "../UnitTest.h"
-#include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/core/Log/LogSystem.h"
 #include "Runtime/function/Scene/Scene.h"
 
 namespace GE

@@ -2,18 +2,7 @@
 
 namespace GE
 {
-    AutoGpuBuffer::~AutoGpuBuffer()
-    {
-        if (!m_shouldExit)
-        {
-            {
-                std::lock_guard<std::mutex> lock(m_cvMutex);
-                m_shouldExit = true;
-            }
-            m_cv.notify_all();
-            m_updateThread.join();
-        }
-    }
+    AutoGpuBuffer::~AutoGpuBuffer() { m_updateJob.Stop(); }
 
     void AutoGpuBuffer::Upload(byte* data, size_t size, size_t offset, bool resize)
     {
@@ -88,17 +77,12 @@ namespace GE
         m_usedSize = size_in_bytes;
     }
 
-    void AutoGpuBuffer::Update()
+    bool AutoGpuBuffer::Update()
     {
-        std::unique_lock<std::mutex> lk(m_cvMutex);
-        bool                         exit = false;
-        while (!exit)
+        if (m_buffer.IsValid() && Time::CurrentTime() - m_tLastAdjust > c_tInactive && m_currentSize > m_usedSize)
         {
-            exit = m_cv.wait_for(lk, c_tCheckInterval, [this] { return m_shouldExit; });
-            if (m_buffer.IsValid() && Time::CurrentTime() - m_tLastAdjust > c_tInactive && m_currentSize > m_usedSize)
-            {
-                Resize(m_usedSize, 0, m_usedSize);
-            }
+            Resize(m_usedSize, 0, m_usedSize);
         }
+        return false;
     }
 } // namespace GE

@@ -6,7 +6,7 @@
 #include "Runtime/core/Json.h"
 #include "Runtime/core/Math/Math.h"
 
-#include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/core/Log/LogSystem.h"
 
 #include "ComponentBase.h"
 

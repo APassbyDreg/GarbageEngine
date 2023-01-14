@@ -6,10 +6,10 @@
 
 #include "Runtime/core/Base/Singleton.h"
 
-#include "Runtime/function/Render/RenderPipeline.h"
-
 #include "Runtime/resource/Managers/ResourceManager.h"
 #include "Runtime/resource/ResourceTypes/JsonResource.h"
+
+#include "../RenderPipeline.h"
 
 namespace GE
 {

@@ -26,6 +26,21 @@ namespace GE
         void Load() override;
         void Save() override;
 
+        void Invalid() override
+        {
+            if (m_valid)
+            {
+                m_valid = false;
+                m_data  = {};
+            }
+        }
+        void SaveData(const json& data) override
+        {
+            m_data  = data;
+            m_valid = true;
+            Save();
+        }
+
     private:
         inline std::string jsonId2string(JsonIdentifier id)
         {

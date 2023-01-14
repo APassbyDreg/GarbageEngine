@@ -5,7 +5,7 @@
 #include "../ResourceBase.h"
 
 #include "Runtime/core/Math/Bounds.h"
-#include "Runtime/function/Render/DataStructures/Mesh.h"
+#include "Runtime/function/Render/Mesh/TriangleMesh.h"
 #include "Runtime/function/Render/VulkanManager/GpuBuffer.h"
 
 #include "ByteResource.h"
@@ -20,10 +20,10 @@ namespace GE
      * [vertex plain data]
      * [index plain data]
      */
-    class GE_API MeshResource : public Resource<Mesh>
+    class GE_API TriangleMeshResource : public Resource<TriangleMesh>
     {
     public:
-        MeshResource(fs::path file, bool use_cache = false, bool delayed_load = false) :
+        TriangleMeshResource(fs::path file, bool use_cache = false, bool delayed_load = false) :
             Resource(ResourceType::MESH, file, use_cache, delayed_load),
             m_trueResource(file, ByteResourceMagicNumber::MESH, use_cache, delayed_load)
         {}
@@ -35,13 +35,18 @@ namespace GE
 
         inline uint64&   Version() { return m_version; }
         inline Bounds3f& BBox() { return m_bbox; }
-        inline VkBuffer  GetVertexBuffer() { return m_vertexBuffer.GetBuffer(); }
-        inline VkBuffer  GetIndexBuffer() { return m_indexBuffer.GetBuffer(); }
-        inline size_t    GetVertexCount() { return m_data.vertices.size(); }
-        inline size_t    GetIndexCount() { return m_data.indices.size(); }
+        inline size_t    GetVertexCount() { return m_data.m_vertices.size(); }
+        inline size_t    GetIndexCount() { return m_data.m_indices.size(); }
 
-    private:
-        void ToGpu();
+        inline void Invalid() override
+        {
+            m_data.Clear();
+            m_valid = false;
+        }
+        inline void SaveData(const TriangleMesh& data) override
+        {
+            GE_CORE_ASSERT(false, "[TriangleMesh::SaveData] shoud not be called");
+        }
 
     private:
         const int64 c_versionOffset     = 0;
@@ -53,9 +58,6 @@ namespace GE
         uint64       m_version = 0;
         Bounds3f     m_bbox;
         ByteResource m_trueResource;
-
-        GpuBuffer m_vertexBuffer;
-        GpuBuffer m_indexBuffer;
 
     private:
         void CalculateBBox();

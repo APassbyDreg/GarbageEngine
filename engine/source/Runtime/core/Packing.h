@@ -5,7 +5,7 @@
 
 #include "Runtime/core/Hash.h"
 
-#include "Runtime/function/Log/LogSystem.h"
+#include "Runtime/core/Log/LogSystem.h"
 
 namespace GE
 {

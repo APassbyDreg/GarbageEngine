@@ -2,6 +2,7 @@
 
 #include "GE_pch.h"
 
+#include "Runtime/core/IntervalJob.h"
 #include "Runtime/core/Time.h"
 
 #include "GpuBuffer.h"
@@ -21,8 +22,8 @@ namespace GE
         ~AutoGpuBuffer();
         AutoGpuBuffer()
         {
-            m_tLastAdjust  = Time::CurrentTime();
-            m_updateThread = std::thread(&AutoGpuBuffer::Update, this);
+            m_tLastAdjust = Time::CurrentTime();
+            m_updateJob.Run(std::bind(&AutoGpuBuffer::Update, this), c_tCheckInterval);
         }
         AutoGpuBuffer(AutoGpuBuffer& src)
         {
@@ -30,30 +31,22 @@ namespace GE
             m_currentSize  = src.m_currentSize;
             m_usedSize     = src.m_usedSize;
             m_tLastAdjust  = Time::CurrentTime();
-            m_updateThread = std::thread(&AutoGpuBuffer::Update, this);
+            m_updateJob.Run(std::bind(&AutoGpuBuffer::Update, this), c_tCheckInterval);
         }
         AutoGpuBuffer(AutoGpuBuffer&& src) : m_buffer(std::move(src.m_buffer))
         {
-            // exit the update thread
-            {
-                std::lock_guard<std::mutex> lock(src.m_cvMutex);
-                src.m_shouldExit = true;
-            }
-            src.m_cv.notify_all();
-            src.m_updateThread.join();
-
-            // copy info and start a new update thread
+            // copy info and start update thread
             m_currentSize  = src.m_currentSize;
             m_usedSize     = src.m_usedSize;
             m_tLastAdjust  = Time::CurrentTime();
-            m_updateThread = std::thread(&AutoGpuBuffer::Update, this);
+            m_updateJob.Run(std::bind(&AutoGpuBuffer::Update, this), c_tCheckInterval);
         }
         AutoGpuBuffer(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)
         {
             Alloc(buffer_info, alloc_info);
             m_currentSize = m_usedSize = buffer_info.size;
             m_tLastAdjust              = Time::CurrentTime();
-            m_updateThread             = std::thread(&AutoGpuBuffer::Update, this);
+            m_updateJob.Run(std::bind(&AutoGpuBuffer::Update, this), c_tCheckInterval);
         }
 
         void           Upload(byte* data, size_t size, size_t offset = 0, bool resize = true);
@@ -100,7 +93,8 @@ namespace GE
         inline VmaAllocationCreateInfo GetAllocInfo() { return m_buffer.GetAllocInfo(); }
         inline bool                    IsValid() { return m_buffer.IsValid(); }
 
-        void Update();
+    private:
+        bool Update();
 
     private:
         GpuBuffer m_buffer;
@@ -109,9 +103,6 @@ namespace GE
 
         Time::TimeStamp m_tLastAdjust;
 
-        std::thread             m_updateThread;
-        std::condition_variable m_cv;
-        std::mutex              m_cvMutex;
-        bool                    m_shouldExit = false;
+        IntervalJob m_updateJob;
     };
 } // namespace GE
