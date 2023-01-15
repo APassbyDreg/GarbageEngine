@@ -5,6 +5,7 @@
 #include "../ResourceBase.h"
 
 #include "Runtime/core/Math/Bounds.h"
+
 #include "Runtime/function/Render/Mesh/TriangleMesh.h"
 #include "Runtime/function/Render/VulkanManager/GpuBuffer.h"
 
@@ -20,7 +21,7 @@ namespace GE
      * [vertex plain data]
      * [index plain data]
      */
-    class GE_API TriangleMeshResource : public Resource<TriangleMesh>
+    class GE_API TriangleMeshResource : public Resource<TriangleMeshData>
     {
     public:
         TriangleMeshResource(fs::path file, bool use_cache = false, bool delayed_load = false) :
@@ -40,12 +41,13 @@ namespace GE
 
         inline void Invalid() override
         {
-            m_data.Clear();
+            m_data  = {};
             m_valid = false;
         }
-        inline void SaveData(const TriangleMesh& data) override
+        inline void SaveData(const TriangleMeshData& data) override
         {
-            GE_CORE_ASSERT(false, "[TriangleMesh::SaveData] shoud not be called");
+            m_data = data;
+            Save();
         }
 
     private:

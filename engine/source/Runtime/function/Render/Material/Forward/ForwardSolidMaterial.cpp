@@ -27,7 +27,6 @@ namespace GE
     json ForwardSolidMaterial::Serialize()
     {
         json data;
-        data["type"]  = GetName();
         data["alias"] = m_alias;
         data["color"] = {m_color.r, m_color.g, m_color.b, m_color.a};
         return data;

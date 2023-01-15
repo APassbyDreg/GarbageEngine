@@ -62,6 +62,7 @@ public: \
         inline void Save()
         {
             auto&& data = Serialize();
+            data["type"] = GetName();
             m_resource->SaveData(data);
         }
 

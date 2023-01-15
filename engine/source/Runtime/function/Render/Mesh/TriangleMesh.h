@@ -9,6 +9,7 @@
 #include "Runtime/core/Math/Math.h"
 
 #include "Mesh.h"
+#include <memory>
 
 namespace GE
 {
@@ -68,25 +69,41 @@ namespace GE
         }
     };
 
-    class TriangleMesh : public Mesh
+    struct TriangleMeshData
     {
-    public:
         std::vector<Vertex>   m_vertices;
         std::vector<uint32_t> m_indices;
 
         inline uint32_t GetTriangleCount() const { return m_indices.size() / 3; }
         inline uint32_t GetVertexCount() const { return m_vertices.size(); }
         inline uint32_t GetIndexCount() const { return m_indices.size(); }
+    };
+
+    class TriangleMeshResource;
+
+    class TriangleMesh : public Mesh
+    {
+        GE_MESH_COMMON(TriangleMesh);
+
+    public:
+        inline uint32_t GetTriangleCount() const;
+        inline uint32_t GetVertexCount() const;
+        inline uint32_t GetIndexCount() const;
 
         inline VkBuffer GetVertexBuffer() { return m_vertexBuffer.GetBuffer(); }
         inline VkBuffer GetIndexBuffer() { return m_indexBuffer.GetBuffer(); }
+
+        void Inspect() override;
+        void Deserialize(const json& data) override;
+        json Serialize() override;
+
+        Bounds3f& BBox() override;
 
         void SetupPipeline(GraphicsRenderPipeline& pipeline) override;
         void RunRenderPass(MeshRenderPassData data) override;
 
         void Activate();
         void Deactivate();
-        void Clear();
 
     private:
         bool Update();
@@ -100,5 +117,7 @@ namespace GE
         bool      m_uploaded = false;
         GpuBuffer m_vertexBuffer;
         GpuBuffer m_indexBuffer;
+
+        std::shared_ptr<TriangleMeshResource> m_meshResource;
     };
 } // namespace GE

@@ -2,10 +2,15 @@
 
 #include "../ShaderManager/HLSLCompiler.h"
 
+#include "Runtime/resource/Managers/ResourceManager.h"
+#include "Runtime/resource/ResourceTypes/TriangleMeshResource.h"
+
 namespace GE
 {
     void TriangleMesh::Activate()
     {
+        GE_CORE_ASSERT(m_meshResource != nullptr, "Error trying to activate an invalid TriangleMesh");
+
         m_tLastUsed = Time::CurrentTime();
 
         if (!m_updateJob.IsRunning())
@@ -15,18 +20,20 @@ namespace GE
 
         if (!m_uploaded)
         {
+            auto& data = m_meshResource->GetData();
+
             auto alloc_info = VkInit::GetAllocationCreateInfo(VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                                                               VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
             auto vertex_info =
-                VkInit::GetBufferCreateInfo(sizeof(Vertex) * m_vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+                VkInit::GetBufferCreateInfo(sizeof(Vertex) * data.GetVertexCount(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
             auto index_info =
-                VkInit::GetBufferCreateInfo(sizeof(uint32_t) * m_indices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+                VkInit::GetBufferCreateInfo(sizeof(uint32_t) * data.GetIndexCount(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 
             m_vertexBuffer.Alloc(vertex_info, alloc_info);
             m_indexBuffer.Alloc(index_info, alloc_info);
 
-            m_vertexBuffer.UploadAs(m_vertices);
-            m_indexBuffer.UploadAs(m_indices);
+            m_vertexBuffer.UploadAs(data.m_vertices);
+            m_indexBuffer.UploadAs(data.m_indices);
             m_uploaded = true;
         }
     }
@@ -38,13 +45,6 @@ namespace GE
         m_uploaded = false;
     }
 
-    void TriangleMesh::Clear()
-    {
-        Deactivate();
-        m_vertices.clear();
-        m_indices.clear();
-    }
-
     bool TriangleMesh::Update()
     {
         if (m_uploaded && Time::CurrentTime() - m_tLastUsed > c_deactiveThres)
@@ -53,6 +53,8 @@ namespace GE
         }
         return false;
     }
+
+    Bounds3f& TriangleMesh::BBox() { return m_meshResource->BBox(); }
 
     void TriangleMesh::SetupPipeline(GraphicsRenderPipeline& pipeline)
     {
@@ -79,6 +81,30 @@ namespace GE
         vkCmdBindVertexBuffers(cmd, 0, 1, buffers, offsets);
         vkCmdBindIndexBuffer(cmd, m_indexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdDrawIndexed(cmd, GetVertexCount(), num_instance, 0, 0, 0);
+        vkCmdDrawIndexed(cmd, m_meshResource->GetVertexCount(), num_instance, 0, 0, 0);
+    }
+
+    void TriangleMesh::Inspect()
+    {
+        ImGui::Text("Source File: %s", m_meshResource->GetFilePath().string().c_str());
+        ImGui::Text("Mesh File: %s", m_resource->GetFilePath().string().c_str());
+    }
+
+    json TriangleMesh::Serialize()
+    {
+        json data;
+        data["mesh"] = m_meshResource->GetFilePath().string();
+        return data;
+    }
+
+    void TriangleMesh::Deserialize(const json& data)
+    {
+        GE_CORE_CHECK(data["type"].get<std::string>() == GetName(),
+                      "[TriangleMesh::Deserialize] Error input type '{}'",
+                      data["type"].get<std::string>());
+        if (data["type"].get<std::string>() == GetName())
+        {
+            m_meshResource = ResourceManager::GetResource<TriangleMeshResource>(data["mesh"].get<std::string>());
+        }
     }
 } // namespace GE

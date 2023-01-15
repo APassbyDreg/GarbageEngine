@@ -32,7 +32,7 @@ namespace GE
         fs::path resource_path = fs::path(Config::asset_dir) / "test.mesh.ge";
         auto     resource      = ResourceManager::GetResource<TriangleMeshResource>(resource_path);
         resource->FromObj(obj_path);
-        Mesh& mesh = resource->GetData();
+        auto&& mesh = resource->GetData();
         // resource->Save();
 
         // Mesh mesh;
