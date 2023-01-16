@@ -6,6 +6,7 @@
 #include "Test.h"
 
 #include "MaterialInspector.h"
+#include "MeshInspector.h"
 #include "SceneInspector.h"
 
 namespace GE
@@ -14,20 +15,23 @@ namespace GE
     {
         GE_APP_INFO("Constructing Editor");
 
-        std::shared_ptr<TestLayer> test_layer = std::make_shared<TestLayer>();
+        auto test_layer = std::make_shared<TestLayer>();
         PushLayer(test_layer);
 
-        std::shared_ptr<MenuLayer> menu_layer = std::make_shared<MenuLayer>();
+        auto menu_layer = std::make_shared<MenuLayer>();
         PushLayer(menu_layer);
 
-        std::shared_ptr<ExplorerLayer> explorer_layer = std::make_shared<ExplorerLayer>();
+        auto explorer_layer = std::make_shared<ExplorerLayer>();
         PushLayer(explorer_layer);
 
-        std::shared_ptr<SceneInspectorLayer> scene_inspector_layer = std::make_shared<SceneInspectorLayer>();
+        auto scene_inspector_layer = std::make_shared<SceneInspectorLayer>();
         PushLayer(scene_inspector_layer);
 
-        std::shared_ptr<MaterialInspectorLayer> material_inspector_layer = std::make_shared<MaterialInspectorLayer>();
+        auto material_inspector_layer = std::make_shared<MaterialInspectorLayer>();
         PushLayer(material_inspector_layer);
+
+        auto mesh_inspector_layer = std::make_shared<MeshInspectorLayer>();
+        PushLayer(mesh_inspector_layer);
     }
 
     Editor::~Editor() {}

@@ -24,10 +24,12 @@ namespace GE
     class GE_API TriangleMeshResource : public Resource<TriangleMeshData>
     {
     public:
-        TriangleMeshResource(fs::path file, bool use_cache = false, bool delayed_load = false) :
-            Resource(ResourceType::MESH, file, use_cache, delayed_load),
+        TriangleMeshResource(fs::path file, bool init = false, bool use_cache = false, bool delayed_load = false) :
+            Resource(ResourceType::MESH, file, init, use_cache, delayed_load),
             m_trueResource(file, ByteResourceMagicNumber::MESH, use_cache, delayed_load)
-        {}
+        {
+            GE_RESOURCE_SETUP();
+        }
 
         void Load() override;
         void Save() override;

@@ -54,13 +54,13 @@ namespace GE
         std::map<int, std::shared_ptr<SceneOctreeNode>>& eid2node;
     };
 
-    class MeshManager
+    class SceneMeshManager
     {
         friend class Scene;
         using TupledInt3 = std::tuple<int, int, int>;
 
     public:
-        MeshManager(Scene& sc) : m_scene(sc) {}
+        SceneMeshManager(Scene& sc) : m_scene(sc) {}
         void Setup();
 
         std::vector<std::shared_ptr<Entity>> FrustrumCull(float4x4& vp_matrix);

@@ -20,9 +20,16 @@ namespace GE
     class GE_API JsonResource : public Resource<json>
     {
     public:
-        JsonResource(fs::path file, JsonIdentifier type, bool delayed_load = false) :
-            Resource(ResourceType::JSON, file, false, delayed_load), m_identifier(type)
-        {}
+        JsonResource(fs::path       file,
+                     JsonIdentifier type,
+                     bool           init         = false,
+                     bool           use_cache    = false,
+                     bool           delayed_load = false) :
+            Resource(ResourceType::JSON, file, init, use_cache, delayed_load),
+            m_identifier(type)
+        {
+            GE_RESOURCE_SETUP();
+        }
 
         void Load() override;
         void Save() override;

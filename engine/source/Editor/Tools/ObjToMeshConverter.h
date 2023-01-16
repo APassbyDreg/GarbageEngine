@@ -44,7 +44,7 @@ namespace GE
                 {
                     m_target = SelectionTarget::MESH;
                     ImGuiFileDialog::Instance()->OpenDialog(
-                        "ChooseFileDlgKey", "Choose Mesh File", ".ge.mesh,.*", workdir.string().c_str());
+                        "ChooseFileDlgKey", "Choose Mesh File", ".ge.trianglemesh,.*", workdir.string().c_str());
                 }
                 HandleFileSelect();
                 ImGui::SameLine();

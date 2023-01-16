@@ -17,9 +17,16 @@ namespace GE
     class GE_API ByteResource : public Resource<std::vector<byte>>
     {
     public:
-        ByteResource(fs::path file, uint64 magic_number = 0, bool use_cache = false, bool delayed_load = false) :
-            Resource(ResourceType::BYTE, file, use_cache, delayed_load), m_magicnumber(magic_number)
-        {}
+        ByteResource(fs::path file,
+                     uint64   magic_number = 0,
+                     bool     init         = false,
+                     bool     use_cache    = false,
+                     bool     delayed_load = false) :
+            Resource(ResourceType::BYTE, file, init, use_cache, delayed_load),
+            m_magicnumber(magic_number)
+        {
+            GE_RESOURCE_SETUP();
+        }
 
         void Load() override;
         void Save() override;

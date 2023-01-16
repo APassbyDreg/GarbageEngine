@@ -17,13 +17,13 @@ namespace GE
 {
 #define DEFINE_SCENE_MANAGER(name) \
 public: \
-    name& Get##name() \
+    Scene##name& Get##name() \
     { \
         return m_##name; \
     } \
 \
 private: \
-    name m_##name;
+    Scene##name m_##name;
 
     class GE_API Scene
     {

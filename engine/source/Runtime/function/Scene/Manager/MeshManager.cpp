@@ -7,7 +7,7 @@
 #include "../Components/Renderer.h"
 #include "../Components/Transform.h"
 
-#define BIND_CLASS_FN(fn) std::bind(&MeshManager::fn, this, std::placeholders::_1)
+#define BIND_CLASS_FN(fn) std::bind(&SceneMeshManager::fn, this, std::placeholders::_1)
 
 namespace GE
 {
@@ -136,7 +136,7 @@ namespace GE
         elements = remaining;
     }
 
-    void MeshManager::Setup()
+    void SceneMeshManager::Setup()
     {
         auto sc_name = m_scene.GetName();
         ComponentHook<InstancedMeshComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
@@ -150,7 +150,7 @@ namespace GE
         ComponentHook<RendererComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
     }
 
-    void MeshManager::AddEntity(Entity& e)
+    void SceneMeshManager::AddEntity(Entity& e)
     {
         int eid = e.GetEntityID();
 
@@ -185,7 +185,7 @@ namespace GE
         }
     }
 
-    void MeshManager::RemoveEntity(Entity& e)
+    void SceneMeshManager::RemoveEntity(Entity& e)
     {
         int eid = e.GetEntityID();
         if (m_entityToNode.find(eid) != m_entityToNode.end())
@@ -198,12 +198,12 @@ namespace GE
         }
     }
 
-    bool MeshManager::Exists(int eid)
+    bool SceneMeshManager::Exists(int eid)
     {
         return m_entityToNode.find(eid) != m_entityToNode.end() && m_largeEntities.find(eid) != m_largeEntities.end();
     }
 
-    void MeshManager::UpdateEntity(Entity& e)
+    void SceneMeshManager::UpdateEntity(Entity& e)
     {
         if (IsManagable(e) && Exists(e.GetEntityID()))
         {
@@ -229,7 +229,7 @@ namespace GE
         }
     }
 
-    std::vector<std::shared_ptr<Entity>> MeshManager::FrustrumCull(float4x4& vp)
+    std::vector<std::shared_ptr<Entity>> SceneMeshManager::FrustrumCull(float4x4& vp)
     {
         // do fursturm test on each root node
         std::map<TupledInt3, std::vector<std::shared_ptr<Entity>>> results;

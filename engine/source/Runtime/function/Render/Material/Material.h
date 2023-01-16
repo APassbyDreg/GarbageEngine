@@ -33,7 +33,13 @@ public: \
         Deserialize(data); \
     } \
     name(int id, fs::path path) : ForwardMaterial(id, path) \
-    {}
+    { \
+        if (m_resource->IsValid()) \
+        { \
+            auto&& data = m_resource->GetData(); \
+            Deserialize(data); \
+        } \
+    }
 
 #define GE_DEFERRED_MATERIAL_COMMON(name) \
     GE_MATERIAL_COMMON(name) \

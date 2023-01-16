@@ -9,6 +9,7 @@
 #include "Editor/Tools/ObjToMeshConverter.h"
 
 #include "MaterialInspector.h"
+#include "MeshInspector.h"
 #include "SceneInspector.h"
 
 
@@ -85,6 +86,12 @@ namespace GE
                 if (ImGui::MenuItem("Material"))
                 {
                     auto e = ToggleMaterialInspectorEvent();
+                    Application::GetInstance().OnEvent(e);
+                }
+
+                if (ImGui::MenuItem("Mesh"))
+                {
+                    auto e = ToggleMeshInspectorEvent();
                     Application::GetInstance().OnEvent(e);
                 }
                 ImGui::EndMenu();

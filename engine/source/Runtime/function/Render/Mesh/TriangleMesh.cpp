@@ -5,6 +5,9 @@
 #include "Runtime/resource/Managers/ResourceManager.h"
 #include "Runtime/resource/ResourceTypes/TriangleMeshResource.h"
 
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "Runtime/Application.h"
+
 namespace GE
 {
     void TriangleMesh::Activate()
@@ -86,14 +89,61 @@ namespace GE
 
     void TriangleMesh::Inspect()
     {
-        ImGui::Text("Source File: %s", m_meshResource->GetFilePath().string().c_str());
-        ImGui::Text("Mesh File: %s", m_resource->GetFilePath().string().c_str());
+        // alias
+        char buf[256];
+        strcpy(buf, m_alias.c_str());
+        ImGui::InputText("Alias", buf, 256);
+        m_alias = buf;
+
+        // mesh file selection
+        if (ImGui::Button("Select Triangle Mesh"))
+        {
+            Application& app     = Application::GetInstance();
+            fs::path     workdir = app.GetWorkDirectory();
+            ImGuiFileDialog::Instance()->OpenDialog(
+                "ChooseFileDlgKey", "Choose File", ".ge.trianglemesh,.*", workdir.string().c_str());
+        }
+        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+                if (filepath.ends_with(".ge.trianglemesh"))
+                {
+                    m_meshResource = ResourceManager::GetResource<TriangleMeshResource>(filepath);
+                }
+                else if (filepath.ends_with(".obj"))
+                {
+                    std::string target_filepath = filepath.substr(0, filepath.size() - 4) + ".ge.trianglemesh";
+                    m_meshResource              = ResourceManager::GetResource<TriangleMeshResource>(target_filepath);
+                    m_meshResource->FromObj(filepath);
+                }
+            }
+            ImGuiFileDialog::Instance()->Close();
+        }
+
+        // mesh file name
+        std::string mesh_path = "Unset";
+        if (m_meshResource != nullptr)
+        {
+            mesh_path = m_meshResource->GetFilePath().string();
+        }
+        ImGui::SameLine();
+        ImGui::Text("Source File: %s", mesh_path.c_str());
+
+        // mesh info
+        if (m_meshResource != nullptr)
+        {
+            auto&& data = m_meshResource->GetData();
+            ImGui::Text("%d vertices, %d indices", data.GetVertexCount(), data.GetIndexCount());
+        }
     }
 
     json TriangleMesh::Serialize()
     {
         json data;
-        data["mesh"] = m_meshResource->GetFilePath().string();
+        data["alias"] = m_alias;
+        data["mesh"]  = m_meshResource == nullptr ? "" : m_meshResource->GetFilePath().string();
         return data;
     }
 
@@ -104,7 +154,12 @@ namespace GE
                       data["type"].get<std::string>());
         if (data["type"].get<std::string>() == GetName())
         {
-            m_meshResource = ResourceManager::GetResource<TriangleMeshResource>(data["mesh"].get<std::string>());
+            m_alias          = data["alias"].get<std::string>();
+            auto&& mesh_path = data["mesh"].get<std::string>();
+            if (!mesh_path.empty())
+            {
+                m_meshResource = ResourceManager::GetResource<TriangleMeshResource>(mesh_path);
+            }
         }
     }
 } // namespace GE

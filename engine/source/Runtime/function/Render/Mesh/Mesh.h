@@ -45,20 +45,20 @@ public: \
         Deserialize(data); \
     } \
     name(int id, fs::path path) : Mesh(id, path) \
-    {}
+    { \
+        if (m_resource->IsValid()) \
+        { \
+            auto&& data = m_resource->GetData(); \
+            Deserialize(data); \
+        } \
+    }
 
     class Mesh
     {
     public:
         Mesh(int id, fs::path path) :
             m_id(id), m_resource(ResourceManager::GetResource<JsonResource>(path, JsonIdentifier::MESH))
-        {
-            if (m_resource->IsValid())
-            {
-                auto&& data = m_resource->GetData();
-                Deserialize(data);
-            }
-        }
+        {}
 
         virtual void SetupPipeline(GraphicsRenderPipeline& pipeline) = 0;
         virtual void RunRenderPass(MeshRenderPassData data)          = 0;
@@ -71,8 +71,8 @@ public: \
 
         virtual Bounds3f& BBox() = 0;
 
-        virtual void Deserialize(const json& data) {}
-        virtual json Serialize() { return {}; }
+        virtual void Deserialize(const json& data) = 0;
+        virtual json Serialize()                   = 0;
 
         inline void Save()
         {
@@ -83,7 +83,7 @@ public: \
 
     protected:
         int                           m_id    = -1;
-        std::string                   m_alias = "material";
+        std::string                   m_alias = "mesh";
         std::shared_ptr<JsonResource> m_resource;
     };
 } // namespace GE

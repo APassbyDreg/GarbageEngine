@@ -14,7 +14,11 @@ namespace GE
         using FactoryFuncWithData = std::function<std::shared_ptr<Mesh>(int id, fs::path path, const json&)>;
 
     public:
-        inline static const std::vector<std::string>& GetSupportedMesh() { return GetInstance().m_meshNames; }
+        inline static const std::vector<std::string>& GetSupportedMesh()
+        {
+            GetInstance().EnsureInit();
+            return GetInstance().m_meshNames;
+        }
 
         inline static std::shared_ptr<Mesh> CreateMesh(std::string name, int id, fs::path path)
         {

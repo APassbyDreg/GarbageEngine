@@ -9,6 +9,11 @@ namespace GE
     void TriangleMeshResource::Load()
     {
         m_trueResource.Load();
+
+        if (!m_trueResource.IsValid())
+        {
+            return;
+        }
         if (m_trueResource.m_magicnumber != ByteResourceMagicNumber::MESH)
         {
             GE_CORE_ERROR("[TriangleMeshResource::Load] Resource {} is not a mesh binary resource",

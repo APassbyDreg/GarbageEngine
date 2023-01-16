@@ -18,6 +18,15 @@ namespace GE
         IMAGE
     };
 
+#define GE_RESOURCE_SETUP() \
+    do \
+    { \
+        if (!delayed_load) \
+            Load(); \
+        if (init && !m_valid) \
+            Initialize(); \
+    } while (0);
+
     class ResourceBase
     {
     public:
@@ -28,18 +37,21 @@ namespace GE
                      bool         delayed_load = false) :
             m_type(type),
             m_filePath(file), m_cacheEnabled(use_cache)
-        {
-            if (!delayed_load)
-                Load();
-            if (init && !m_valid)
-                Initialize();
-        }
+        {}
         ~ResourceBase()
         {
             if (IsValid())
             {
                 Save();
             }
+        }
+
+        inline void Setup(bool init, bool delayed_load)
+        {
+            if (!delayed_load)
+                Load();
+            if (init && !m_valid)
+                Initialize();
         }
 
         inline fs::path    GetFilePath() { return m_filePath; }
@@ -66,7 +78,7 @@ namespace GE
                  bool         init         = false,
                  bool         use_cache    = false,
                  bool         delayed_load = false) :
-            ResourceBase(type, file, use_cache, delayed_load)
+            ResourceBase(type, file, init, use_cache, delayed_load)
         {}
 
         inline T& GetData()

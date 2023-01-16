@@ -24,7 +24,7 @@ namespace GE
     void IntervalJob::Run(std::function<bool()> func, Time::Miliseconds interval)
     {
         GE_CORE_ASSERT(m_running == false, "Cannot start in a running interval job");
-
+        m_running  = true;
         m_func     = func;
         m_interval = interval;
         m_thread   = std::thread(&IntervalJob::RunInternal, this);
