@@ -1,4 +1,5 @@
 #include "__TestBasicRoutine.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -23,47 +24,7 @@ namespace GE
             m_viewportSize.width  = width;
             m_viewportSize.height = height;
 
-            // recreate framedata
-            for (size_t i = 0; i < m_frameCnt; i++)
-            {
-                if (m_frameData.size() <= i)
-                {
-                    m_frameData.push_back(std::make_shared<TestBasicFrameData>());
-                }
-                auto fd = m_frameData[i];
-
-                // (re)create image
-                VkImageCreateInfo image_info       = {};
-                image_info.sType                   = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-                image_info.imageType               = VK_IMAGE_TYPE_2D;
-                image_info.extent.width            = m_viewportSize.width;
-                image_info.extent.height           = m_viewportSize.height;
-                image_info.extent.depth            = 1;
-                image_info.format                  = VK_FORMAT_R8G8B8A8_UNORM;
-                image_info.mipLevels               = 1;
-                image_info.arrayLayers             = 1;
-                image_info.initialLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
-                image_info.usage                   = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-                image_info.samples                 = VK_SAMPLE_COUNT_1_BIT;
-                image_info.tiling                  = VK_IMAGE_TILING_OPTIMAL;
-                image_info.sharingMode             = VK_SHARING_MODE_EXCLUSIVE;
-                VmaAllocationCreateInfo alloc_info = {};
-                fd->m_image.Alloc(image_info, alloc_info);
-
-                // (re)create framebuffer
-                fd->DestroyFrameBuffer();
-                VkFramebufferCreateInfo framebuffer_info = {};
-                VkImageView             img_views[]      = {fd->m_image.GetImageView()};
-                framebuffer_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-                framebuffer_info.renderPass              = m_basicMeshPass.GetRenderPass();
-                framebuffer_info.attachmentCount         = 1;
-                framebuffer_info.pAttachments            = img_views;
-                framebuffer_info.width                   = m_viewportSize.width;
-                framebuffer_info.height                  = m_viewportSize.height;
-                framebuffer_info.layers                  = 1;
-                GE_VK_ASSERT(
-                    vkCreateFramebuffer(VulkanCore::GetDevice(), &framebuffer_info, nullptr, &fd->m_framebuffer));
-            }
+            m_basicMeshPass.Resize(width, height);
         }
     }
 
@@ -72,19 +33,13 @@ namespace GE
         GE_CORE_ASSERT(n_frames > 0, "[TestBasicRoutine::Init] At least one frame is needed.");
         m_frameCnt = n_frames;
 
+        m_resourceManager.Init(n_frames);
         m_basicMeshPass.Init(n_frames);
 
         Resize(1280, 720);
 
-        /* ------------------------ create frame data ----------------------- */
-        for (size_t i = 0; i < n_frames; i++)
-        {
-            m_frameData[i]->m_graphicsPool = VulkanCore::CreateGrahicsCmdPool();
-            m_frameData[i]->m_computePool  = VulkanCore::CreateComputeCmdPool();
-
-            m_frameData[i]->m_graphicsCmdBuffer = VulkanCore::CreateCmdBuffer(m_frameData[i]->m_graphicsPool, 8);
-            m_frameData[i]->m_computeCmdBuffer  = VulkanCore::CreateCmdBuffer(m_frameData[i]->m_computePool, 8);
-        }
+        /* ------------------------ reserve resources ----------------------- */
+        m_resourceManager.ReservePerFrameGraphicsCmdBuffer("BasicMeshPass");
 
         /* ------------- create default vertex and index buffer ------------- */
         {
@@ -124,30 +79,28 @@ namespace GE
                                      std::vector<VkSemaphore> signal_semaphores,
                                      VkFence                  fence)
     {
-        index                                  = index % m_frameCnt;
-        std::shared_ptr<TestBasicFrameData> fd = m_frameData[index];
+        uint frame_index = index % m_frameCnt;
 
-        VulkanCore::ResetCmdPool(fd->m_graphicsPool);
-        VulkanCore::ResetCmdPool(fd->m_computePool);
+        m_resourceManager.NewFrame(frame_index);
 
         VkClearValue clear_value = {};
         clear_value.color        = {0.2f, 0.2f, 0.6f, 1.0f};
 
         {
-            VkRenderPassBeginInfo info = {};
-            info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            info.renderPass            = m_basicMeshPass.GetRenderPass();
-            info.framebuffer           = fd->m_framebuffer;
-            info.renderArea.offset     = {0, 0};
-            info.renderArea.extent     = m_viewportSize;
-            info.clearValueCount       = 1;
-            info.pClearValues          = &clear_value;
-
-            RenderPassRunData run_data = {
-                index, fd->m_graphicsCmdBuffer[0], info, wait_semaphores, signal_semaphores, fence};
+            RenderPassRunData     run_data  = {frame_index,
+                                               m_resourceManager.GetPerFrameGraphicsCmdBuffer(frame_index, "BasicMeshPass"),
+                                               wait_semaphores,
+                                               signal_semaphores,
+                                               fence,
+                                               m_resourceManager};
             TestBasicMeshPassData pass_data = {m_vertexBuffer, m_indexBuffer, 6, m_viewportSize};
 
             m_basicMeshPass.Run(run_data, pass_data);
         }
+    }
+
+    VkImageView TestBasicRoutine::GetOutputImageView(uint frame_idx)
+    {
+        return m_resourceManager.GetPerFrameImage(frame_idx, m_basicMeshPass.FullIdentifier("color"))->GetImageView();
     }
 } // namespace GE

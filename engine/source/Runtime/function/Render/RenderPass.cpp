@@ -48,6 +48,20 @@ namespace GE
             dependency.dstStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
             dependency.dstAccessMask       = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             m_dependencies.push_back(dependency);
+
+            if (m_enableDepthStencil)
+            {
+                VkSubpassDependency depth_dependency = {};
+                depth_dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;
+                depth_dependency.dstSubpass          = 0;
+                depth_dependency.srcStageMask =
+                    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+                depth_dependency.srcAccessMask = 0;
+                depth_dependency.dstStageMask =
+                    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+                depth_dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                m_dependencies.push_back(depth_dependency);
+            }
         }
 
         {
@@ -62,6 +76,9 @@ namespace GE
 
     void GraphicsPass::__update_resource()
     {
+        m_flattenAttachments.clear();
+        m_inputRefference.clear();
+        m_outputReference.clear();
         /* ------- make references and flatten attachment descriptions ------ */
         int ref_idx = 0;
         // inputs

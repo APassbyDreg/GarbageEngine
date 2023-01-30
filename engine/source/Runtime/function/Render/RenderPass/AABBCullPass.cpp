@@ -7,7 +7,6 @@
 
 #include "Runtime/Application.h"
 
-#include "Runtime/function/Scene/Components/Renderer.h"
 #include "Runtime/function/Scene/Logic/EntityAABB.h"
 #include "Runtime/function/Scene/Scene.h"
 
@@ -40,51 +39,41 @@ namespace GE
 
         /* ------------------------- setup resources ------------------------ */
         const uint default_instance_cnt = 256;
-        auto       layouts              = std::vector<VkDescriptorSetLayout>(frame_cnt, set_layout);
+        auto       layouts              = std::vector<VkDescriptorSetLayout>(1, set_layout);
         auto       desc_sets_alloc_info = VkInit::GetDescriptorSetAllocateInfo(layouts);
-        auto       desc_sets            = VulkanCore::AllocDescriptorSets(desc_sets_alloc_info);
-        for (uint i = 0; i < frame_cnt; i++)
         {
-            FrameData fd = {};
-            {
-                VmaAllocationCreateInfo alloc_info = {};
-                alloc_info.usage                   = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-                VkBufferCreateInfo buffer_info     = {};
-                buffer_info.sType                  = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-                buffer_info.size                   = default_instance_cnt * sizeof(Bounds3f);
-                buffer_info.usage                  = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-
-                std::shared_ptr<AutoGpuBuffer> buffer = std::make_shared<AutoGpuBuffer>();
-                buffer->Alloc(buffer_info, alloc_info);
-                fd.aabb_buffer = buffer;
-            }
-            {
-                VmaAllocationCreateInfo alloc_info = {};
-                alloc_info.usage                   = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
-                VkBufferCreateInfo buffer_info     = {};
-                buffer_info.sType                  = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-                buffer_info.size                   = ceil(default_instance_cnt / 8.0);
-                buffer_info.usage                  = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-
-                std::shared_ptr<AutoGpuBuffer> buffer = std::make_shared<AutoGpuBuffer>();
-                buffer->Alloc(buffer_info, alloc_info);
-                fd.result_buffer = buffer;
-            }
-            fd.desc_set = desc_sets[i];
-            m_frameData.emplace_back(std::move(fd));
+            VmaAllocationCreateInfo alloc_info = {};
+            alloc_info.usage                   = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+            VkBufferCreateInfo buffer_info     = {};
+            buffer_info.sType                  = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            buffer_info.size                   = default_instance_cnt * sizeof(Bounds3f);
+            buffer_info.usage                  = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+            m_resourceManager.ReservePerFrameDynamicBuffer(FullIdentifier("AabbBuffer"), buffer_info, alloc_info);
         }
+        {
+            VmaAllocationCreateInfo alloc_info = {};
+            alloc_info.usage                   = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+            VkBufferCreateInfo buffer_info     = {};
+            buffer_info.sType                  = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            buffer_info.size                   = ceil(default_instance_cnt / 8.0 / sizeof(uint)) * sizeof(uint);
+            buffer_info.usage                  = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+            m_resourceManager.ReservePerFrameDynamicBuffer(FullIdentifier("ResultBuffer"), buffer_info, alloc_info);
+        }
+        m_resourceManager.ReservePerFrameDescriptorSet(FullIdentifier("Descriptor"), desc_sets_alloc_info);
     }
 
     void AABBCullPass::Run(RenderPassRunData& run_data, AABBCullPassData& data)
     {
         // unpack data
-        auto&& [frame_idx, cmd, rp_info, wait_semaphores, signal_semaphores, fence] = run_data;
-        auto&& [result_buffer, aabb_buffer, desc_set]                               = m_frameData[frame_idx];
+        auto&& [frame_idx, cmd, wait_semaphores, signal_semaphores, fence, resource_manager] = run_data;
+        auto&& aabb_buffer   = m_resourceManager.GetPerFrameDynamicBuffer(frame_idx, FullIdentifier("AabbBuffer"));
+        auto&& result_buffer = m_resourceManager.GetPerFrameDynamicBuffer(frame_idx, FullIdentifier("ResultBuffer"));
+        auto&& desc_set      = m_resourceManager.GetPerFrameDescriptorSet(frame_idx, "Descriptor");
 
         // get AABB of all renderable objects
         auto                  sc          = Application::GetInstance().GetActiveScene();
         auto                  renderables = sc->GetMeshManager().FrustrumCull(data.camera_vp);
-        const uint32          num_aabbs   = renderables.size();
+        uint                  num_aabbs   = renderables.size();
         std::vector<Bounds3f> aabbs {renderables.size()};
         for (auto&& e : renderables)
         {
@@ -93,7 +82,7 @@ namespace GE
 
         // update buffers
         // TODO: update only changed AABBs
-        size_t result_size = ceil(num_aabbs / 8.0);
+        size_t result_size = ceil(num_aabbs / 8.0 / sizeof(uint)) * sizeof(uint);
         aabb_buffer->Upload((byte*)aabbs.data(), aabbs.size() * sizeof(Bounds3f), 0, true);
         result_buffer->Resize(result_size);
 
@@ -125,7 +114,7 @@ namespace GE
             vkUpdateDescriptorSets(VulkanCore::GetDevice(), writes.size(), writes.data(), 0, nullptr);
         }
 
-        // bind and dispatch and end
+        // bind, dispatch and end
         {
             VkCommandBufferBeginInfo info = {};
             info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -137,11 +126,11 @@ namespace GE
             vkCmdBindDescriptorSets(
                 cmd, VK_PIPELINE_BIND_POINT_COMPUTE, GetPipelineLayout(), 0, 1, &desc_set, 0, nullptr);
 
-            data.num_aabbs = num_aabbs;
+            AABBCullPassPushConstants pc = {data.camera_vp, num_aabbs};
             vkCmdPushConstants(
-                cmd, GetPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(AABBCullPassData), &data);
+                cmd, GetPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(AABBCullPassPushConstants), &pc);
 
-            vkCmdDispatch(cmd, result_size, 1, 1);
+            vkCmdDispatch(cmd, num_aabbs, 1, 1);
 
             GE_VK_ASSERT(vkEndCommandBuffer(cmd));
         }

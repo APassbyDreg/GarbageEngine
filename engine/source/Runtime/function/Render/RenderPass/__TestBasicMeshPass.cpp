@@ -1,12 +1,61 @@
 #include "__TestBasicMeshPass.h"
 
 #include "Runtime/function/Render/ShaderManager/GLSLCompiler.h"
+#include "vulkan/vulkan_core.h"
+#include <memory>
 
 namespace GE
 {
+    void TestBasicMeshPass::Resize(uint width, uint height)
+    {
+        m_extent = {width, height};
+
+        std::vector<std::shared_ptr<GpuImage>> frame_images =
+            m_resourceManager.GetFramewiseImage(FullIdentifier("color"));
+
+        uint num_frames = frame_images.size();
+        m_frameBuffers.clear();
+        for (uint frame_id = 0; frame_id < num_frames; frame_id++)
+        {
+            // (re)create frame buffer image
+            auto&&            img              = frame_images[frame_id];
+            VkImageCreateInfo image_info       = {};
+            image_info.sType                   = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+            image_info.imageType               = VK_IMAGE_TYPE_2D;
+            image_info.extent.width            = width;
+            image_info.extent.height           = height;
+            image_info.extent.depth            = 1;
+            image_info.format                  = VK_FORMAT_R8G8B8A8_UNORM;
+            image_info.mipLevels               = 1;
+            image_info.arrayLayers             = 1;
+            image_info.initialLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
+            image_info.usage                   = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+            image_info.samples                 = VK_SAMPLE_COUNT_1_BIT;
+            image_info.tiling                  = VK_IMAGE_TILING_OPTIMAL;
+            image_info.sharingMode             = VK_SHARING_MODE_EXCLUSIVE;
+            VmaAllocationCreateInfo alloc_info = {};
+            img->Alloc(image_info, alloc_info);
+
+            // (re)create frame buffer
+            VkFramebufferCreateInfo framebuffer_info = {};
+            VkImageView             img_views[]      = {img->GetImageView()};
+            framebuffer_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebuffer_info.renderPass              = GetRenderPass();
+            framebuffer_info.attachmentCount         = 1;
+            framebuffer_info.pAttachments            = img_views;
+            framebuffer_info.width                   = width;
+            framebuffer_info.height                  = height;
+            framebuffer_info.layers                  = 1;
+            m_frameBuffers.emplace_back(std::make_shared<FrameBuffer>(framebuffer_info));
+        }
+    }
+
     void TestBasicMeshPass::InitInternal(uint frame_cnt)
     {
         m_name = "TestBasicMeshPass";
+
+        /* ------------------------ reserve resources ----------------------- */
+        m_resourceManager.ReservePerFrameImage(FullIdentifier("color"));
 
         /* ------------------------- setup resources ------------------------ */
         GraphicsPassResource output = {};
@@ -50,15 +99,27 @@ namespace GE
     void TestBasicMeshPass::Run(RenderPassRunData run_data, TestBasicMeshPassData pass_data)
     {
         // unpack data
-        auto&& [frame_idx, cmd, rp_info, wait_semaphores, signal_semaphores, fence] = run_data;
+        auto&& [frame_idx, cmd, wait_semaphores, signal_semaphores, fence, resource_manager] = run_data;
         auto&& [vertex_buffer, index_buffer, vertex_cnt, viewport_size]             = pass_data;
 
         // begin cmd buffer and render pass
+        VkClearValue clear_value = {};
+        clear_value.color        = {0.2f, 0.2f, 0.6f, 1.0f};
+        clear_value.depthStencil = {0.0f, 0};
         {
-            VkCommandBufferBeginInfo info = {};
-            info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            GE_VK_ASSERT(vkBeginCommandBuffer(cmd, &info));
+            VkCommandBufferBeginInfo cmd_info = {};
+            cmd_info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            cmd_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+            GE_VK_ASSERT(vkBeginCommandBuffer(cmd, &cmd_info));
+
+            VkRenderPassBeginInfo rp_info = {};
+            rp_info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            rp_info.renderPass            = GetRenderPass();
+            rp_info.framebuffer           = m_frameBuffers[frame_idx]->Get();
+            rp_info.renderArea.offset     = {0, 0};
+            rp_info.renderArea.extent     = m_extent;
+            rp_info.clearValueCount       = 1;
+            rp_info.pClearValues          = &clear_value;
             vkCmdBeginRenderPass(cmd, &rp_info, VK_SUBPASS_CONTENTS_INLINE);
         }
 

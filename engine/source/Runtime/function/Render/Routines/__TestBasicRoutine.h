@@ -10,22 +10,6 @@
 
 namespace GE
 {
-    class TestBasicFrameData
-    {
-    public:
-        GpuImage                     m_image;
-        VkFramebuffer                m_framebuffer;
-        VkCommandPool                m_graphicsPool, m_computePool;
-        std::vector<VkCommandBuffer> m_graphicsCmdBuffer, m_computeCmdBuffer;
-
-        ~TestBasicFrameData() { DestroyFrameBuffer(); };
-        void DestroyFrameBuffer()
-        {
-            if (m_framebuffer != VK_NULL_HANDLE)
-                vkDestroyFramebuffer(VulkanCore::GetDevice(), m_framebuffer, nullptr);
-        }
-    };
-
     class TestBasicRoutine
     {
     public:
@@ -42,17 +26,17 @@ namespace GE
 
         void Resize(uint width, uint height);
 
-        inline std::shared_ptr<TestBasicFrameData> GetFrameData(uint idx) { return m_frameData[idx]; }
+        VkImageView GetOutputImageView(uint frame_idx);
 
     private:
-        TestBasicMeshPass     m_basicMeshPass;
+        RenderResourceManager m_resourceManager;
+        TestBasicMeshPass     m_basicMeshPass {m_resourceManager};
 
         std::shared_ptr<AutoGpuBuffer> m_vertexBuffer;
         std::shared_ptr<AutoGpuBuffer> m_indexBuffer;
 
         VkExtent2D m_viewportSize = {0, 0};
 
-        uint                                             m_frameCnt = 0;
-        std::vector<std::shared_ptr<TestBasicFrameData>> m_frameData;
+        uint m_frameCnt = 0;
     };
 } // namespace GE

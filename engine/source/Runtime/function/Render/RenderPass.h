@@ -8,21 +8,33 @@
 
 #include "RenderPipeline.h"
 
+#include "RenderResource.h"
+#include "vulkan/vulkan_core.h"
+
 namespace GE
 {
     struct RenderPassRunData
     {
         uint                     frame_idx;
         VkCommandBuffer          cmd;
-        VkRenderPassBeginInfo&   rp_info;
-        std::vector<VkSemaphore> waitSemaphores;
-        std::vector<VkSemaphore> signalSemaphores;
+        std::vector<VkSemaphore> wait_semaphores;
+        std::vector<VkSemaphore> signal_semaphores;
         VkFence                  fence;
+        RenderResourceManager&   resource_manager;
     };
 
     class RenderPassBase
     {
     public:
+        RenderPassBase(RenderResourceManager& resource_manager, std::string identifier_prefix) :
+            m_resourceManager(resource_manager)
+        {
+            m_identifierPrefix = "RenderPass/" + identifier_prefix;
+            if (!m_identifierPrefix.ends_with("/"))
+            {
+                m_identifierPrefix += "/";
+            }
+        }
         void Init(uint frame_cnt)
         {
             m_frameCnt        = frame_cnt;
@@ -31,17 +43,22 @@ namespace GE
             BuildInternal();
         }
 
+        virtual void Resize(uint2 size) {}
+
         inline VkSemaphore GetSignaledSemaphore() { return m_signalSemaphore; }
+        inline std::string FullIdentifier(std::string suffix) { return m_identifierPrefix + suffix; }
 
     protected:
         virtual void InitInternal(uint frame_cnt) = 0; // Override by final class
         virtual void BuildInternal() = 0; // Override by different pass type
 
     protected:
-        std::string m_name            = "";
-        uint        m_frameCnt        = 1;
-        bool        m_ready           = false;
-        VkSemaphore m_signalSemaphore = VK_NULL_HANDLE;
+        std::string            m_identifierPrefix = "";
+        std::string            m_name             = "";
+        uint                   m_frameCnt         = 1;
+        bool                   m_ready            = false;
+        VkSemaphore            m_signalSemaphore  = VK_NULL_HANDLE;
+        RenderResourceManager& m_resourceManager;
     };
 
     class GraphicsPassResource
@@ -64,7 +81,12 @@ namespace GE
     class GraphicsPass : public RenderPassBase
     {
     public:
-        ~GraphicsPass();
+        GraphicsPass(RenderResourceManager& resource_manager, std::string identifier_prefix) :
+            RenderPassBase(resource_manager, "Graphics/" + identifier_prefix)
+        {}
+        virtual ~GraphicsPass();
+
+        virtual void Resize(uint width, uint height) { m_extent = {width, height}; };
 
         inline VkRenderPass     GetRenderPass() { return m_renderPass; }
         inline VkPipeline       GetPipeline() { return m_pipeline.GetPipeline(); }
@@ -100,7 +122,10 @@ namespace GE
     class ComputePass : public RenderPassBase
     {
     public:
-        ~ComputePass();
+        ComputePass(RenderResourceManager& resource_manager, std::string identifier_prefix) :
+            RenderPassBase(resource_manager, "Compute/" + identifier_prefix)
+        {}
+        virtual ~ComputePass();
 
         inline VkPipeline       GetPipeline() { return m_pipeline.GetPipeline(); }
         inline VkPipelineLayout GetPipelineLayout() { return m_pipeline.GetPipelineLayout(); }

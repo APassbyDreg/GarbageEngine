@@ -3,11 +3,31 @@
 #include "GE_pch.h"
 
 #include "VulkanCommon.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
     namespace VkInit
     {
+        inline VkFramebufferCreateInfo GetFramebufferCreateInfo(VkRenderPass              renderpass,
+                                                                VkExtent2D                size,
+                                                                std::vector<VkImageView>& attachments,
+                                                                uint                      layers = 1,
+                                                                VkFramebufferCreateFlags  flags  = 0)
+
+        {
+            VkFramebufferCreateInfo info = {};
+            info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            info.renderPass              = renderpass;
+            info.attachmentCount         = static_cast<uint32_t>(attachments.size());
+            info.pAttachments            = attachments.data();
+            info.width                   = size.width;
+            info.height                  = size.height;
+            info.layers                  = layers;
+            info.flags                   = flags;
+            return info;
+        }
+
         inline VkBufferCreateInfo GetBufferCreateInfo(VkDeviceSize       size,
                                                       VkBufferUsageFlags usage,
                                                       VkSharingMode      sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
@@ -30,8 +50,8 @@ namespace GE
             return info;
         }
 
-        inline VkDescriptorSetAllocateInfo
-        GetDescriptorSetAllocateInfo(std::vector<VkDescriptorSetLayout> layouts, VkDescriptorPool pool = VK_NULL_HANDLE)
+        inline VkDescriptorSetAllocateInfo GetDescriptorSetAllocateInfo(std::vector<VkDescriptorSetLayout>& layouts,
+                                                                        VkDescriptorPool pool = VK_NULL_HANDLE)
         {
             VkDescriptorSetAllocateInfo info = {};
             info.sType                       = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -393,6 +413,36 @@ namespace GE
             info.flags             = flags;
             info.dynamicStateCount = dynamicStates.size();
             info.pDynamicStates    = dynamicStates.data();
+            return info;
+        }
+
+        inline VkPipelineDepthStencilStateCreateInfo
+        GetPipelineDepthStencilStateCreateInfo(bool             depthTest   = false,
+                                               bool             depthWrite  = false,
+                                               VkCompareOp      depthOp     = VK_COMPARE_OP_LESS_OR_EQUAL,
+                                               float2           depthBounds = float2(0, 0),
+                                               bool             stencilTest = false,
+                                               VkStencilOpState front       = {},
+                                               VkStencilOpState back        = {})
+        {
+            bool depthBoundTest = depthBounds.x < depthBounds.x;
+
+            VkPipelineDepthStencilStateCreateInfo info = {};
+            info.sType                                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            info.pNext                                 = nullptr;
+
+            info.depthTestEnable  = depthTest ? VK_TRUE : VK_FALSE;
+            info.depthWriteEnable = depthWrite ? VK_TRUE : VK_FALSE;
+            info.depthCompareOp   = depthTest ? depthOp : VK_COMPARE_OP_ALWAYS;
+
+            info.depthBoundsTestEnable = depthBoundTest ? VK_TRUE : VK_FALSE;
+            info.minDepthBounds        = depthBounds.x;
+            info.maxDepthBounds        = depthBounds.y;
+
+            info.stencilTestEnable = stencilTest ? VK_TRUE : VK_FALSE;
+            info.front             = front;
+            info.back              = back;
+
             return info;
         }
 

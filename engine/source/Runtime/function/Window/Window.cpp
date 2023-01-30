@@ -523,10 +523,10 @@ namespace GE
         info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         GE_VK_ASSERT(vkCreateSampler(VulkanCore::GetDevice(), &info, nullptr, &m_viewportSampler));
 
-        for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
+        for (size_t frame_idx = 0; frame_idx < m_imguiWindow.ImageCount; frame_idx++)
         {
             auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
-                                                   m_renderRoutine.GetFrameData(i)->m_image.GetImageView(),
+                                                   m_renderRoutine.GetOutputImageView(frame_idx),
                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             m_viewportDescriptorSets.push_back(img);
         }
@@ -549,10 +549,10 @@ namespace GE
 
             // recreate viewport descriptor sets
             m_viewportDescriptorSets.clear();
-            for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
+            for (size_t frame_idx = 0; frame_idx < m_imguiWindow.ImageCount; frame_idx++)
             {
                 auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
-                                                       m_renderRoutine.GetFrameData(i)->m_image.GetImageView(),
+                                                       m_renderRoutine.GetOutputImageView(frame_idx),
                                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                 m_viewportDescriptorSets.push_back(img);
             }

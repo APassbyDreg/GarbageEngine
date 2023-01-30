@@ -16,10 +16,10 @@ namespace GE
             m_updatedCallbacks(v.m_updatedCallbacks), m_value(v.m_value), m_lastValue(v.m_lastValue)
         {}
 
-        inline void AddCallback(UpdateCallbackFn cb) { m_updatedCallbacks.push_back(cb); }
-        inline T    GetValue() const { return m_value; }
-        inline T    GetLastValue() const { return m_lastValue; }
-        inline void SetValue(T val)
+        inline void     AddCallback(UpdateCallbackFn cb) { m_updatedCallbacks.push_back(cb); }
+        inline const T& GetValue() const { return m_value; }
+        inline const T& GetLastValue() const { return m_lastValue; }
+        inline void     SetValue(T val)
         {
             m_lastValue = m_value;
             m_value     = val;

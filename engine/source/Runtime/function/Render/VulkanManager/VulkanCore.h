@@ -11,6 +11,7 @@
 
 #include "Runtime/core/Base/Singleton.h"
 #include "Runtime/core/Math/Math.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -68,7 +69,7 @@ namespace GE
         }
 
         /* ---------------------------- commands ---------------------------- */
-        static inline VkCommandPool CreateGrahicsCmdPool()
+        static inline VkCommandPool CreateGraphicsCmdPool()
         {
             VkCommandPoolCreateInfo create_info = VkInit::GetCommandPoolCreateInfo(GetGraphicsQueueFamilyIndex());
             VkCommandPool           command_pool;
@@ -87,9 +88,9 @@ namespace GE
             return command_pool;
         }
         static inline std::vector<VkCommandBuffer>
-        CreateCmdBuffer(VkCommandPool        pool,
-                        size_t               count = 1,
-                        VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+        CreateCmdBuffers(VkCommandPool        pool,
+                         size_t               count = 1,
+                         VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY)
         {
             VkCommandBufferAllocateInfo  info = VkInit::GetCommandBufferAllocateInfo(pool, level, 1);
             std::vector<VkCommandBuffer> cmd  = std::vector<VkCommandBuffer>(count);
@@ -108,7 +109,7 @@ namespace GE
         }
         static inline VkCommandBuffer BeginTransferCmd()
         {
-            VkCommandBuffer          cmd        = CreateCmdBuffer(GetInstance().m_transferCmdPool)[0];
+            VkCommandBuffer          cmd        = CreateCmdBuffers(GetInstance().m_transferCmdPool)[0];
             VkCommandBufferBeginInfo begin_info = {};
             begin_info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
             begin_info.flags                    = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -137,18 +138,17 @@ namespace GE
         static inline VkFence CreateFence()
         {
             VkFence           fence;
+            VkDevice          device = GetDevice();
             VkFenceCreateInfo info = VkInit::GetFenceCreateInfo();
-            GE_VK_ASSERT(vkCreateFence(GetDevice(), &info, nullptr, &fence));
-            GetInstance().m_destroyActionStack.push_back([=]() { vkDestroyFence(GetDevice(), fence, nullptr); });
+            GE_VK_ASSERT(vkCreateFence(device, &info, nullptr, &fence));
             return fence;
         }
         static inline VkSemaphore CreateSemaphore(VkSemaphoreCreateFlags flags = 0)
         {
             VkSemaphore           semaphore;
+            VkDevice              device = GetDevice();
             VkSemaphoreCreateInfo info = VkInit::GetSemaphoreCreateInfo(flags);
-            GE_VK_ASSERT(vkCreateSemaphore(GetDevice(), &info, nullptr, &semaphore));
-            GetInstance().m_destroyActionStack.push_back(
-                [=]() { vkDestroySemaphore(GetDevice(), semaphore, nullptr); });
+            GE_VK_ASSERT(vkCreateSemaphore(device, &info, nullptr, &semaphore));
             return semaphore;
         }
         static inline void WaitForFence(VkFence fence, bool waitAll = true, uint64_t timeout = UINT64_MAX)
@@ -159,9 +159,22 @@ namespace GE
         }
 
         /* --------------------------- descriptors -------------------------- */
+        static inline void ResetDescriptorPool(VkDescriptorPool pool, VkDescriptorPoolResetFlags flags = 0)
+        {
+            GE_VK_ASSERT(vkResetDescriptorPool(GetDevice(), pool, flags));
+        }
         static inline VkDescriptorPool GetGlobalDescriptorPool()
         {
             return GetInstance().ensure_ready().m_descriptorPool;
+        }
+        static inline VkDescriptorPool CreateDescriptorPool(VkDescriptorPoolCreateInfo info)
+        {
+            auto&&           instance = GetInstance().ensure_ready();
+            VkDescriptorPool pool;
+            GE_VK_ASSERT(vkCreateDescriptorPool(instance.m_device, &info, nullptr, &pool));
+            instance.m_destroyActionStack.push_back(
+                [=]() { vkDestroyDescriptorPool(GetInstance().ensure_ready().m_device, pool, nullptr); });
+            return pool;
         }
         static inline VkDescriptorSetLayout CreateDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo info)
         {
@@ -178,6 +191,14 @@ namespace GE
             GE_VK_ASSERT(vkAllocateDescriptorSets(GetDevice(), &info, sets.data()));
             return sets;
         }
+        static inline std::vector<VkDescriptorSet> AllocDescriptorSets(VkDescriptorPool            pool,
+                                                                       VkDescriptorSetAllocateInfo info)
+        {
+            std::vector<VkDescriptorSet> sets(info.descriptorSetCount);
+            info.descriptorPool = pool;
+            GE_VK_ASSERT(vkAllocateDescriptorSets(GetDevice(), &info, sets.data()));
+            return sets;
+        }
 
         /* ----------------------------- submit ----------------------------- */
         static inline void SubmitToGraphicsQueue(VkSubmitInfo info, VkFence fence = VK_NULL_HANDLE)
@@ -187,6 +208,14 @@ namespace GE
         static inline void SubmitToComputeQueue(VkSubmitInfo info, VkFence fence = VK_NULL_HANDLE)
         {
             GE_VK_ASSERT(vkQueueSubmit(GetComputeQueue(), 1, &info, fence));
+        }
+
+        /* -------------------------- frame buffer -------------------------- */
+        static inline VkFramebuffer CreateFramebuffer(VkFramebufferCreateInfo info)
+        {
+            VkFramebuffer framebuffer;
+            GE_VK_ASSERT(vkCreateFramebuffer(GetDevice(), &info, nullptr, &framebuffer));
+            return framebuffer;
         }
 
     private:
