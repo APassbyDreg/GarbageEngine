@@ -82,6 +82,11 @@ namespace GE
 
     void TriangleMeshResource::FromObj(fs::path file)
     {
+        // clear old data
+        m_data.m_indices.clear();
+        m_data.m_vertices.clear();
+
+        // load model
         objl::Loader loader;
         bool         success = loader.LoadFile(file.string());
         GE_CORE_CHECK(success, "[TriangleMeshResource::FromObj] Error loading obj file {}", file.string());

@@ -1,0 +1,6 @@
+{
+    "hlsl.additionalIncludeDirectories": [
+        "D:/Repositories/GarbageEngine/engine/shaders"
+    ],
+    "root": true
+}

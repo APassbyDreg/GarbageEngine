@@ -1,6 +1,6 @@
 #include "EntityAABB.h"
 
-#include "../Components/InstancedMesh.h"
+#include "../Components/Mesh.h"
 #include "../Components/Transform.h"
 #include "../Entity.h"
 
@@ -20,10 +20,10 @@ namespace GE
         }
         // compute new one
         Bounds3f aabb = float3(0, 0, 0);
-        if (e.HasComponent<InstancedMeshComponent>())
+        if (e.HasComponent<MeshComponent>())
         {
-            auto&& mesh = e.GetComponent<InstancedMeshComponent>();
-            auto   resource = mesh.GetCoreValues();
+            auto&& mesh     = e.GetComponent<MeshComponent>();
+            auto&& resource = mesh.GetCoreValue();
             if (resource != nullptr)
             {
                 aabb = resource->BBox();

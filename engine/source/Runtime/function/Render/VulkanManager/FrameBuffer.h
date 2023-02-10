@@ -11,6 +11,7 @@ namespace GE
     {
     public:
         FrameBuffer() {}
+        FrameBuffer(FrameBuffer&& old) { framebuffer = old.framebuffer; }
         FrameBuffer(VkFramebufferCreateInfo info) { framebuffer = VulkanCore::CreateFramebuffer(info); }
         ~FrameBuffer()
         {

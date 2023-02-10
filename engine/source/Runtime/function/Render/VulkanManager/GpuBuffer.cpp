@@ -1,29 +1,14 @@
 #include "GpuBuffer.h"
+#include "RenderUtils.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
-    void TransferBuffer(VkBuffer                 src,
-                        VkBuffer                 dst,
-                        size_t                   size,
-                        size_t                   src_offset        = 0,
-                        size_t                   dst_offset        = 0,
-                        std::vector<VkSemaphore> wait_semaphores   = {},
-                        std::vector<VkSemaphore> signal_semaphores = {},
-                        VkFence                  fence             = VK_NULL_HANDLE)
-    {
-        VkCommandBuffer cmd = VulkanCore::BeginTransferCmd();
-        VkBufferCopy    copyRegion {};
-        copyRegion.srcOffset = src_offset;
-        copyRegion.dstOffset = dst_offset;
-        copyRegion.size      = size;
-        vkCmdCopyBuffer(cmd, src, dst, 1, &copyRegion);
-        VulkanCore::EndTransferCmd(cmd, wait_semaphores, signal_semaphores, fence);
-    }
 
     void GpuBuffer::Setup()
     {
-        m_actionCompleteSemaphore = VulkanCore::CreateSemaphore();
-        m_actionCompleteFence     = VulkanCore::CreateFence();
+        m_actionCompleteFence = VulkanCore::CreateFence();
+        m_transferCmd         = VulkanCore::CreateCmdBuffers(GetBufferTransferCmdPool())[0];
     }
 
     GpuBuffer::GpuBuffer(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)
@@ -44,15 +29,11 @@ namespace GE
         m_alloced = src.m_alloced;
         if (m_alloced)
         {
-            m_bufferInfo = src.m_bufferInfo;
-            m_allocInfo  = src.m_allocInfo;
-            m_buffer     = src.m_buffer;
-            m_allocation = src.m_allocation;
-
-            src.WaitLastAction();
-            m_hasAction               = false;
-            m_actionCompleteFence     = src.m_actionCompleteFence;
-            m_actionCompleteSemaphore = src.m_actionCompleteSemaphore;
+            m_bufferInfo          = src.m_bufferInfo;
+            m_allocInfo           = src.m_allocInfo;
+            m_buffer              = src.m_buffer;
+            m_allocation          = src.m_allocation;
+            m_actionCompleteFence = src.m_actionCompleteFence;
         }
     }
 
@@ -99,7 +80,6 @@ namespace GE
     void GpuBuffer::Download(byte* data, size_t size, size_t offset)
     {
         GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
-        WaitLastAction();
 
         byte* mapped;
         GE_VK_ASSERT(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, (void**)&mapped));
@@ -107,13 +87,8 @@ namespace GE
         vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
     }
 
-    void GpuBuffer::Copy(GpuBuffer&               src_buffer,
-                         size_t                   size,
-                         size_t                   src_offset,
-                         size_t                   dst_offset,
-                         bool                     async,
-                         std::vector<VkSemaphore> wait_semaphores,
-                         bool                     resize_if_needed)
+    void
+    GpuBuffer::Copy(GpuBuffer& src_buffer, size_t size, size_t src_offset, size_t dst_offset, bool resize_if_needed)
     {
         GE_CORE_ASSERT(src_buffer.IsValid(), "Src buffer is not valid");
 
@@ -147,20 +122,9 @@ namespace GE
         }
 
         // dispatch transfer
-        WaitLastAction();
-        TransferBuffer(src_buffer.m_buffer,
-                       m_buffer,
-                       size,
-                       src_offset,
-                       dst_offset,
-                       wait_semaphores,
-                       {m_actionCompleteSemaphore},
-                       m_actionCompleteFence);
-        m_hasAction = true;
-        if (!async)
-        {
-            WaitLastAction();
-        }
+        RenderUtils::TransferBuffer(
+            m_transferCmd, src_buffer.m_buffer, m_buffer, size, src_offset, dst_offset, {}, {}, m_actionCompleteFence);
+        VulkanCore::WaitForFence(m_actionCompleteFence, c_waitTimeout);
     }
 
     void GpuBuffer::Resize(size_t size, size_t retain_start, size_t retain_size)
@@ -196,15 +160,15 @@ namespace GE
                 VulkanCore::GetAllocator(), &m_bufferInfo, &m_allocInfo, &m_buffer, &m_allocation, nullptr));
 
             // transfer
-            WaitLastAction();
-            TransferBuffer(old_buffer,
-                           m_buffer,
-                           retain_size,
-                           retain_start,
-                           retain_start,
-                           {},
-                           {m_actionCompleteSemaphore},
-                           m_actionCompleteFence);
+            RenderUtils::TransferBuffer(m_transferCmd,
+                                        old_buffer,
+                                        m_buffer,
+                                        retain_size,
+                                        retain_start,
+                                        retain_start,
+                                        {},
+                                        {},
+                                        m_actionCompleteFence);
             VulkanCore::WaitForFence(m_actionCompleteFence, c_waitTimeout);
 
             // destroy old buffer

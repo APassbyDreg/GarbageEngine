@@ -32,14 +32,26 @@ namespace GE
 
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-        ImGui::Begin("viewport");
-        __viewport_resize(ImGui::GetContentRegionAvail());
-        if (m_frameIdx >= m_imguiWindow.ImageCount)
         {
-            // only draw when we have gone through all frames for at least once
-            ImGui::Image(m_viewportDescriptorSets[m_imguiWindow.FrameIndex], m_viewportSize);
+            ImGui::Begin("Viewport");
+            __viewport_resize(ImGui::GetContentRegionAvail());
+            // TODO: migrate to real settings
+            int curr_routine_idx = Application::GetInstance()
+                                       .GetActiveScene()
+                                       ->GetSetting("TestSceneSetting")["Render Routine"]
+                                       .get<int>();
+            if (m_usingRenderRoutine != curr_routine_idx)
+            {
+                m_usingRenderRoutine = curr_routine_idx;
+                m_frameIdx           = 0;
+            }
+            if (m_frameIdx >= m_imguiWindow.ImageCount)
+            {
+                // only draw when we have gone through all frames for at least once
+                ImGui::Image(m_viewportDescriptorSets[curr_routine_idx][m_imguiWindow.FrameIndex], m_viewportSize);
+            }
+            ImGui::End();
         }
-        ImGui::End();
     }
 
     void Window::EndWindowRender()
@@ -96,9 +108,22 @@ namespace GE
         VulkanCore::WaitForFence(fd->Fence);
 
         /* -------------------------- renderer pass ------------------------- */
+        switch (m_usingRenderRoutine)
         {
-            m_renderRoutine.DrawFrame(
-                m_imguiWindow.FrameIndex, {image_acquired_semaphore}, {viewport_complete_semaphore}, VK_NULL_HANDLE);
+            case 0:
+                m_renderRoutine0.DrawFrame(m_imguiWindow.FrameIndex,
+                                           {image_acquired_semaphore},
+                                           {viewport_complete_semaphore},
+                                           VK_NULL_HANDLE);
+                break;
+            case 1:
+                m_renderRoutine1.DrawFrame(m_imguiWindow.FrameIndex,
+                                           {image_acquired_semaphore},
+                                           {viewport_complete_semaphore},
+                                           VK_NULL_HANDLE);
+                break;
+            default:
+                GE_CORE_ERROR("Invalid Render Routine {}, valid range is [0, 1]", m_usingRenderRoutine);
         }
 
         /* --------------------------- imgui pass --------------------------- */
@@ -503,7 +528,8 @@ namespace GE
         __init_imgui(int2(props.width, props.height));
 
         // setup render routine
-        m_renderRoutine.Init(m_imguiWindow.ImageCount);
+        m_renderRoutine0.Init(m_imguiWindow.ImageCount);
+        m_renderRoutine1.Init(m_imguiWindow.ImageCount);
 
         // setup semaphores
         for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
@@ -522,13 +548,21 @@ namespace GE
         info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         GE_VK_ASSERT(vkCreateSampler(VulkanCore::GetDevice(), &info, nullptr, &m_viewportSampler));
-
+        m_viewportDescriptorSets = {{}, {}};
         for (size_t frame_idx = 0; frame_idx < m_imguiWindow.ImageCount; frame_idx++)
         {
-            auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
-                                                   m_renderRoutine.GetOutputImageView(frame_idx),
-                                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-            m_viewportDescriptorSets.push_back(img);
+            {
+                auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
+                                                       m_renderRoutine0.GetOutputImageView(frame_idx),
+                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                m_viewportDescriptorSets[0].push_back(img);
+            }
+            {
+                auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
+                                                       m_renderRoutine1.GetOutputImageView(frame_idx),
+                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                m_viewportDescriptorSets[1].push_back(img);
+            }
         }
     }
 
@@ -545,16 +579,25 @@ namespace GE
         if (size.x != m_viewportSize.x || size.y != m_viewportSize.y)
         {
             m_viewportSize = size;
-            m_renderRoutine.Resize(size.x, size.y);
+            m_renderRoutine0.Resize(size.x, size.y);
+            m_renderRoutine1.Resize(size.x, size.y);
 
             // recreate viewport descriptor sets
-            m_viewportDescriptorSets.clear();
+            m_viewportDescriptorSets = {{}, {}};
             for (size_t frame_idx = 0; frame_idx < m_imguiWindow.ImageCount; frame_idx++)
             {
-                auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
-                                                       m_renderRoutine.GetOutputImageView(frame_idx),
-                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                m_viewportDescriptorSets.push_back(img);
+                {
+                    auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
+                                                           m_renderRoutine0.GetOutputImageView(frame_idx),
+                                                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    m_viewportDescriptorSets[0].push_back(img);
+                }
+                {
+                    auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
+                                                           m_renderRoutine1.GetOutputImageView(frame_idx),
+                                                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    m_viewportDescriptorSets[1].push_back(img);
+                }
             }
 
             // reset frame index

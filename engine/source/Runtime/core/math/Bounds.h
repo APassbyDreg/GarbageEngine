@@ -134,39 +134,41 @@ namespace GE
     typedef TransformedBounds<Bounds3f, float4x4> TransformedBounds3f;
     typedef TransformedBounds<Bounds2f, float3x3> TransformedBounds2f;
 
-    enum class AABBFrustrumIntersection
+    enum class BoundsIntersectionState
     {
         INSIDE,
         INTERSECT,
         OUTSIDE
     };
 
-    inline AABBFrustrumIntersection FrustrumAABBIntersection(float4x4& vp, Bounds3f aabb)
+    inline BoundsIntersectionState FrustrumAABBIntersection(float4x4& vp, Bounds3f aabb)
     {
         aabb = Transform(aabb, vp);
 
-        const std::vector<float2> directions = {{0, 0}, {1, 0}, {0, 1}, {1, 1}};
-        const float2              b          = aabb.Min();
-        const float2              v          = aabb.Max() - aabb.Min();
+        auto intersect_1d = [](float min, float max) {
+            assert(min <= max);
+            if ((min < 0 && max < 0) || (min > 1 && max > 1))
+                return BoundsIntersectionState::OUTSIDE;
+            else if (0 <= min && max <= 1)
+                return BoundsIntersectionState::INSIDE;
+            else
+                return BoundsIntersectionState::INTERSECT;
+        };
 
-        int inside_cnt = 0;
-        for (auto&& dir : directions)
+        auto x_state = intersect_1d(aabb.minX(), aabb.maxX());
+        auto y_state = intersect_1d(aabb.minY(), aabb.maxY());
+
+        if (x_state == BoundsIntersectionState::OUTSIDE || y_state == BoundsIntersectionState::OUTSIDE)
         {
-            float2 p = b + dir * v;
-            if (p.x >= -1 && p.x <= 1 && p.y >= -1 && p.y <= 1)
-            {
-                inside_cnt++;
-            }
+            return BoundsIntersectionState::OUTSIDE;
         }
-
-        switch (inside_cnt)
+        else if (x_state == BoundsIntersectionState::INSIDE && y_state == BoundsIntersectionState::INSIDE)
         {
-            case 4:
-                return AABBFrustrumIntersection::INSIDE;
-            case 0:
-                return AABBFrustrumIntersection::OUTSIDE;
-            default:
-                return AABBFrustrumIntersection::INTERSECT;
+            return BoundsIntersectionState::INSIDE;
+        }
+        else
+        {
+            return BoundsIntersectionState::INTERSECT;
         }
     }
 } // namespace GE

@@ -13,9 +13,9 @@ layout(push_constant) uniform Constants
 }
 config;
 
-layout(binding = 1) readonly buffer AABBBuffer { AABB aabbs[]; }
+layout(set = 0, binding = 0) readonly buffer AABBBuffer { AABB aabbs[]; }
 aabb_buffer;
-layout(binding = 2) buffer ResultBuffer { lowp uint result[]; }
+layout(set = 0, binding = 1) buffer ResultBuffer { lowp uint result[]; }
 result_buffer;
 
 const vec3 directions[8] = {vec3(0.0, 0.0, 0.0),

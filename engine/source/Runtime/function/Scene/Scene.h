@@ -9,6 +9,7 @@
 #include "Runtime/resource/Managers/ResourceManager.h"
 #include "Runtime/resource/ResourceTypes/JsonResource.h"
 
+#include "Manager/CameraManager.h"
 #include "Manager/MeshManager.h"
 
 #include "Settings/SceneSettingsFactory.h"
@@ -29,7 +30,8 @@ private: \
     {
         friend class Entity;
 
-        DEFINE_SCENE_MANAGER(MeshManager)
+        DEFINE_SCENE_MANAGER(MeshManager);
+        DEFINE_SCENE_MANAGER(CameraManager);
 
     public:
         Scene();

@@ -2,7 +2,7 @@
 
 namespace GE
 {
-    inline shaderc_shader_kind __shadertype2kind(ShaderType type)
+    static shaderc_shader_kind __shadertype2kind(ShaderType type)
     {
         switch (type)
         {

@@ -2,10 +2,13 @@
 
 #include "GE_pch.h"
 
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/string_cast.hpp"
 #include "glm/gtx/transform.hpp"
+#include <type_traits>
 
 namespace GE
 {
@@ -93,5 +96,11 @@ namespace GE
     inline T Lerp(T a, T b, double t)
     {
         return a + (b - a) * t;
+    }
+
+    template<uint64 R, class T = int64>
+    static inline T RoundTo(T value)
+    {
+        return round(value / float(R)) * T(R);
     }
 } // namespace GE

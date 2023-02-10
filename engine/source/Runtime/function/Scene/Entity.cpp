@@ -13,7 +13,6 @@ namespace GE
 
     Entity::~Entity()
     {
-        GE_CORE_TRACE("destroy {}", m_entityID);
         m_srcReg.destroy(m_registryID);
     }
 

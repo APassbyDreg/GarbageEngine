@@ -1,0 +1,70 @@
+#include "Common/Transforms.gsh"
+
+#define GROUP_SIZE 32
+
+struct AABB
+{
+    float3 min_loc;
+    float3 max_loc;
+};
+
+struct Settings 
+{
+    uint num_aabbs;
+    float4x4 cam_vp;
+};
+
+[[vk::binding(0, 0)]]
+StructuredBuffer<AABB> aabb_buffer; // in world space
+
+[[vk::binding(1, 0)]]
+RWBuffer<uint> result_buffer; // view as 32 bit uint
+
+[[vk::push_constant]]
+Settings settings;
+
+groupshared bool group_results[GROUP_SIZE];
+
+const float3 directions[8] = {float3(0.0, 0.0, 0.0),
+                              float3(0.0, 0.0, 1.0),
+                              float3(0.0, 1.0, 0.0),
+                              float3(0.0, 1.0, 1.0),
+                              float3(1.0, 0.0, 0.0),
+                              float3(1.0, 0.0, 1.0),
+                              float3(1.0, 1.0, 0.0),
+                              float3(1.0, 1.0, 1.0)};
+
+[numthreads(GROUP_SIZE, 1, 1)]
+void CSMain(uint3 dispatch_id : SV_DispatchThreadID, uint group_id : SV_GroupIndex)
+{
+    uint offset = dispatch_id.x * GROUP_SIZE + group_id;
+    if (offset < settings.num_aabbs)
+    {
+        group_results[group_id] = false;
+        AABB aabb               = aabb_buffer[offset];
+        float3 min_to_max       = aabb.max_loc - aabb.min_loc;
+        for (int i = 0; i < 8; i++)
+        {
+            float3 pt = aabb.min_loc + min_to_max * directions[i];
+            pt = HomogeneousTransform(pt, settings.cam_vp);
+            if (pt.x >= -1 && pt.x <= 1 && pt.y >= -1 && pt.y <= 1 && pt.z >= -1 && pt.z <= 1)
+            {
+                group_results[group_id] = true;
+                break;
+            }
+        }
+    }
+    
+    AllMemoryBarrierWithGroupSync();
+
+    if (group_id == 0)
+    {
+        uint result = 0;
+        [unroll]
+        for (int i = 0; i < GROUP_SIZE; i++)
+        {
+            result |= group_results[i] << i;
+        }
+        result_buffer[dispatch_id.x] = result;
+    }
+}

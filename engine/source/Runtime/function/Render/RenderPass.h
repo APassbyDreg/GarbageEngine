@@ -9,18 +9,16 @@
 #include "RenderPipeline.h"
 
 #include "RenderResource.h"
-#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
     struct RenderPassRunData
     {
-        uint                     frame_idx;
-        VkCommandBuffer          cmd;
-        std::vector<VkSemaphore> wait_semaphores;
-        std::vector<VkSemaphore> signal_semaphores;
-        VkFence                  fence;
-        RenderResourceManager&   resource_manager;
+        uint                     frame_idx         = std::numeric_limits<uint>::max();
+        VkCommandBuffer          cmd               = VK_NULL_HANDLE;
+        std::vector<VkSemaphore> wait_semaphores   = {};
+        std::vector<VkSemaphore> signal_semaphores = {};
+        VkFence                  fence             = VK_NULL_HANDLE;
     };
 
     class RenderPassBase
@@ -45,8 +43,9 @@ namespace GE
 
         virtual void Resize(uint2 size) {}
 
-        inline VkSemaphore GetSignaledSemaphore() { return m_signalSemaphore; }
-        inline std::string FullIdentifier(std::string suffix) { return m_identifierPrefix + suffix; }
+        inline VkSemaphore            GetSignaledSemaphore() { return m_signalSemaphore; }
+        inline std::string            FullIdentifier(std::string suffix = "") { return m_identifierPrefix + suffix; }
+        inline RenderResourceManager& GetResourceManager() { return m_resourceManager; }
 
     protected:
         virtual void InitInternal(uint frame_cnt) = 0; // Override by final class
@@ -61,10 +60,10 @@ namespace GE
         RenderResourceManager& m_resourceManager;
     };
 
-    class GraphicsPassResource
+    class GraphicsColorResource
     {
     public:
-        GraphicsPassResource()
+        GraphicsColorResource()
         {
             desc   = VkInit::GetAttachmentDescription();
             blend  = VkInit::GetPipelineColorBlendAttachmentState();
@@ -92,12 +91,14 @@ namespace GE
         inline VkPipeline       GetPipeline() { return m_pipeline.GetPipeline(); }
         inline VkPipelineLayout GetPipelineLayout() { return m_pipeline.GetPipelineLayout(); }
 
+        inline GraphicsRenderPipeline& GetPipelineObject() { return m_pipeline; }
+
     protected:
         virtual void BuildInternal() override;
         void __update_resource();
 
     public:
-        std::vector<GraphicsPassResource> m_input, m_output;
+        std::vector<GraphicsColorResource> m_input, m_output;
 
     protected:
         VkRenderPass m_renderPass;
@@ -129,6 +130,8 @@ namespace GE
 
         inline VkPipeline       GetPipeline() { return m_pipeline.GetPipeline(); }
         inline VkPipelineLayout GetPipelineLayout() { return m_pipeline.GetPipelineLayout(); }
+
+        inline ComputeRenderPipeline& GetPipelineObject() { return m_pipeline; }
 
     protected:
         virtual void BuildInternal() override;

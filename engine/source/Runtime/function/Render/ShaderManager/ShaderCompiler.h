@@ -16,7 +16,10 @@ namespace GE
                        std::vector<std::string> include_dirs = {},
                        std::vector<std::string> defines      = {}) :
             m_type(type),
-            m_includeDirs(include_dirs), m_defines(defines) {};
+            m_includeDirs(include_dirs), m_defines(defines)
+        {
+            m_includeDirs.push_back(Config::shader_dir);
+        };
 
         virtual std::shared_ptr<ShaderModule> Compile(std::string path, std::string entry) = 0;
 

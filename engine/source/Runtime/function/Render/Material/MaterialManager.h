@@ -5,6 +5,7 @@
 #include "Runtime/core/Concepts.h"
 
 #include "Material.h"
+#include <memory>
 
 namespace GE
 {
@@ -22,46 +23,46 @@ namespace GE
             GetInstance().EnsureInit();
             if constexpr (std::is_same_v<T, ForwardMaterial>)
             {
-                return GetInstance().m_forwardMaterialNames;
+                return GetInstance().m_forwardMaterialTypes;
             }
             if constexpr (std::is_same_v<T, DeferredMaterial>)
             {
-                return GetInstance().m_deferredMaterialNames;
+                return GetInstance().m_deferredMaterialTypes;
             }
         }
 
-        inline static std::shared_ptr<ForwardMaterial> CreateForwardMaterial(std::string name, int id, fs::path path)
+        inline static std::shared_ptr<ForwardMaterial> CreateForwardMaterial(std::string type, int id, fs::path path)
         {
             GetInstance().EnsureInit();
-            return GetInstance().m_forwardFactoriesNoData[name](id, path);
+            return GetInstance().m_forwardFactoriesNoData[type](id, path);
         }
         inline static std::shared_ptr<ForwardMaterial>
-        CreateForwardMaterial(std::string name, int id, fs::path path, const json& data)
+        CreateForwardMaterial(std::string type, int id, fs::path path, const json& data)
         {
             GetInstance().EnsureInit();
-            return GetInstance().m_forwardFactoriesWithData[name](id, path, data);
+            return GetInstance().m_forwardFactoriesWithData[type](id, path, data);
         }
 
-        inline static std::shared_ptr<DeferredMaterial> CreateDeferredMaterial(std::string name, int id, fs::path path)
+        inline static std::shared_ptr<DeferredMaterial> CreateDeferredMaterial(std::string type, int id, fs::path path)
         {
             GetInstance().EnsureInit();
-            return GetInstance().m_deferredFactoriesNoData[name](id, path);
+            return GetInstance().m_deferredFactoriesNoData[type](id, path);
         }
         inline static std::shared_ptr<DeferredMaterial>
-        CreateDeferredMaterial(std::string name, int id, fs::path path, const json& data)
+        CreateDeferredMaterial(std::string type, int id, fs::path path, const json& data)
         {
             GetInstance().EnsureInit();
-            return GetInstance().m_deferredFactoriesWithData[name](id, path, data);
+            return GetInstance().m_deferredFactoriesWithData[type](id, path, data);
         }
 
     private:
         template<std::derived_from<ForwardMaterial> T>
         void AddForwardMaterial()
         {
-            auto name = T::GetNameStatic();
-            m_forwardMaterialNames.push_back(name);
-            m_forwardFactoriesNoData[name]   = [](int id, fs::path path) { return std::make_shared<T>(id, path); };
-            m_forwardFactoriesWithData[name] = [](int id, fs::path path, const json& data) {
+            auto type = T::GetTypeStatic();
+            m_forwardMaterialTypes.push_back(type);
+            m_forwardFactoriesNoData[type]   = [](int id, fs::path path) { return std::make_shared<T>(id, path); };
+            m_forwardFactoriesWithData[type] = [](int id, fs::path path, const json& data) {
                 return std::make_shared<T>(id, path, data);
             };
         }
@@ -69,10 +70,10 @@ namespace GE
         template<std::derived_from<DeferredMaterial> T>
         void AddDeferredMaterial()
         {
-            auto name = T::GetNameStatic();
-            m_deferredMaterialNames.push_back(name);
-            m_deferredFactoriesNoData[name]   = [](int id, fs::path path) { return std::make_shared<T>(id, path); };
-            m_deferredFactoriesWithData[name] = [](int id, fs::path path, const json& data) {
+            auto type = T::GetTypeStatic();
+            m_deferredMaterialTypes.push_back(type);
+            m_deferredFactoriesNoData[type]   = [](int id, fs::path path) { return std::make_shared<T>(id, path); };
+            m_deferredFactoriesWithData[type] = [](int id, fs::path path, const json& data) {
                 return std::make_shared<T>(id, path, data);
             };
         }
@@ -81,8 +82,8 @@ namespace GE
     private:
         bool m_initialized = false;
 
-        std::vector<std::string>                                     m_forwardMaterialNames;
-        std::vector<std::string>                                     m_deferredMaterialNames;
+        std::vector<std::string>                                     m_forwardMaterialTypes;
+        std::vector<std::string>                                     m_deferredMaterialTypes;
         std::map<std::string, FactoryFuncNoData<ForwardMaterial>>    m_forwardFactoriesNoData;
         std::map<std::string, FactoryFuncNoData<DeferredMaterial>>   m_deferredFactoriesNoData;
         std::map<std::string, FactoryFuncWithData<ForwardMaterial>>  m_forwardFactoriesWithData;
@@ -128,39 +129,90 @@ namespace GE
             return GetInstance().m_forwardMaterials[id];
         }
 
-        inline static std::shared_ptr<ForwardMaterial> CreateForwardMaterial(std::string name, fs::path path)
+        inline static std::shared_ptr<ForwardMaterial> CreateForwardMaterial(std::string type, std::string path)
         {
             uint id       = GetInstance().m_forwardMaterials.size();
-            auto material = MaterialFactory::CreateForwardMaterial(name, id, path);
+            auto material = MaterialFactory::CreateForwardMaterial(type, id, path);
             GetInstance().m_forwardMaterials.push_back(material);
+            GetInstance().m_pathToMaterial[path] = material;
             return material;
         }
-        inline static std::shared_ptr<DeferredMaterial> CreateDeferredMaterial(std::string name, fs::path path)
+        inline static std::shared_ptr<DeferredMaterial> CreateDeferredMaterial(std::string type, std::string path)
         {
             uint id       = GetInstance().m_deferredMaterials.size();
-            auto material = MaterialFactory::CreateDeferredMaterial(name, id, path);
+            auto material = MaterialFactory::CreateDeferredMaterial(type, id, path);
             GetInstance().m_deferredMaterials.push_back(material);
+            GetInstance().m_pathToMaterial[path] = material;
             return material;
         }
         inline static std::shared_ptr<ForwardMaterial>
-        CreateForwardMaterial(std::string name, fs::path path, const json& data)
+        CreateForwardMaterial(std::string type, std::string path, const json& data)
         {
             uint id       = GetInstance().m_forwardMaterials.size();
-            auto material = MaterialFactory::CreateForwardMaterial(name, id, path, data);
+            auto material = MaterialFactory::CreateForwardMaterial(type, id, path, data);
             GetInstance().m_forwardMaterials.push_back(material);
+            GetInstance().m_pathToMaterial[path] = material;
             return material;
         }
         inline static std::shared_ptr<DeferredMaterial>
-        CreateDeferredMaterial(std::string name, fs::path path, const json& data)
+        CreateDeferredMaterial(std::string type, std::string path, const json& data)
         {
             uint id       = GetInstance().m_deferredMaterials.size();
-            auto material = MaterialFactory::CreateDeferredMaterial(name, id, path, data);
+            auto material = MaterialFactory::CreateDeferredMaterial(type, id, path, data);
             GetInstance().m_deferredMaterials.push_back(material);
+            GetInstance().m_pathToMaterial[path] = material;
             return material;
+        }
+
+        inline static std::shared_ptr<Material> LoadMaterial(std::string path)
+        {
+            auto&& instance = GetInstance();
+            if (instance.m_pathToMaterial.find(path) != instance.m_pathToMaterial.end())
+            {
+                return instance.m_pathToMaterial[path];
+            }
+
+            auto&& resource = ResourceManager::GetResource<JsonResource>(path, JsonIdentifier::MATERIAL);
+            if (resource->IsValid())
+            {
+                auto&& data = resource->GetData();
+                auto&& type = data["type"].get<std::string>();
+                auto&& mode = data["mode"].get<std::string>();
+                if (mode == "forward")
+                {
+                    return CreateForwardMaterial(type, path);
+                }
+                if (mode == "deferred")
+                {
+                    return CreateDeferredMaterial(type, path);
+                }
+            }
+            GE_CORE_WARN("[MaterialManager::LoadMaterial] invalid input path [{}]", path);
+            return nullptr;
+        }
+
+        inline static std::shared_ptr<Material> CreateMaterial(std::string type, std::string mode, std::string path)
+        {
+            auto&& instance = GetInstance();
+            if (instance.m_pathToMaterial.find(path) != instance.m_pathToMaterial.end())
+            {
+                return instance.m_pathToMaterial[path];
+            }
+            if (mode == "forward")
+            {
+                return CreateForwardMaterial(type, path);
+            }
+            if (mode == "deferred")
+            {
+                return CreateDeferredMaterial(type, path);
+            }
+            GE_CORE_WARN("[MaterialManager::CreateMaterial] invalid input mode [{}]", mode);
+            return nullptr;
         }
 
     private:
         std::vector<std::shared_ptr<DeferredMaterial>> m_deferredMaterials;
         std::vector<std::shared_ptr<ForwardMaterial>>  m_forwardMaterials;
+        std::map<std::string, std::shared_ptr<Material>> m_pathToMaterial;
     };
 } // namespace GE

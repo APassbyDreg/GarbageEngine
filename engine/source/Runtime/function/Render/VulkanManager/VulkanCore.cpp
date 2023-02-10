@@ -1,6 +1,8 @@
 #include "VulkanCore.h"
 
 #include "Runtime/core/Log/LogSystem.h"
+#include "vulkan/vulkan_core.h"
+#include <stdint.h>
 
 namespace GE
 {
@@ -42,7 +44,7 @@ namespace GE
                 GE_CORE_WARN("[Vulkan {0}]: {1}", msg_type, pCallbackData->pMessage);
                 break;
             case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-                GE_CORE_ERROR("[Vulkan {0}]: {1}", msg_type, pCallbackData->pMessage);
+                GE_CORE_CRITICAL("[Vulkan {0}]: {1}", msg_type, pCallbackData->pMessage);
                 break;
             default:
                 GE_CORE_WARN("[Vulkan {0}]: {1}", msg_type, pCallbackData->pMessage);
@@ -87,7 +89,7 @@ namespace GE
                 .set_app_version(1)
                 .set_engine_name("GE")
                 .set_engine_version(1)
-                .require_api_version(VK_API_VERSION_1_2);
+                .require_api_version(VK_API_VERSION_1_3);
 
             // extensions
             uint32_t     glfw_extension_count = 0;
@@ -98,6 +100,22 @@ namespace GE
             }
 
 #ifdef GE_DEBUG
+            // std::vector<VkExtensionProperties> properties = {};
+            // uint32_t                           prop_count = 0;
+            // VkResult                           err        = VK_INCOMPLETE;
+            // while (err == VK_INCOMPLETE)
+            // {
+            //     err = vkEnumerateInstanceExtensionProperties(nullptr, &prop_count, nullptr);
+            //     properties.resize(prop_count);
+            //     err = vkEnumerateInstanceExtensionProperties(nullptr, &prop_count, properties.data());
+            // }
+            // std::vector<std::string> props;
+            // for (int i = 0; i < prop_count; i++)
+            // {
+            //     props.emplace_back(properties[i].extensionName);
+            // }
+            // builder.enable_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+
             builder.request_validation_layers(true).set_debug_callback(__debug_messenger);
 #endif
             VKB_CHECK_RETURN(builder.build(), m_vkbInstance);
@@ -121,7 +139,7 @@ namespace GE
         // Choose and create device
         {
             vkb::PhysicalDeviceSelector selector {m_vkbInstance};
-            selector.set_minimum_version(1, 2).set_surface(m_surface).require_present().prefer_gpu_device_type(
+            selector.set_minimum_version(1, 3).set_surface(m_surface).require_present().prefer_gpu_device_type(
                 vkb::PreferredDeviceType::discrete);
             VKB_CHECK_RETURN(selector.select(), m_vkbPhysicalDevice);
 

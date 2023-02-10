@@ -2,31 +2,29 @@
 
 #include "Runtime/function/Scene/Components/Tag.h"
 
+#include "Runtime/core/Math/Random.h"
+
 namespace GE
 {
-    Scene::Scene() : m_MeshManager(*this)
+#define SETUP_SCENE_MANAGERS() m_MeshManager(*this), m_CameraManager(*this)
+
+    Scene::Scene() : SETUP_SCENE_MANAGERS()
     {
+        Random rand;
+        m_name = std::format("GE_scene_{}", rand.RandInt<uint>(0, (1 << 16) - 1));
         Setup();
-        m_name = std::format("GE_scene_{}", std::rand() % (1 << 16));
     }
 
-    Scene::Scene(const json& data) : m_MeshManager(*this)
-    {
-        Setup();
-        Deserialize(data);
-    }
+    Scene::Scene(const json& data) : SETUP_SCENE_MANAGERS() { Deserialize(data); }
 
-    Scene::Scene(const fs::path path) : m_MeshManager(*this)
-    {
-        Setup();
-        Load(path);
-    }
+    Scene::Scene(const fs::path path) : SETUP_SCENE_MANAGERS() { Load(path); }
 
     Scene::~Scene() {}
 
     void Scene::Setup()
     {
         m_MeshManager.Setup();
+        m_CameraManager.Setup();
         SceneSettingsFactory::InitializeSettingsMap(m_sceneSettings);
     }
 
@@ -86,8 +84,8 @@ namespace GE
     {
         for (auto&& [eid, e] : m_entities)
         {
-            TagComponent& tag = e->GetComponent<TagComponent>();
-            if (tag.GetCoreValues().name == name)
+            auto&& tagname = e->GetComponent<TagComponent>().GetTagName();
+            if (tagname == name)
             {
                 return e;
             }
@@ -119,7 +117,7 @@ namespace GE
         for (auto&& [eid, e] : m_entities)
         {
             TagComponent& tag  = e->GetComponent<TagComponent>();
-            std::string   name = tag.GetCoreValues().name;
+            std::string   name = tag.GetTagName();
             if (name.empty())
             {
                 name = "unnamed entity";
@@ -161,10 +159,11 @@ namespace GE
                 for (auto [eid, entity] : m_entities)
                 {
                     std::string display_name =
-                        std::to_string(eid) + ": " + entity->GetComponent<TagComponent>().GetCoreValues().name;
+                        std::to_string(eid) + ": " + entity->GetComponent<TagComponent>().GetCoreValue().name;
                     if (ImGui::Selectable(display_name.c_str()))
                     {
-                        focused_entity->SetParent(entity);
+                        if (focused_entity->GetEntityID() != eid)
+                            focused_entity->SetParent(entity);
                     }
                 }
                 ImGui::EndPopup();
@@ -174,7 +173,7 @@ namespace GE
             ImGui::SameLine();
             std::shared_ptr<Entity> parent = focused_entity->GetParent();
             std::string             parent_text =
-                "Parent: " + ((parent == nullptr) ? "None" : parent->GetComponent<TagComponent>().GetCoreValues().name);
+                "Parent: " + ((parent == nullptr) ? "None" : parent->GetComponent<TagComponent>().GetCoreValue().name);
             ImGui::Text(parent_text.c_str());
 
             // per component
@@ -237,6 +236,7 @@ namespace GE
     void Scene::Deserialize(const json& data)
     {
         m_name = data["name"].get<std::string>();
+        Setup();
 
         for (auto& edata : data["entities"])
         {

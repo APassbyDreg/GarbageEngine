@@ -25,6 +25,8 @@ public: \
         return #name; \
     }
 
+#define LABEL_WITH_NAME(text) (std::string(text) + "##Settings_" + GetName()).c_str()
+
     class SettingsBase
     {
     public:

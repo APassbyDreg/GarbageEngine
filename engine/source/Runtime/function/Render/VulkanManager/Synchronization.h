@@ -9,6 +9,7 @@ namespace GE
     class Semaphore
     {
     public:
+        Semaphore(Semaphore&& old) { semaphore = old.semaphore; }
         Semaphore(uint flags = 0) { semaphore = VulkanCore::CreateSemaphore(flags); }
         ~Semaphore()
         {
@@ -19,6 +20,7 @@ namespace GE
         }
 
         inline VkSemaphore Get() { return semaphore; }
+        inline bool        IsValid() { return semaphore != VK_NULL_HANDLE; }
         inline             operator VkSemaphore() { return semaphore; }
 
     private:
@@ -29,6 +31,7 @@ namespace GE
     {
     public:
         Fence() { fence = VulkanCore::CreateFence(); }
+        Fence(Fence&& old) { fence = old.fence; }
         ~Fence()
         {
             if (fence != VK_NULL_HANDLE)
@@ -38,6 +41,7 @@ namespace GE
         }
 
         inline VkFence Get() { return fence; }
+        inline bool    IsValid() { return fence != VK_NULL_HANDLE; }
         inline         operator VkFence() { return fence; }
 
     private:

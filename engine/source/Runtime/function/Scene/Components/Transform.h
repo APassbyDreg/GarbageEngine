@@ -63,9 +63,9 @@ namespace GE
         {
             auto [position, scale, rotation] = m_core.GetValue();
             float3 euler                     = glm::degrees(glm::eulerAngles(rotation));
-            ImGui::DragFloat3("Position", reinterpret_cast<float*>(&position));
-            ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&scale));
-            ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&euler));
+            ImGui::DragFloat3(LABEL_WITH_NAME("Position"), reinterpret_cast<float*>(&position));
+            ImGui::DragFloat3(LABEL_WITH_NAME("Scale"), reinterpret_cast<float*>(&scale));
+            ImGui::DragFloat3(LABEL_WITH_NAME("Rotation"), reinterpret_cast<float*>(&euler));
             rotation = glm::quat(glm::radians(euler));
 
             auto [old_position, old_scale, old_rotation] = m_core.GetValue();
@@ -80,8 +80,12 @@ namespace GE
         // get transform matrix in S->R->T order
         inline float4x4 GetTransformMatrix() const
         {
-            auto [position, scale, rotation] = m_core.GetValue();
+            auto&& [position, scale, rotation] = m_core.GetValue();
             return glm::translate(glm::mat4_cast(rotation) * glm::scale(scale), position);
         }
+
+        inline float3 GetPosition() const { return m_core.GetValue().position; }
+        inline float3 GetScale() const { return m_core.GetValue().scale; }
+        inline quat   GetRotation() const { return m_core.GetValue().rotation; }
     };
 } // namespace GE

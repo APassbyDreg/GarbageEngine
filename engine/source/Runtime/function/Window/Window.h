@@ -10,6 +10,7 @@
 #include "Runtime/core/Math/Math.h"
 #include "Runtime/function/Event/EventSystem.h"
 
+#include "Runtime/function/Render/Routines/BuiltinRenderRoutine.h"
 #include "Runtime/function/Render/Routines/__TestBasicRoutine.h"
 
 namespace GE
@@ -99,12 +100,14 @@ namespace GE
 
         /* ------------------------- render routine ------------------------- */
         // TODO: move to dedicate manager
-        TestBasicRoutine m_renderRoutine;
+        int                  m_usingRenderRoutine = 0;
+        TestBasicRoutine     m_renderRoutine0;
+        BuiltinRenderRoutine m_renderRoutine1;
 
-        VkSampler                    m_viewportSampler;
-        std::vector<VkDescriptorSet> m_viewportDescriptorSets;
-        std::vector<VkSemaphore>     m_renderFinishedSemaphores;
-        ImVec2                       m_viewportSize = {1280, 720};
+        VkSampler                                 m_viewportSampler;
+        std::vector<std::vector<VkDescriptorSet>> m_viewportDescriptorSets;
+        std::vector<VkSemaphore>                  m_renderFinishedSemaphores;
+        ImVec2                                    m_viewportSize = {1280, 720};
 
         uint64 m_frameIdx = 0;
     };

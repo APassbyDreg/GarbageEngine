@@ -51,31 +51,29 @@ namespace GE
                 {
                     m_materialNameToCreate = "";
 
-                    ImGui::Separator();
-                    ImGui::Text("> Forward Materials ----------");
-                    ImGui::Separator();
-
-                    for (auto&& name : MaterialManager::GetSupportedMaterial<ForwardMaterial>())
+                    if (ImGui::CollapsingHeader("Forward Materials"))
                     {
-                        if (ImGui::Selectable(name.c_str()))
+                        for (auto&& name : MaterialManager::GetSupportedMaterial<ForwardMaterial>())
                         {
-                            m_materialNameToCreate = "F" + name;
-                            ImGuiFileDialog::Instance()->OpenDialog(
-                                "ChooseFileDlgKey", "Choose File", ".ge.mat,.*", workdir.string().c_str());
+                            if (ImGui::Selectable(name.c_str()))
+                            {
+                                m_materialNameToCreate = "F" + name;
+                                ImGuiFileDialog::Instance()->OpenDialog(
+                                    "ChooseFileDlgKey", "Choose File", ".ge.mat,.*", workdir.string().c_str());
+                            }
                         }
                     }
 
-                    ImGui::Separator();
-                    ImGui::Text("> Deferred Materials ----------");
-                    ImGui::Separator();
-
-                    for (auto&& name : MaterialManager::GetSupportedMaterial<DeferredMaterial>())
+                    if (ImGui::CollapsingHeader("Deferred Materials"))
                     {
-                        if (ImGui::Selectable(name.c_str()))
+                        for (auto&& name : MaterialManager::GetSupportedMaterial<DeferredMaterial>())
                         {
-                            m_materialNameToCreate = "D" + name;
-                            ImGuiFileDialog::Instance()->OpenDialog(
-                                "ChooseFileDlgKey", "Choose File", ".ge.mat,.*", workdir.string().c_str());
+                            if (ImGui::Selectable(name.c_str()))
+                            {
+                                m_materialNameToCreate = "D" + name;
+                                ImGuiFileDialog::Instance()->OpenDialog(
+                                    "ChooseFileDlgKey", "Choose File", ".ge.mat,.*", workdir.string().c_str());
+                            }
                         }
                     }
 
@@ -138,11 +136,11 @@ namespace GE
 
                         if (mat_type == "F")
                         {
-                            MaterialManager::CreateForwardMaterial(mat_name, filepath);
+                            MaterialManager::CreateMaterial(mat_name, "forward", filepath);
                         }
                         if (mat_type == "D")
                         {
-                            MaterialManager::CreateDeferredMaterial(mat_name, filepath);
+                            MaterialManager::CreateMaterial(mat_name, "deferred", filepath);
                         }
 
                         GE_CORE_INFO("Created Material {} at {}", m_materialNameToCreate, filepath);

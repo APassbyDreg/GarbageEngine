@@ -34,12 +34,14 @@ public: \
     } \
     comp(std::shared_ptr<Entity> e) : ComponentBase(e) \
     {} \
-    inline comp##Core GetCoreValues() \
+    inline comp##Core GetCoreValue() const \
     { \
         return m_core.GetValue(); \
     } \
     WatchedValue<comp##Core> m_core; \
     using CoreType = comp##Core;
+
+#define LABEL_WITH_NAME(text) (std::string(text) + "##Component_" + GetName()).c_str()
 
     class ComponentBase
     {

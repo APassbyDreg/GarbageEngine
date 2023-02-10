@@ -1,0 +1,39 @@
+#include "Common/Pipeline/FragmentInputs.gsh"
+#include "Common/ViewUniform.gsh"
+
+#ifndef MAX_INSTANCE_COUNT
+#define MAX_INSTANCE_COUNT 64
+#endif
+
+struct VertexInputs
+{
+    [[vk::location(0)]] float3 position : POSITION;
+    [[vk::location(1)]] float3 normal   : NORMAL;
+    [[vk::location(2)]] float3 tangent  : TANGENT;
+    [[vk::location(3)]] float2 uv0      : TEXCOORD0;
+    [[vk::location(4)]] uint flags      : TEXCOORD1;
+};
+
+struct InstanceData
+{
+    float4x4 model_mat;
+    float4x4 t_inv_model_mat;
+};
+
+[[vk::binding(0, 1)]] cbuffer InstanceData { 
+    InstanceData instance_data[MAX_INSTANCE_COUNT];
+};
+
+FragmentInputs VSMain(VertexInputs i, uint instanceID : SV_InstanceID)
+{
+    FragmentInputs o;
+    o.posWS = HomogeneousTransform(i.position, instance_data[instanceID].model_mat);
+    o.normalWS = HomogeneousTransform(i.normal, instance_data[instanceID].t_inv_model_mat);
+    o.tangentWS = HomogeneousTransform(i.tangent, instance_data[instanceID].t_inv_model_mat);
+    o.uv = i.uv0;
+    o.posCS = float4(TransformWorldSpaceToClipSpace(o.posWS), 1.0);
+    // o.posCS.z = -o.posCS.z; // inverse z
+    o.instanceID = instanceID;
+    o.flags = i.flags;
+    return o;
+}

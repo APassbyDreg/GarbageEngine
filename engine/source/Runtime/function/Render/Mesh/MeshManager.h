@@ -5,6 +5,8 @@
 #include "Runtime/core/Concepts.h"
 
 #include "Mesh.h"
+#include <cstddef>
+#include <string>
 
 namespace GE
 {
@@ -20,25 +22,25 @@ namespace GE
             return GetInstance().m_meshNames;
         }
 
-        inline static std::shared_ptr<Mesh> CreateMesh(std::string name, int id, fs::path path)
+        inline static std::shared_ptr<Mesh> CreateMesh(std::string type, int id, fs::path path)
         {
             GetInstance().EnsureInit();
-            return GetInstance().m_factoriesNoData[name](id, path);
+            return GetInstance().m_factoriesNoData[type](id, path);
         }
-        inline static std::shared_ptr<Mesh> CreateMesh(std::string name, int id, fs::path path, const json& data)
+        inline static std::shared_ptr<Mesh> CreateMesh(std::string type, int id, fs::path path, const json& data)
         {
             GetInstance().EnsureInit();
-            return GetInstance().m_factoriesWithData[name](id, path, data);
+            return GetInstance().m_factoriesWithData[type](id, path, data);
         }
 
     private:
         template<std::derived_from<Mesh> T>
         void AddMesh()
         {
-            auto name = T::GetNameStatic();
-            m_meshNames.push_back(name);
-            m_factoriesNoData[name]   = [](int id, fs::path path) { return std::make_shared<T>(id, path); };
-            m_factoriesWithData[name] = [](int id, fs::path path, const json& data) {
+            auto type = T::GetTypeStatic();
+            m_meshNames.push_back(type);
+            m_factoriesNoData[type]   = [](int id, fs::path path) { return std::make_shared<T>(id, path); };
+            m_factoriesWithData[type] = [](int id, fs::path path, const json& data) {
                 return std::make_shared<T>(id, path, data);
             };
         }
@@ -70,22 +72,54 @@ namespace GE
 
         inline static std::shared_ptr<Mesh> GetMeshByID(uint id) { return GetInstance().m_meshs[id]; }
 
-        inline static std::shared_ptr<Mesh> CreateMesh(std::string name, fs::path path)
+        inline static std::shared_ptr<Mesh> GetMeshByTypeAndFilePath(std::string type, std::string path)
         {
-            uint id   = GetInstance().m_meshs.size();
-            auto Mesh = MeshFactory::CreateMesh(name, id, path);
-            GetInstance().m_meshs.push_back(Mesh);
-            return Mesh;
+            auto&& instance = GetInstance();
+            if (instance.m_pathToMesh.find(path) != instance.m_pathToMesh.end())
+            {
+                auto&& mesh = instance.m_pathToMesh[path];
+                if (mesh->GetType() == type)
+                    return mesh;
+                else
+                    return nullptr;
+            }
+            else
+            {
+                return CreateMesh(type, path);
+            }
         }
-        inline static std::shared_ptr<Mesh> CreateDeferredMesh(std::string name, fs::path path, const json& data)
+
+        inline static std::shared_ptr<Mesh> LoadMesh(std::string path)
         {
-            uint id   = GetInstance().m_meshs.size();
-            auto mesh = MeshFactory::CreateMesh(name, id, path, data);
-            GetInstance().m_meshs.push_back(mesh);
+            auto&& instance = GetInstance();
+
+            uint   id       = instance.m_meshs.size();
+            auto&& resource = ResourceManager::GetResource<JsonResource>(path, JsonIdentifier::MESH);
+            if (!resource->IsValid())
+            {
+                GE_CORE_WARN("[MeshManager::LoadMesh] trying to read from an none-exist path {}", path);
+                return nullptr;
+            }
+            auto&& type = resource->GetData()["type"].get<std::string>();
+            auto&& mesh = MeshFactory::CreateMesh(type, id, path);
+            instance.m_meshs.push_back(mesh);
+            instance.m_pathToMesh[path] = mesh;
+            return mesh;
+        }
+
+        inline static std::shared_ptr<Mesh> CreateMesh(std::string type, std::string path)
+        {
+            auto&& instance = GetInstance();
+
+            uint   id   = instance.m_meshs.size();
+            auto&& mesh = MeshFactory::CreateMesh(type, id, path);
+            instance.m_meshs.push_back(mesh);
+            instance.m_pathToMesh[path] = mesh;
             return mesh;
         }
 
     private:
-        std::vector<std::shared_ptr<Mesh>> m_meshs;
+        std::vector<std::shared_ptr<Mesh>>           m_meshs;
+        std::map<std::string, std::shared_ptr<Mesh>> m_pathToMesh;
     };
 } // namespace GE

@@ -1,6 +1,5 @@
 #include "HLSLCompiler.h"
 
-#include "dxc/d3d12shader.h"
 #include "dxc/dxcapi.h"
 
 namespace GE
@@ -50,7 +49,7 @@ namespace GE
         // IDxcCompiler3::Compile will always return an error buffer, but its length will be zero if
         // there are no warnings or errors.
         if (pErrors != nullptr && pErrors->GetStringLength() != 0)
-            wprintf(L"Warnings and Errors:\n%S\n", pErrors->GetStringPointer());
+            GE_CORE_ERROR("HLSL Compiler: \n{}\n", pErrors->GetStringPointer());
 
         // Quit if the compilation failed.
         HRESULT hrStatus;
@@ -69,13 +68,17 @@ namespace GE
         return std::make_shared<ShaderModule>(shader_binary, m_type, entry);
     }
 
-    inline std::wstring __to_wstring(std::string s) { return std::wstring(s.begin(), s.end()); }
+    static std::wstring __to_wstring(std::string s) { return std::wstring(s.begin(), s.end()); }
 
     std::vector<std::wstring> HLSLCompiler::__setup_compile_args(std::string path, std::string entry)
     {
         std::vector<std::wstring> args;
         args.emplace_back(L"-spirv");
-        args.emplace_back(L"-fspv-target-env=vulkan1.2"); // REVIEW: Use dynamic vulkan version.
+#ifdef GE_DEBUG
+        args.emplace_back(L"-Zi");
+        // args.emplace_back(L"-fspv-debug=vulkan-with-source");
+#endif
+        args.emplace_back(L"-fspv-target-env=vulkan1.3"); // REVIEW: Use dynamic vulkan version.
         args.emplace_back(L"-E");
         args.emplace_back(std::wstring(entry.begin(), entry.end()));
         for (auto& dir : m_includeDirs)

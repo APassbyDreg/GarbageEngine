@@ -47,6 +47,7 @@ namespace GE
             m_srcReg.emplace<T>(m_registryID, shared_from_this(), std::forward<TArgs>(args)...);
             ComponentHook<T>::CallConstructHooks(*this, m_sceneName);
 
+            
             T&          comp = GetComponent<T>();
             std::string name = T::GetNameStatic();
 

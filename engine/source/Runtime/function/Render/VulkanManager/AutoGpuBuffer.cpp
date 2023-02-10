@@ -1,9 +1,8 @@
 #include "AutoGpuBuffer.h"
+#include <vcruntime.h>
 
 namespace GE
 {
-    AutoGpuBuffer::~AutoGpuBuffer() { m_updateJob.Stop(); }
-
     void AutoGpuBuffer::Upload(byte* data, size_t size, size_t offset, bool resize)
     {
         if (resize)
@@ -12,17 +11,19 @@ namespace GE
         }
         m_buffer.Upload(data, size, offset, false);
         m_usedSize = size;
+
+        UpdateSize();
     }
 
-    void AutoGpuBuffer::Download(byte* data, size_t size, size_t offset) { m_buffer.Download(data, size, offset); }
+    void AutoGpuBuffer::Download(byte* data, size_t size, size_t offset)
+    {
+        m_buffer.Download(data, size, offset);
 
-    void AutoGpuBuffer::Copy(GpuBuffer&               src_buffer,
-                             size_t                   size,
-                             size_t                   src_offset,
-                             size_t                   dst_offset,
-                             bool                     async,
-                             std::vector<VkSemaphore> wait_semaphores,
-                             bool                     resize_if_needed)
+        UpdateSize();
+    }
+
+    void
+    AutoGpuBuffer::Copy(GpuBuffer& src_buffer, size_t size, size_t src_offset, size_t dst_offset, bool resize_if_needed)
     {
         GE_CORE_ASSERT(dst_offset <= m_usedSize, "dst_offset out of range: offset={}, size={}", dst_offset, m_usedSize);
 
@@ -35,18 +36,18 @@ namespace GE
                            m_currentSize);
             Resize(size + dst_offset, 0, dst_offset);
         }
-        m_buffer.Copy(src_buffer, size, src_offset, dst_offset, async, wait_semaphores, false);
+        m_buffer.Copy(src_buffer, size, src_offset, dst_offset, false);
+
+        UpdateSize();
     }
 
-    void AutoGpuBuffer::Copy(AutoGpuBuffer&           src_buffer,
-                             size_t                   size,
-                             size_t                   src_offset,
-                             size_t                   dst_offset,
-                             bool                     async,
-                             std::vector<VkSemaphore> wait_semaphores,
-                             bool                     resize_if_needed)
+    void AutoGpuBuffer::Copy(AutoGpuBuffer& src_buffer,
+                             size_t         size,
+                             size_t         src_offset,
+                             size_t         dst_offset,
+                             bool           resize_if_needed)
     {
-        Copy(src_buffer.m_buffer, size, src_offset, dst_offset, async, wait_semaphores, resize_if_needed);
+        Copy(src_buffer.m_buffer, size, src_offset, dst_offset, resize_if_needed);
     }
 
     void AutoGpuBuffer::Alloc(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)
@@ -54,35 +55,62 @@ namespace GE
         m_buffer.Alloc(buffer_info, alloc_info);
         m_currentSize = m_usedSize = buffer_info.size;
         m_tLastAdjust              = Time::CurrentTime();
+
+        UpdateSize();
     }
 
-    void AutoGpuBuffer::Resize(size_t size_in_bytes, size_t retain_start, size_t retain_size)
+    void AutoGpuBuffer::Resize(size_t target_size, size_t retain_start, size_t retain_size, bool force)
     {
-        size_t  new_size   = size_in_bytes;
-        int64_t delta_size = size_in_bytes - m_usedSize;
-        if (IsValid() && Time::CurrentTime() - m_tLastAdjust < c_tActive && delta_size > 0)
+        if (force)
         {
-            new_size += delta_size * 2;
-        }
-
-        if (new_size > m_currentSize)
-        {
-            m_buffer.Resize(new_size, retain_start, retain_size);
-            m_currentSize = new_size;
-        }
-        if (size_in_bytes > m_usedSize)
-        {
+            m_buffer.Resize(target_size, retain_start, retain_size);
+            m_currentSize = target_size;
             m_tLastAdjust = Time::CurrentTime();
         }
-        m_usedSize = size_in_bytes;
+        else
+        {
+            size_t new_size   = target_size;
+            int64  delta_size = target_size - m_usedSize;
+            if (IsValid() && Time::CurrentTime() - m_tLastAdjust < c_tActive && delta_size > 0)
+            {
+                new_size = Max<size_t>(target_size + delta_size * 4, round(1.4 * m_usedSize));
+            }
+
+            if (new_size > m_currentSize)
+            {
+                m_buffer.Resize(new_size, retain_start, retain_size);
+                m_currentSize = new_size;
+                m_tLastAdjust = Time::CurrentTime();
+            }
+            m_usedSize = target_size;
+
+            UpdateSize();
+        }
     }
 
-    bool AutoGpuBuffer::Update()
+    void AutoGpuBuffer::UpdateSize()
     {
-        if (m_buffer.IsValid() && Time::CurrentTime() - m_tLastAdjust > c_tInactive && m_currentSize > m_usedSize)
+        Time::TimeStamp t = Time::CurrentTime();
+
+        // record avg size
+        if (m_avgSize == 0)
         {
-            Resize(m_usedSize, 0, m_usedSize);
+            m_avgSize     = m_usedSize;
+            m_tLastRecord = t;
         }
-        return false;
+        else
+        {
+            double dt     = Time::ToSeconds(t - m_tLastRecord);
+            double weight = pow(c_sizeWeightDecayPerSec, dt);
+            m_avgSize     = m_avgSize * weight + m_usedSize * (1.0 - weight);
+            m_tLastRecord = t;
+        }
+
+        // change size if needed
+        if (t - m_tLastAdjust > c_tInactive && m_avgSize < m_currentSize * 0.7)
+        {
+            size_t new_size = Max<size_t>(RoundTo<4>((m_avgSize + m_currentSize) * 0.5), m_usedSize);
+            Resize(new_size, 0, m_usedSize, true);
+        }
     }
 } // namespace GE

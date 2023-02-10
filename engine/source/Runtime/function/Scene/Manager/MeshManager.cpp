@@ -3,17 +3,18 @@
 #include "../Hooks.h"
 #include "../Scene.h"
 
-#include "../Components/InstancedMesh.h"
-#include "../Components/Renderer.h"
+#include "../Components/Material.h"
+#include "../Components/Mesh.h"
 #include "../Components/Transform.h"
 
 #define BIND_CLASS_FN(fn) std::bind(&SceneMeshManager::fn, this, std::placeholders::_1)
 
 namespace GE
 {
-    inline bool IsManagable(Entity& e)
+    static bool IsManagable(Entity& e)
     {
-        return e.HasComponent<TransformComponent>() && e.HasComponent<RendererComponent>();
+        return e.HasComponent<TransformComponent>() && e.HasComponent<MaterialComponent>() &&
+               e.HasComponent<MeshComponent>();
     }
 
     void SceneOctreeNode::RemoveElement(int eid, bool is_leaf)
@@ -139,15 +140,15 @@ namespace GE
     void SceneMeshManager::Setup()
     {
         auto sc_name = m_scene.GetName();
-        ComponentHook<InstancedMeshComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
-        ComponentHook<InstancedMeshComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
-        ComponentHook<InstancedMeshComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
+        ComponentHook<MeshComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
+        ComponentHook<MeshComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
+        ComponentHook<MeshComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
         ComponentHook<TransformComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
         ComponentHook<TransformComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
         ComponentHook<TransformComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
-        ComponentHook<RendererComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
-        ComponentHook<RendererComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
-        ComponentHook<RendererComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
+        ComponentHook<MaterialComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
+        ComponentHook<MaterialComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
+        ComponentHook<MaterialComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
     }
 
     void SceneMeshManager::AddEntity(Entity& e)
@@ -216,15 +217,22 @@ namespace GE
     FrustrumCullNode(float4x4& vp, std::shared_ptr<SceneOctreeNode> node, std::vector<std::shared_ptr<Entity>>& results)
     {
         auto is = FrustrumAABBIntersection(vp, node->GetAABB());
-        if (is == AABBFrustrumIntersection::INSIDE)
+        if (is == BoundsIntersectionState::INSIDE)
         {
             results.insert(results.end(), node->elements.begin(), node->elements.end());
         }
-        else if (is == AABBFrustrumIntersection::INTERSECT)
+        else if (is == BoundsIntersectionState::INTERSECT)
         {
-            for (auto&& child : node->children)
+            if (node->children.empty())
             {
-                FrustrumCullNode(vp, child, results);
+                results.insert(results.end(), node->elements.begin(), node->elements.end());
+            }
+            else
+            {
+                for (auto&& child : node->children)
+                {
+                    FrustrumCullNode(vp, child, results);
+                }
             }
         }
     }

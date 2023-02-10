@@ -12,6 +12,7 @@
 #include "Runtime/core/Base/Singleton.h"
 #include "Runtime/core/Math/Math.h"
 #include "vulkan/vulkan_core.h"
+#include <vcruntime.h>
 
 namespace GE
 {
@@ -87,6 +88,16 @@ namespace GE
                 [=]() { vkDestroyCommandPool(GetDevice(), command_pool, nullptr); });
             return command_pool;
         }
+        static inline VkCommandPool CreateTransferCmdPool(VkCommandPoolCreateFlags flags = 0)
+        {
+            VkCommandPoolCreateInfo create_info =
+                VkInit::GetCommandPoolCreateInfo(GetTransferQueueFamilyIndex(), flags);
+            VkCommandPool command_pool;
+            vkCreateCommandPool(GetDevice(), &create_info, nullptr, &command_pool);
+            GetInstance().m_destroyActionStack.push_back(
+                [=]() { vkDestroyCommandPool(GetDevice(), command_pool, nullptr); });
+            return command_pool;
+        }
         static inline std::vector<VkCommandBuffer>
         CreateCmdBuffers(VkCommandPool        pool,
                          size_t               count = 1,
@@ -95,8 +106,6 @@ namespace GE
             VkCommandBufferAllocateInfo  info = VkInit::GetCommandBufferAllocateInfo(pool, level, 1);
             std::vector<VkCommandBuffer> cmd  = std::vector<VkCommandBuffer>(count);
             vkAllocateCommandBuffers(GetDevice(), &info, cmd.data());
-            GetInstance().m_destroyActionStack.push_back(
-                [=]() { vkFreeCommandBuffers(GetDevice(), pool, 1, cmd.data()); });
             return cmd;
         }
         static inline void ResetCmdPool(VkCommandPool pool, VkCommandPoolResetFlags flags = 0)
@@ -106,32 +115,6 @@ namespace GE
         static inline void ResetCmdBuffer(VkCommandBuffer cmd, VkCommandBufferResetFlags flags = 0)
         {
             GE_VK_ASSERT(vkResetCommandBuffer(cmd, flags));
-        }
-        static inline VkCommandBuffer BeginTransferCmd()
-        {
-            VkCommandBuffer          cmd        = CreateCmdBuffers(GetInstance().m_transferCmdPool)[0];
-            VkCommandBufferBeginInfo begin_info = {};
-            begin_info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            begin_info.flags                    = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            vkBeginCommandBuffer(cmd, &begin_info);
-            return cmd;
-        }
-        static inline void EndTransferCmd(VkCommandBuffer          cmd,
-                                          std::vector<VkSemaphore> wait_semaphores   = {},
-                                          std::vector<VkSemaphore> signal_semaphores = {},
-                                          VkFence                  fence             = VK_NULL_HANDLE)
-        {
-            vkEndCommandBuffer(cmd);
-            VkSubmitInfo submit_info         = {};
-            submit_info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            submit_info.commandBufferCount   = 1;
-            submit_info.pCommandBuffers      = &cmd;
-            submit_info.waitSemaphoreCount   = wait_semaphores.size();
-            submit_info.pWaitSemaphores      = wait_semaphores.data();
-            submit_info.signalSemaphoreCount = signal_semaphores.size();
-            submit_info.pSignalSemaphores    = signal_semaphores.data();
-            vkQueueSubmit(GetTransferQueue(), 1, &submit_info, fence);
-            vkFreeCommandBuffers(GetDevice(), GetInstance().m_transferCmdPool, 1, &cmd);
         }
 
         /* ------------------------ synchronizations ------------------------ */
@@ -180,8 +163,6 @@ namespace GE
         {
             VkDescriptorSetLayout layout;
             GE_VK_ASSERT(vkCreateDescriptorSetLayout(GetDevice(), &info, nullptr, &layout));
-            GetInstance().m_destroyActionStack.push_back(
-                [=]() { vkDestroyDescriptorSetLayout(GetDevice(), layout, nullptr); });
             return layout;
         }
         static inline std::vector<VkDescriptorSet> AllocDescriptorSets(VkDescriptorSetAllocateInfo info)
@@ -199,6 +180,19 @@ namespace GE
             GE_VK_ASSERT(vkAllocateDescriptorSets(GetDevice(), &info, sets.data()));
             return sets;
         }
+        static inline void UpdateDescriptors(std::vector<VkWriteDescriptorSet> writes,
+                                             std::vector<VkCopyDescriptorSet>  copies)
+        {
+            vkUpdateDescriptorSets(GetDevice(), writes.size(), writes.data(), copies.size(), copies.data());
+        }
+        static inline void WriteDescriptors(std::vector<VkWriteDescriptorSet> writes)
+        {
+            vkUpdateDescriptorSets(GetDevice(), writes.size(), writes.data(), 0, nullptr);
+        }
+        static inline void CopyDescriptors(std::vector<VkCopyDescriptorSet> copies)
+        {
+            vkUpdateDescriptorSets(GetDevice(), 0, nullptr, copies.size(), copies.data());
+        }
 
         /* ----------------------------- submit ----------------------------- */
         static inline void SubmitToGraphicsQueue(VkSubmitInfo info, VkFence fence = VK_NULL_HANDLE)
@@ -208,6 +202,10 @@ namespace GE
         static inline void SubmitToComputeQueue(VkSubmitInfo info, VkFence fence = VK_NULL_HANDLE)
         {
             GE_VK_ASSERT(vkQueueSubmit(GetComputeQueue(), 1, &info, fence));
+        }
+        static inline void SubmitToTransferQueue(VkSubmitInfo info, VkFence fence = VK_NULL_HANDLE)
+        {
+            GE_VK_ASSERT(vkQueueSubmit(GetTransferQueue(), 1, &info, fence));
         }
 
         /* -------------------------- frame buffer -------------------------- */

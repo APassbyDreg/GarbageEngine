@@ -1,8 +1,6 @@
 #include "__TestBasicMeshPass.h"
 
-#include "Runtime/function/Render/ShaderManager/GLSLCompiler.h"
-#include "vulkan/vulkan_core.h"
-#include <memory>
+#include "Runtime/function/Render/ShaderManager/HLSLCompiler.h"
 
 namespace GE
 {
@@ -19,22 +17,16 @@ namespace GE
         {
             // (re)create frame buffer image
             auto&&            img              = frame_images[frame_id];
-            VkImageCreateInfo image_info       = {};
-            image_info.sType                   = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-            image_info.imageType               = VK_IMAGE_TYPE_2D;
-            image_info.extent.width            = width;
-            image_info.extent.height           = height;
-            image_info.extent.depth            = 1;
-            image_info.format                  = VK_FORMAT_R8G8B8A8_UNORM;
-            image_info.mipLevels               = 1;
-            image_info.arrayLayers             = 1;
-            image_info.initialLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
-            image_info.usage                   = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-            image_info.samples                 = VK_SAMPLE_COUNT_1_BIT;
-            image_info.tiling                  = VK_IMAGE_TILING_OPTIMAL;
-            image_info.sharingMode             = VK_SHARING_MODE_EXCLUSIVE;
+            VkImageCreateInfo image_info =
+                VkInit::GetVkImageCreateInfo(VK_IMAGE_TYPE_2D,
+                                             VK_FORMAT_R8G8B8A8_UNORM,
+                                             {width, height, 1},
+                                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+            VkImageViewCreateInfo   view_info = VkInit::GetVkImageViewCreateInfo(image_info, VK_IMAGE_ASPECT_COLOR_BIT);
             VmaAllocationCreateInfo alloc_info = {};
-            img->Alloc(image_info, alloc_info);
+            alloc_info.usage                   = VMA_MEMORY_USAGE_GPU_ONLY;
+            alloc_info.requiredFlags           = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+            img->Alloc(image_info, view_info, alloc_info);
 
             // (re)create frame buffer
             VkFramebufferCreateInfo framebuffer_info = {};
@@ -58,19 +50,21 @@ namespace GE
         m_resourceManager.ReservePerFrameImage(FullIdentifier("color"));
 
         /* ------------------------- setup resources ------------------------ */
-        GraphicsPassResource output = {};
-        output.desc.finalLayout   = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        GraphicsColorResource output = {};
+        output.desc.loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        output.desc.initialLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
+        output.desc.finalLayout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         m_output.push_back(output);
         __update_resource();
 
         /* ------------------------- setup pipeline ------------------------- */
         {
-            fs::path     fspath     = fs::path(Config::shader_dir) / "Passes/__test02_simple_mesh/test.frag";
-            fs::path     vspath     = fs::path(Config::shader_dir) / "Passes/__test02_simple_mesh/test.vert";
-            GLSLCompiler fscompiler = {ShaderType::FRAGMENT};
-            GLSLCompiler vscompiler = {ShaderType::VERTEX};
-            m_pipeline.m_shaders.push_back(vscompiler.Compile(vspath.string()));
-            m_pipeline.m_shaders.push_back(fscompiler.Compile(fspath.string()));
+            fs::path     fspath     = fs::path(Config::shader_dir) / "Passes/__test02_simple_mesh/test.hlsl";
+            fs::path     vspath     = fs::path(Config::shader_dir) / "Passes/__test02_simple_mesh/test.hlsl";
+            HLSLCompiler fscompiler = {ShaderType::FRAGMENT};
+            HLSLCompiler vscompiler = {ShaderType::VERTEX};
+            m_pipeline.m_shaders.push_back(vscompiler.Compile(vspath.string(), "vert"));
+            m_pipeline.m_shaders.push_back(fscompiler.Compile(fspath.string(), "frag"));
         }
 
         static VertexInputDescription input_desc = Vertex::GetVertexInputDesc();
@@ -99,8 +93,8 @@ namespace GE
     void TestBasicMeshPass::Run(RenderPassRunData run_data, TestBasicMeshPassData pass_data)
     {
         // unpack data
-        auto&& [frame_idx, cmd, wait_semaphores, signal_semaphores, fence, resource_manager] = run_data;
-        auto&& [vertex_buffer, index_buffer, vertex_cnt, viewport_size]             = pass_data;
+        auto&& [frame_idx, cmd, wait_semaphores, signal_semaphores, fence] = run_data;
+        auto&& [vertex_buffer, index_buffer, vertex_cnt, viewport_size]    = pass_data;
 
         // begin cmd buffer and render pass
         VkClearValue clear_value = {};

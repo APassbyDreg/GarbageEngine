@@ -4,6 +4,7 @@
 
 #include "../RenderPass.h"
 #include "../VulkanManager/AutoGpuBuffer.h"
+#include "../VulkanManager/DescriptorSetLayout.h"
 
 #include "Runtime/core/Math/Bounds.h"
 #include "Runtime/core/Math/Math.h"
@@ -31,5 +32,8 @@ namespace GE
 
     protected:
         virtual void InitInternal(uint frame_cnt) override;
+
+    private:
+        std::shared_ptr<DescriptorSetLayout> m_layout;
     };
 } // namespace GE

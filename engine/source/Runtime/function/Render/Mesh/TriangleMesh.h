@@ -9,10 +9,16 @@
 #include "Runtime/core/Math/Math.h"
 
 #include "Mesh.h"
+#include "vulkan/vulkan_core.h"
 #include <memory>
 
 namespace GE
 {
+    struct VertexInstanceData
+    {
+        float4x4 model;
+        float4x4 t_inv_model;
+    };
 
     struct Vertex
     {
@@ -20,51 +26,64 @@ namespace GE
         float3 normal   = {0.0f, 0.0f, 0.0f};
         float3 tangent  = {0.0f, 0.0f, 0.0f};
         float2 uv0      = {0.0f, 0.0f};
+        uint   flags    = 0;
 
-        static inline VertexInputDescription GetVertexInputDesc()
+        static inline VertexInputDescription& GetVertexInputDesc()
         {
-            VertexInputDescription description;
+            static VertexInputDescription description = {};
+            static bool                   initialized = false;
 
-            // we will have just 1 vertex buffer binding, with a per-vertex rate
-            VkVertexInputBindingDescription mainBinding = {};
-            mainBinding.binding                         = 0;
-            mainBinding.stride                          = sizeof(Vertex);
-            mainBinding.inputRate                       = VK_VERTEX_INPUT_RATE_VERTEX;
+            if (!initialized)
+            {
+                initialized = true;
 
-            description.bindings.push_back(mainBinding);
+                VkVertexInputBindingDescription vertexBinding = {};
+                vertexBinding.binding                         = 0;
+                vertexBinding.stride                          = sizeof(Vertex);
+                vertexBinding.inputRate                       = VK_VERTEX_INPUT_RATE_VERTEX;
+                description.bindings.push_back(vertexBinding);
 
-            // Position
-            VkVertexInputAttributeDescription positionAttribute = {};
-            positionAttribute.binding                           = 0;
-            positionAttribute.location                          = 0;
-            positionAttribute.format                            = VK_FORMAT_R32G32B32_SFLOAT;
-            positionAttribute.offset                            = offsetof(Vertex, position);
+                // Position
+                VkVertexInputAttributeDescription positionAttribute = {};
+                positionAttribute.binding                           = 0;
+                positionAttribute.location                          = 0;
+                positionAttribute.format                            = VK_FORMAT_R32G32B32_SFLOAT;
+                positionAttribute.offset                            = offsetof(Vertex, position);
+                description.attributes.push_back(positionAttribute);
 
-            // Normal
-            VkVertexInputAttributeDescription normalAttribute = {};
-            normalAttribute.binding                           = 0;
-            normalAttribute.location                          = 1;
-            normalAttribute.format                            = VK_FORMAT_R32G32B32_SFLOAT;
-            normalAttribute.offset                            = offsetof(Vertex, normal);
+                // Normal
+                VkVertexInputAttributeDescription normalAttribute = {};
+                normalAttribute.binding                           = 0;
+                normalAttribute.location                          = 1;
+                normalAttribute.format                            = VK_FORMAT_R32G32B32_SFLOAT;
+                normalAttribute.offset                            = offsetof(Vertex, normal);
+                description.attributes.push_back(normalAttribute);
 
-            // Tangent
-            VkVertexInputAttributeDescription tangentAttribute = {};
-            tangentAttribute.binding                           = 0;
-            tangentAttribute.location                          = 2;
-            tangentAttribute.format                            = VK_FORMAT_R32G32B32_SFLOAT;
-            tangentAttribute.offset                            = offsetof(Vertex, tangent);
+                // Tangent
+                VkVertexInputAttributeDescription tangentAttribute = {};
+                tangentAttribute.binding                           = 0;
+                tangentAttribute.location                          = 2;
+                tangentAttribute.format                            = VK_FORMAT_R32G32B32_SFLOAT;
+                tangentAttribute.offset                            = offsetof(Vertex, tangent);
+                description.attributes.push_back(tangentAttribute);
 
-            // UV0
-            VkVertexInputAttributeDescription texcoordAttribute = {};
-            texcoordAttribute.binding                           = 0;
-            texcoordAttribute.location                          = 3;
-            texcoordAttribute.format                            = VK_FORMAT_R32G32_SFLOAT;
-            texcoordAttribute.offset                            = offsetof(Vertex, uv0);
+                // UV0
+                VkVertexInputAttributeDescription texcoordAttribute = {};
+                texcoordAttribute.binding                           = 0;
+                texcoordAttribute.location                          = 3;
+                texcoordAttribute.format                            = VK_FORMAT_R32G32_SFLOAT;
+                texcoordAttribute.offset                            = offsetof(Vertex, uv0);
+                description.attributes.push_back(texcoordAttribute);
 
-            description.attributes.push_back(positionAttribute);
-            description.attributes.push_back(normalAttribute);
-            description.attributes.push_back(tangentAttribute);
-            description.attributes.push_back(texcoordAttribute);
+                // flags
+                VkVertexInputAttributeDescription flagAttribute = {};
+                flagAttribute.binding                           = 0;
+                flagAttribute.location                          = 4;
+                flagAttribute.format                            = VK_FORMAT_R32_UINT;
+                flagAttribute.offset                            = offsetof(Vertex, flags);
+                description.attributes.push_back(flagAttribute);
+            }
+
             return description;
         }
     };
@@ -84,6 +103,9 @@ namespace GE
     class TriangleMesh : public Mesh
     {
         GE_MESH_COMMON(TriangleMesh);
+        const uint c_maxInstancePerDraw = 64;
+        const uint c_vertexBindId       = 0;
+        const uint c_instanceBindId     = 1;
 
     public:
         inline uint32_t GetTriangleCount() const;
@@ -99,13 +121,17 @@ namespace GE
 
         Bounds3f& BBox() override;
 
-        void SetupPipeline(GraphicsRenderPipeline& pipeline) override;
+        void SetupRenderPass(std::shared_ptr<GraphicsPass> pass) override;
         void RunRenderPass(MeshRenderPassData data) override;
 
         void Activate();
         void Deactivate();
 
+        inline void SetMeshResource(std::shared_ptr<TriangleMeshResource> mesh) { m_meshResource = mesh; }
+
     private:
+        static VkDescriptorSetLayout GetInstanceDataDescriptorSetLayout();
+
         bool Update();
 
     private:

@@ -1,12 +1,15 @@
 #include "GpuImage.h"
 
 #include "VulkanCreateInfoBuilder.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
-    GpuImage::GpuImage(VkImageCreateInfo image_info, VmaAllocationCreateInfo alloc_info)
+    GpuImage::GpuImage(VkImageCreateInfo       image_info,
+                       VkImageViewCreateInfo   view_info,
+                       VmaAllocationCreateInfo alloc_info)
     {
-        Alloc(image_info, alloc_info);
+        Alloc(image_info, view_info, alloc_info);
     }
 
     GpuImage::~GpuImage() { Delete(); }
@@ -23,7 +26,8 @@ namespace GE
         }
     }
 
-    void GpuImage::Alloc(VkImageCreateInfo image_info, VmaAllocationCreateInfo alloc_info)
+    void
+    GpuImage::Alloc(VkImageCreateInfo image_info, VkImageViewCreateInfo view_info, VmaAllocationCreateInfo alloc_info)
     {
         Delete();
 
@@ -33,8 +37,8 @@ namespace GE
         GE_VK_ASSERT(
             vmaCreateImage(VulkanCore::GetAllocator(), &image_info, &alloc_info, &m_image, &m_allocation, nullptr));
 
-        VkImageViewCreateInfo info = VkInit::GetVkImageViewCreateInfo(m_image, image_info);
-        GE_VK_ASSERT(vkCreateImageView(VulkanCore::GetDevice(), &info, nullptr, &m_imageView));
+        view_info.image = m_image;
+        GE_VK_ASSERT(vkCreateImageView(VulkanCore::GetDevice(), &view_info, nullptr, &m_imageView));
 
         m_alloced = true;
     }

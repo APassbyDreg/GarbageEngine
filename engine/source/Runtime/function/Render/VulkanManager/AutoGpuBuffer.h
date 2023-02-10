@@ -16,22 +16,17 @@ namespace GE
         // implemented by a guard thread.
         const Time::Seconds c_tInactive = Time::Seconds(5);
         // If the buffer is enlarged less than 50ms ago, it will be given more space.
-        const Time::Seconds c_tActive = Time::Miliseconds(50);
+        const Time::Seconds c_tActive = Time::Miliseconds(100);
 
     public:
-        ~AutoGpuBuffer();
-        AutoGpuBuffer()
-        {
-            m_tLastAdjust = Time::CurrentTime();
-            m_updateJob.Run(std::bind(&AutoGpuBuffer::Update, this), c_tCheckInterval);
-        }
+        ~AutoGpuBuffer() {}
+        AutoGpuBuffer() { m_tLastAdjust = Time::CurrentTime(); }
         AutoGpuBuffer(AutoGpuBuffer& src)
         {
             m_buffer.Copy(src.m_buffer);
             m_currentSize  = src.m_currentSize;
             m_usedSize     = src.m_usedSize;
             m_tLastAdjust  = Time::CurrentTime();
-            m_updateJob.Run(std::bind(&AutoGpuBuffer::Update, this), c_tCheckInterval);
         }
         AutoGpuBuffer(AutoGpuBuffer&& src) : m_buffer(std::move(src.m_buffer))
         {
@@ -39,34 +34,28 @@ namespace GE
             m_currentSize  = src.m_currentSize;
             m_usedSize     = src.m_usedSize;
             m_tLastAdjust  = Time::CurrentTime();
-            m_updateJob.Run(std::bind(&AutoGpuBuffer::Update, this), c_tCheckInterval);
         }
         AutoGpuBuffer(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)
         {
             Alloc(buffer_info, alloc_info);
             m_currentSize = m_usedSize = buffer_info.size;
             m_tLastAdjust              = Time::CurrentTime();
-            m_updateJob.Run(std::bind(&AutoGpuBuffer::Update, this), c_tCheckInterval);
         }
 
         void           Upload(byte* data, size_t size, size_t offset = 0, bool resize = true);
         void           Download(byte* data, size_t size, size_t offset = 0);
-        void           Copy(GpuBuffer&               src_buffer,
-                            size_t                   size             = 0,
-                            size_t                   src_offset       = 0,
-                            size_t                   dst_offset       = 0,
-                            bool                     async            = false,
-                            std::vector<VkSemaphore> wait_semaphores  = {},
-                            bool                     resize_if_needed = true);
-        void           Copy(AutoGpuBuffer&           src_buffer,
-                            size_t                   size             = 0,
-                            size_t                   src_offset       = 0,
-                            size_t                   dst_offset       = 0,
-                            bool                     async            = false,
-                            std::vector<VkSemaphore> wait_semaphores  = {},
-                            bool                     resize_if_needed = true);
+        void           Copy(GpuBuffer& src_buffer,
+                            size_t     size             = 0,
+                            size_t     src_offset       = 0,
+                            size_t     dst_offset       = 0,
+                            bool       resize_if_needed = true);
+        void           Copy(AutoGpuBuffer& src_buffer,
+                            size_t         size             = 0,
+                            size_t         src_offset       = 0,
+                            size_t         dst_offset       = 0,
+                            bool           resize_if_needed = true);
         void           Alloc(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info);
-        void           Resize(size_t sizeInBytes, size_t retain_start = 0, size_t retain_size = 0);
+        void           Resize(size_t sizeInBytes, size_t retain_start = 0, size_t retain_size = 0, bool force = false);
 
         template<typename T>
         void UploadAs(std::vector<T>& data, size_t offset = 0, bool resize = true)
@@ -88,21 +77,20 @@ namespace GE
 
         inline size_t                  GetSize() { return m_usedSize; }
         inline VkBuffer                GetBuffer() { return m_buffer.GetBuffer(); }
-        inline VkSemaphore             GetSemaphore() { return m_buffer.GetSemaphore(); }
         inline VkBufferCreateInfo      GetBufferInfo() { return m_buffer.GetBufferInfo(); }
         inline VmaAllocationCreateInfo GetAllocInfo() { return m_buffer.GetAllocInfo(); }
         inline bool                    IsValid() { return m_buffer.IsValid(); }
 
     private:
-        bool Update();
-
-    private:
         GpuBuffer m_buffer;
 
-        size_t m_currentSize, m_usedSize;
-
+        size_t          m_currentSize, m_usedSize;
         Time::TimeStamp m_tLastAdjust;
 
-        IntervalJob m_updateJob;
+        // Time weighted average size
+        const double    c_sizeWeightDecayPerSec = 0.25;
+        double          m_avgSize               = 0.0;
+        Time::TimeStamp m_tLastRecord;
+        void            UpdateSize();
     };
 } // namespace GE

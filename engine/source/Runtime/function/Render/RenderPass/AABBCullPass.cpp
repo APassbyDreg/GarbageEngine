@@ -9,6 +9,7 @@
 
 #include "Runtime/function/Scene/Logic/EntityAABB.h"
 #include "Runtime/function/Scene/Scene.h"
+#include <memory>
 
 namespace GE
 {
@@ -30,7 +31,8 @@ namespace GE
             bindings.push_back(VkInit::GetDescriptorSetLayoutBinding(
                 VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, VK_SHADER_STAGE_COMPUTE_BIT, 1));
             auto info  = VkInit::GetDescriptorSetLayoutCreateInfo(bindings);
-            set_layout = VulkanCore::CreateDescriptorSetLayout(info);
+            m_layout   = std::make_shared<DescriptorSetLayout>(info);
+            set_layout = m_layout->Get();
             m_pipeline.m_descriptorSetLayout.push_back(set_layout);
             // push constant
             m_pipeline.m_pushConstantRanges.push_back(
@@ -65,7 +67,7 @@ namespace GE
     void AABBCullPass::Run(RenderPassRunData& run_data, AABBCullPassData& data)
     {
         // unpack data
-        auto&& [frame_idx, cmd, wait_semaphores, signal_semaphores, fence, resource_manager] = run_data;
+        auto&& [frame_idx, cmd, wait_semaphores, signal_semaphores, fence] = run_data;
         auto&& aabb_buffer   = m_resourceManager.GetPerFrameDynamicBuffer(frame_idx, FullIdentifier("AabbBuffer"));
         auto&& result_buffer = m_resourceManager.GetPerFrameDynamicBuffer(frame_idx, FullIdentifier("ResultBuffer"));
         auto&& desc_set      = m_resourceManager.GetPerFrameDescriptorSet(frame_idx, "Descriptor");
@@ -111,7 +113,7 @@ namespace GE
             writes[1].dstBinding      = 1;
             writes[1].dstArrayElement = 0;
             writes[1].pBufferInfo     = &result_buffer_info;
-            vkUpdateDescriptorSets(VulkanCore::GetDevice(), writes.size(), writes.data(), 0, nullptr);
+            VulkanCore::WriteDescriptors(writes);
         }
 
         // bind, dispatch and end

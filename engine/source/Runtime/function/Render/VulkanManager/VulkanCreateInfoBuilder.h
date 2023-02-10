@@ -136,18 +136,25 @@ namespace GE
             return push_constant_range;
         }
 
-        inline VkAttachmentDescription GetAttachmentDescription(VkFormat              format = VK_FORMAT_R8G8B8A8_UNORM,
-                                                                VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT)
+        inline VkAttachmentDescription
+        GetAttachmentDescription(VkFormat              format         = VK_FORMAT_R8G8B8A8_UNORM,
+                                 VkSampleCountFlagBits samples        = VK_SAMPLE_COUNT_1_BIT,
+                                 VkAttachmentLoadOp    loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD,
+                                 VkAttachmentStoreOp   storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+                                 VkAttachmentLoadOp    stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_LOAD,
+                                 VkAttachmentStoreOp   stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+                                 VkImageLayout         initialLayout  = VK_IMAGE_LAYOUT_GENERAL,
+                                 VkImageLayout         finalLayout    = VK_IMAGE_LAYOUT_GENERAL)
         {
             VkAttachmentDescription attachment = {};
             attachment.format                  = format;
             attachment.samples                 = samples;
-            attachment.loadOp                  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            attachment.storeOp                 = VK_ATTACHMENT_STORE_OP_STORE;
-            attachment.stencilLoadOp           = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            attachment.stencilStoreOp          = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            attachment.initialLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachment.finalLayout             = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
+            attachment.loadOp                  = loadOp;
+            attachment.storeOp                 = storeOp;
+            attachment.stencilLoadOp           = stencilLoadOp;
+            attachment.stencilStoreOp          = stencilStoreOp;
+            attachment.initialLayout           = initialLayout;
+            attachment.finalLayout             = finalLayout;
             return attachment;
         }
 
@@ -175,14 +182,43 @@ namespace GE
             return info;
         }
 
-        inline VkImageViewCreateInfo GetVkImageViewCreateInfo(VkImage            image,
-                                                              VkImageCreateInfo& img_info,
+        inline VkImageCreateInfo GetVkImageCreateInfo(VkImageType           type,
+                                                      VkFormat              format,
+                                                      VkExtent3D            extent,
+                                                      VkImageUsageFlags     usage,
+                                                      uint                  numMips     = 1,
+                                                      uint                  arrayLayers = 1,
+                                                      VkSampleCountFlagBits samples     = VK_SAMPLE_COUNT_1_BIT,
+                                                      VkImageLayout         layout      = VK_IMAGE_LAYOUT_UNDEFINED,
+                                                      VkImageTiling         tiling      = VK_IMAGE_TILING_OPTIMAL,
+                                                      VkSharingMode         mode        = VK_SHARING_MODE_EXCLUSIVE,
+                                                      VkFlags               flags       = 0)
+        {
+            VkImageCreateInfo info = {};
+            info.sType             = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+            info.imageType         = type;
+            info.format            = format;
+            info.extent            = extent;
+            info.usage             = usage;
+            info.mipLevels         = numMips;
+            info.arrayLayers       = arrayLayers;
+            info.samples           = samples;
+            info.initialLayout     = layout;
+            info.tiling            = tiling;
+            info.sharingMode       = mode;
+            info.flags             = flags;
+            return info;
+        }
+
+        inline VkImageViewCreateInfo GetVkImageViewCreateInfo(VkImageCreateInfo  img_info    = {},
+                                                              VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_NONE,
                                                               VkImageViewType    viewtype = VK_IMAGE_VIEW_TYPE_MAX_ENUM,
+                                                              VkImage            image    = VK_NULL_HANDLE,
                                                               VkFlags            flags    = 0)
         {
             if (viewtype == VK_IMAGE_VIEW_TYPE_MAX_ENUM)
             {
-                viewtype = (VkImageViewType)img_info.imageType; // force view type to match image type
+                viewtype = (VkImageViewType)img_info.imageType;
             }
 
             VkImageViewCreateInfo info           = {};
@@ -196,7 +232,7 @@ namespace GE
             info.components.g                    = VK_COMPONENT_SWIZZLE_G;
             info.components.b                    = VK_COMPONENT_SWIZZLE_B;
             info.components.a                    = VK_COMPONENT_SWIZZLE_A;
-            info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            info.subresourceRange.aspectMask     = aspectFlags;
             info.subresourceRange.baseMipLevel   = 0;
             info.subresourceRange.levelCount     = 1;
             info.subresourceRange.baseArrayLayer = 0;
@@ -420,12 +456,12 @@ namespace GE
         GetPipelineDepthStencilStateCreateInfo(bool             depthTest   = false,
                                                bool             depthWrite  = false,
                                                VkCompareOp      depthOp     = VK_COMPARE_OP_LESS_OR_EQUAL,
-                                               float2           depthBounds = float2(0, 0),
+                                               float2           depthBounds = float2(-1, 1),
                                                bool             stencilTest = false,
                                                VkStencilOpState front       = {},
                                                VkStencilOpState back        = {})
         {
-            bool depthBoundTest = depthBounds.x < depthBounds.x;
+            bool depthBoundTest = depthBounds.x < depthBounds.y;
 
             VkPipelineDepthStencilStateCreateInfo info = {};
             info.sType                                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -435,7 +471,8 @@ namespace GE
             info.depthWriteEnable = depthWrite ? VK_TRUE : VK_FALSE;
             info.depthCompareOp   = depthTest ? depthOp : VK_COMPARE_OP_ALWAYS;
 
-            info.depthBoundsTestEnable = depthBoundTest ? VK_TRUE : VK_FALSE;
+            // info.depthBoundsTestEnable = depthBoundTest ? VK_TRUE : VK_FALSE;
+            info.depthBoundsTestEnable = VK_FALSE; // REVIEW: enable depth bound test
             info.minDepthBounds        = depthBounds.x;
             info.maxDepthBounds        = depthBounds.y;
 

@@ -23,6 +23,10 @@ namespace GE
             m_core = {name, layer, tag};
         }
 
+        inline std::string GetTagName() const { return m_core.GetValue().name; }
+        inline int         GetTagID() const { return m_core.GetValue().tag; }
+        inline int         GetLayerID() const { return m_core.GetValue().layer; }
+
         inline json Serialize() const override
         {
             auto [name, layer, tag] = m_core.GetValue();
@@ -44,9 +48,9 @@ namespace GE
             auto [name, layer, tag] = m_core.GetValue();
             char nameBuffer[256]    = {};
             strcpy(nameBuffer, name.c_str());
-            ImGui::InputText("Name", nameBuffer, 256);
-            ImGui::InputInt("Layer", &layer);
-            ImGui::InputInt("Tag", &tag);
+            ImGui::InputText(LABEL_WITH_NAME("Name"), nameBuffer, 256);
+            ImGui::InputInt(LABEL_WITH_NAME("Layer"), &layer);
+            ImGui::InputInt(LABEL_WITH_NAME("Tag"), &tag);
             name   = nameBuffer;
 
             auto [old_name, old_layer, old_tag] = m_core.GetValue();

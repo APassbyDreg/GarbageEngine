@@ -3,13 +3,13 @@
 #include "GE_pch.h"
 
 #include "Runtime/core/Base/Singleton.h"
+#include "Runtime/core/Json.h"
 
 #include "VulkanManager/AutoGpuBuffer.h"
 #include "VulkanManager/FrameBuffer.h"
 #include "VulkanManager/GpuImage.h"
 #include "VulkanManager/Synchronization.h"
 #include "VulkanManager/VulkanCore.h"
-#include <memory>
 
 namespace GE
 {
@@ -154,11 +154,59 @@ public: \
     inline void RegisterExternalGlobal##name(std::string identifier, type resources) \
     { \
         m_globalResources.RegisterExternal##name(identifier, resources); \
+    } \
+    /* ------------------------- persistant variants ------------------------ */ \
+    inline type& GetPerFramePersistant##name(uint frame, std::string identifier) \
+    { \
+        return m_perFramePersistantResources[frame].Get##name(identifier); \
+    } \
+    inline std::vector<type> GetFramewisePersistant##name(std::string identifier) \
+    { \
+        std::vector<type> resources = {}; \
+        for (auto&& frame : m_perFramePersistantResources) \
+        { \
+            resources.emplace_back(frame.Get##name(identifier)); \
+        } \
+        return resources; \
+    } \
+    inline type& GetGlobalPersistant##name(std::string identifier) \
+    { \
+        return m_globalPersistantResources.Get##name(identifier); \
+    } \
+    template<typename... TArgs> \
+    inline void ReservePerFramePersistant##name(std::string identifier, TArgs&&... args) \
+    { \
+        for (int frame = 0; frame < m_numFrames; frame++) \
+            m_perFramePersistantResources[frame].Reserve##name(identifier, std::forward<TArgs>(args)...); \
+    } \
+    template<typename... TArgs> \
+    inline void ReserveGlobalPersistant##name(std::string identifier, TArgs&&... args) \
+    { \
+        m_globalPersistantResources.Reserve##name(identifier, std::forward<TArgs>(args)...); \
+    } \
+    inline void RegisterExternalPerFramePersistant##name(std::string identifier, std::vector<type> resources) \
+    { \
+        for (int frame = 0; frame < m_numFrames; frame++) \
+            m_perFramePersistantResources[frame].RegisterExternal##name(identifier, resources[frame]); \
+    } \
+    inline void RegisterExternalGlobalPersistant##name(std::string identifier, type resources) \
+    { \
+        m_globalPersistantResources.RegisterExternal##name(identifier, resources); \
     }
 
     public:
+        // used to store some intermediate states for render pass
+        inline void  SetState(std::string identifier, json state) { m_recordedStates[identifier] = state; }
+        inline json& GetState(std::string identifier) { return m_recordedStates[identifier]; }
+        template<class T>
+        inline T GetState(std::string identifier)
+        {
+            return m_recordedStates[identifier].get<T>();
+        }
+
         void Init(uint num_frames);
         void NewFrame(uint frame_id);
+        void Reset();
 
         IMPLEMENT_RENDER_RESOURCE_TYPE(StaticBuffer, std::shared_ptr<GpuBuffer>);
         IMPLEMENT_RENDER_RESOURCE_TYPE(DynamicBuffer, std::shared_ptr<AutoGpuBuffer>);
@@ -172,6 +220,11 @@ public: \
     private:
         std::vector<ResourceBlock> m_perFrameResources = {};
         ResourceBlock              m_globalResources   = {};
+
+        std::vector<ResourceBlock> m_perFramePersistantResources = {};
+        ResourceBlock              m_globalPersistantResources   = {};
+
+        json m_recordedStates;
 
         uint m_numFrames = 0;
 #undef IMPLEMENT_RENDER_RESOURCE_TYPE

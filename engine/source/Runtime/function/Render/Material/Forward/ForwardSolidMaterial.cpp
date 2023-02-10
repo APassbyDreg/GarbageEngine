@@ -2,8 +2,7 @@
 
 #include "ForwardSolidMaterial.h"
 
-#include "Runtime/function/Render/ShaderManager/GLSLCompiler.h"
-#include <vcruntime_string.h>
+#include "Runtime/function/Render/ShaderManager/HLSLCompiler.h"
 
 namespace GE
 {
@@ -11,10 +10,10 @@ namespace GE
 
     void ForwardSolidMaterial::Deserialize(const json& data)
     {
-        GE_CORE_CHECK(data["type"].get<std::string>() == GetName(),
+        GE_CORE_CHECK(data["type"].get<std::string>() == GetType(),
                       "[ForwardSolidMaterial::Deserialize] Error input type '{}'",
                       data["type"].get<std::string>());
-        if (data["type"].get<std::string>() == GetName())
+        if (data["type"].get<std::string>() == GetType())
         {
             m_alias   = data["alias"].get<std::string>();
             m_color.r = data["color"][0].get<float>();
@@ -27,7 +26,6 @@ namespace GE
     json ForwardSolidMaterial::Serialize()
     {
         json data;
-        data["alias"] = m_alias;
         data["color"] = {m_color.r, m_color.g, m_color.b, m_color.a};
         return data;
     }
@@ -50,11 +48,16 @@ namespace GE
 
     void ForwardSolidMaterial::SetupShadingPipeline(GraphicsRenderPipeline& pipeline)
     {
+        // push constants
         auto pc_range = VkInit::GetPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(float4));
         pipeline.m_pushConstantRanges.push_back(pc_range);
 
-        fs::path     fspath     = fs::path(Config::shader_dir) / "Passes/Forward/Solid.frag";
-        GLSLCompiler fscompiler = {ShaderType::FRAGMENT};
-        pipeline.m_shaders.push_back(fscompiler.Compile(fspath.string()));
+        // shader
+        fs::path     fspath     = fs::path(Config::shader_dir) / "Passes/Forward/Solid.gsf";
+        HLSLCompiler fscompiler = {ShaderType::FRAGMENT};
+        pipeline.m_shaders.push_back(fscompiler.Compile(fspath.string(), "FSMain"));
+
+        // states
+        pipeline.m_rasterizationState = VkInit::GetPipelineRasterizationStateCreateInfo();
     }
 } // namespace GE

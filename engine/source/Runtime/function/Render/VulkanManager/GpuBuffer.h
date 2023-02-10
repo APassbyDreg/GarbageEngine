@@ -3,6 +3,7 @@
 #include "GE_pch.h"
 
 #include "VulkanCore.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -45,7 +46,6 @@ namespace GE
         std::vector<T> DownloadAs(size_t count, size_t offset = 0)
         {
             GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
-            WaitLastAction();
 
             std::vector<T> result;
             result.resize(count);
@@ -58,18 +58,15 @@ namespace GE
             return result;
         }
 
-        void Copy(GpuBuffer&               src_buffer,
-                  size_t                   size             = 0,
-                  size_t                   src_offset       = 0,
-                  size_t                   dst_offset       = 0,
-                  bool                     async            = false,
-                  std::vector<VkSemaphore> wait_semaphores  = {},
-                  bool                     resize_if_needed = true);
+        void Copy(GpuBuffer& src_buffer,
+                  size_t     size             = 0,
+                  size_t     src_offset       = 0,
+                  size_t     dst_offset       = 0,
+                  bool       resize_if_needed = true);
+        void Resize(size_t size, size_t retain_start = 0, size_t retain_size = 0);
 
         void Alloc(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info);
         void Destroy();
-
-        void Resize(size_t size, size_t retain_start = 0, size_t retain_size = 0);
 
         inline size_t                  GetSize() { return m_bufferInfo.size; }
         inline VkBuffer                GetBuffer() { return m_buffer; }
@@ -77,16 +74,16 @@ namespace GE
         inline VmaAllocationCreateInfo GetAllocInfo() { return m_allocInfo; }
         inline bool                    IsValid() { return m_alloced; }
 
-        inline VkSemaphore GetSemaphore() { return m_hasAction ? m_actionCompleteSemaphore : VK_NULL_HANDLE; }
-
     private:
-        inline void WaitLastAction()
+        static VkCommandPool GetBufferTransferCmdPool()
         {
-            if (m_hasAction)
+            static VkCommandPool pool = VK_NULL_HANDLE;
+            if (pool == VK_NULL_HANDLE)
             {
-                VulkanCore::WaitForFence(m_actionCompleteFence, c_waitTimeout);
-                m_hasAction = false;
+                pool = VulkanCore::CreateTransferCmdPool(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT |
+                                                         VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
             }
+            return pool;
         }
 
     private:
@@ -95,11 +92,10 @@ namespace GE
         VkBufferCreateInfo      m_bufferInfo;
         VmaAllocationCreateInfo m_allocInfo;
 
-        std::atomic_bool m_hasAction = false;
-        VkFence          m_actionCompleteFence;
-        VkSemaphore      m_actionCompleteSemaphore;
+        VkFence         m_actionCompleteFence = VK_NULL_HANDLE;
+        VkCommandBuffer m_transferCmd         = VK_NULL_HANDLE;
 
-        VkBuffer      m_buffer;
+        VkBuffer      m_buffer, m_oldBuffer;
         VmaAllocation m_allocation;
     };
 

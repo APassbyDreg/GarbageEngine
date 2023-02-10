@@ -21,7 +21,7 @@ namespace GE
     {
     public:
         JsonResource(fs::path       file,
-                     JsonIdentifier type,
+                     JsonIdentifier type         = JsonIdentifier::UNKNOWN,
                      bool           init         = false,
                      bool           use_cache    = false,
                      bool           delayed_load = false) :

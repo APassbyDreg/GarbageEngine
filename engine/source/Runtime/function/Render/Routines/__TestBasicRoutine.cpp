@@ -91,8 +91,7 @@ namespace GE
                                                m_resourceManager.GetPerFrameGraphicsCmdBuffer(frame_index, "BasicMeshPass"),
                                                wait_semaphores,
                                                signal_semaphores,
-                                               fence,
-                                               m_resourceManager};
+                                               fence};
             TestBasicMeshPassData pass_data = {m_vertexBuffer, m_indexBuffer, 6, m_viewportSize};
 
             m_basicMeshPass.Run(run_data, pass_data);
