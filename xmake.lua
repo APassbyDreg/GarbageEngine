@@ -13,7 +13,7 @@ function GE_add_predefined_macros()
     is_plat("windows")
         add_defines("GE_PLATFORM_WINDOWS")
 
-    add_defines("GE_ENABLE_TESTING")
+    -- add_defines("GE_ENABLE_TESTING")
 end
 
 -- runtime
