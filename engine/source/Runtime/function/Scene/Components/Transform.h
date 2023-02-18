@@ -18,7 +18,7 @@ namespace GE
         operator std::tuple<float3, float3, quat>() { return {position, scale, rotation}; }
     };
 
-    class TransformComponent : public ComponentBase
+    class GE_API TransformComponent : public ComponentBase
     {
         GE_COMPONENT_COMMON(TransformComponent);
 
@@ -59,21 +59,7 @@ namespace GE
             m_core = {position, scale, rotation};
         }
 
-        inline void Inspect() override
-        {
-            auto [position, scale, rotation] = m_core.GetValue();
-            float3 euler                     = glm::degrees(glm::eulerAngles(rotation));
-            ImGui::DragFloat3(LABEL_WITH_NAME("Position"), reinterpret_cast<float*>(&position));
-            ImGui::DragFloat3(LABEL_WITH_NAME("Scale"), reinterpret_cast<float*>(&scale));
-            ImGui::DragFloat3(LABEL_WITH_NAME("Rotation"), reinterpret_cast<float*>(&euler));
-            rotation = glm::quat(glm::radians(euler));
-
-            auto [old_position, old_scale, old_rotation] = m_core.GetValue();
-            if (position != old_position || scale != old_scale || rotation != old_rotation)
-            {
-                m_core = {position, scale, rotation};
-            }
-        }
+        void Inspect() override;
 
         /* ----------------------------- helpers ---------------------------- */
 
@@ -81,7 +67,7 @@ namespace GE
         inline float4x4 GetTransformMatrix() const
         {
             auto&& [position, scale, rotation] = m_core.GetValue();
-            return glm::translate(glm::mat4_cast(rotation) * glm::scale(scale), position);
+            return glm::translate(position) * glm::mat4_cast(rotation) * glm::scale(scale);
         }
 
         inline float3 GetPosition() const { return m_core.GetValue().position; }

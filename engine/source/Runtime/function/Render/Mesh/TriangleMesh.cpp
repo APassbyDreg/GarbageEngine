@@ -9,9 +9,6 @@
 
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "Runtime/Application.h"
-#include "glm/matrix.hpp"
-#include "vulkan/vulkan_core.h"
-#include <vector>
 
 namespace GE
 {
@@ -203,14 +200,14 @@ namespace GE
         {
             Application& app     = Application::GetInstance();
             fs::path     workdir = app.GetWorkDirectory();
-            ImGuiFileDialog::Instance()->OpenDialog(
+            m_fileDialogInstance.OpenDialog(
                 "ChooseFileDlgKey", "Choose File", ".ge.trianglemesh,.*", workdir.string().c_str());
         }
-        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        if (m_fileDialogInstance.Display("ChooseFileDlgKey"))
         {
-            if (ImGuiFileDialog::Instance()->IsOk())
+            if (m_fileDialogInstance.IsOk())
             {
-                std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::string filepath = m_fileDialogInstance.GetFilePathName();
                 if (filepath.ends_with(".ge.trianglemesh"))
                 {
                     m_meshResource = ResourceManager::GetResource<TriangleMeshResource>(filepath);
@@ -222,7 +219,7 @@ namespace GE
                     m_meshResource->FromObj(filepath);
                 }
             }
-            ImGuiFileDialog::Instance()->Close();
+            m_fileDialogInstance.Close();
         }
 
         // mesh file name

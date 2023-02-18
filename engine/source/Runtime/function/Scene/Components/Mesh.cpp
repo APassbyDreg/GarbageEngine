@@ -54,7 +54,7 @@ namespace GE
             if (ImGui::Button(LABEL_WITH_NAME("Select From File")))
             {
                 fs::path workdir = Application::GetInstance().GetWorkDirectory();
-                ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey",
+                GetImGuiFileDialogInstance().OpenDialog("ChooseFileDlgKey",
                                                         "Choose Mesh Asset",
                                                         ".ge.mesh,.obj,.ge.trianglemesh,.*",
                                                         workdir.string().c_str());
@@ -79,13 +79,13 @@ namespace GE
     void MeshComponent::HandleOpenFile()
     {
         std::string filepath = "";
-        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        if (GetImGuiFileDialogInstance().Display("ChooseFileDlgKey"))
         {
-            if (ImGuiFileDialog::Instance()->IsOk())
+            if (GetImGuiFileDialogInstance().IsOk())
             {
-                filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+                filepath = GetImGuiFileDialogInstance().GetFilePathName();
             }
-            ImGuiFileDialog::Instance()->Close();
+            GetImGuiFileDialogInstance().Close();
         }
 
         if (filepath.ends_with(".obj"))

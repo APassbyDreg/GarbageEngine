@@ -28,11 +28,10 @@ FragmentInputs VSMain(VertexInputs i, uint instanceID : SV_InstanceID)
 {
     FragmentInputs o;
     o.posWS = HomogeneousTransform(i.position, instance_data[instanceID].model_mat);
-    o.normalWS = HomogeneousTransform(i.normal, instance_data[instanceID].t_inv_model_mat);
-    o.tangentWS = HomogeneousTransform(i.tangent, instance_data[instanceID].t_inv_model_mat);
+    o.normalWS = HomogeneousTransformVector(i.normal, instance_data[instanceID].t_inv_model_mat);
+    o.tangentWS = HomogeneousTransformVector(i.tangent, instance_data[instanceID].t_inv_model_mat);
     o.uv = i.uv0;
-    o.posCS = float4(TransformWorldSpaceToClipSpace(o.posWS), 1.0);
-    // o.posCS.z = -o.posCS.z; // inverse z
+    o.posCS = TransformVertex(o.posWS);
     o.instanceID = instanceID;
     o.flags = i.flags;
     return o;

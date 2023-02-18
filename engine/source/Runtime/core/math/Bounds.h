@@ -9,7 +9,7 @@
 namespace GE
 {
 #define GETTER(selector, dim_name, dim_idx) \
-    inline TBase& selector##dim_name() \
+    inline const TBase& selector##dim_name() const \
     { \
         if constexpr (dim > dim_idx) \
         { \
@@ -45,8 +45,23 @@ namespace GE
         GETTER(max, X, 0);
         GETTER(max, Y, 1);
         GETTER(max, Z, 2);
-        TStorage& Min() { return minimuns; }
-        TStorage& Max() { return maximuns; }
+        const TStorage& Min() const { return minimuns; }
+        const TStorage& Max() const { return maximuns; }
+
+        /* --------------------------- get cornner -------------------------- */
+        inline TStorage operator[](uint i) requires(dim == 3)
+        {
+            const TStorage dirs[8] = {
+                {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0}, {0, 0, 1}, {1, 0, 1}, {0, 1, 1}, {1, 1, 1}};
+            TStorage d = maximuns - minimuns;
+            return minimuns + d * TStorage(dirs[i]);
+        }
+        inline TStorage operator[](uint i) requires(dim == 2)
+        {
+            const TStorage dirs[8] = {{0, 0}, {1, 0}, {0, 1}, {1, 1}};
+            TStorage       d       = maximuns - minimuns;
+            return minimuns + d * TStorage(dirs[i]);
+        }
 
         /* ---------------------------- operators --------------------------- */
         // Union
@@ -133,42 +148,4 @@ namespace GE
 
     typedef TransformedBounds<Bounds3f, float4x4> TransformedBounds3f;
     typedef TransformedBounds<Bounds2f, float3x3> TransformedBounds2f;
-
-    enum class BoundsIntersectionState
-    {
-        INSIDE,
-        INTERSECT,
-        OUTSIDE
-    };
-
-    inline BoundsIntersectionState FrustrumAABBIntersection(float4x4& vp, Bounds3f aabb)
-    {
-        aabb = Transform(aabb, vp);
-
-        auto intersect_1d = [](float min, float max) {
-            assert(min <= max);
-            if ((min < 0 && max < 0) || (min > 1 && max > 1))
-                return BoundsIntersectionState::OUTSIDE;
-            else if (0 <= min && max <= 1)
-                return BoundsIntersectionState::INSIDE;
-            else
-                return BoundsIntersectionState::INTERSECT;
-        };
-
-        auto x_state = intersect_1d(aabb.minX(), aabb.maxX());
-        auto y_state = intersect_1d(aabb.minY(), aabb.maxY());
-
-        if (x_state == BoundsIntersectionState::OUTSIDE || y_state == BoundsIntersectionState::OUTSIDE)
-        {
-            return BoundsIntersectionState::OUTSIDE;
-        }
-        else if (x_state == BoundsIntersectionState::INSIDE && y_state == BoundsIntersectionState::INSIDE)
-        {
-            return BoundsIntersectionState::INSIDE;
-        }
-        else
-        {
-            return BoundsIntersectionState::INTERSECT;
-        }
-    }
 } // namespace GE

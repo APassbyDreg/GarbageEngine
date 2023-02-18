@@ -3,6 +3,7 @@
 #include "GE_pch.h"
 
 #include "imgui.h"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
 
 #include "Runtime/core/Base/WatchedValue.h"
 #include "Runtime/core/ECS.h"

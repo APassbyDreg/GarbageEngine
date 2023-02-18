@@ -54,7 +54,7 @@ namespace GE
                         if (ImGui::Selectable(name.c_str()))
                         {
                             m_MeshNameToCreate = name;
-                            ImGuiFileDialog::Instance()->OpenDialog(
+                            m_fileDialogInstance.OpenDialog(
                                 "ChooseFileDlgKey", "Choose File", ".ge.mesh,.*", workdir.string().c_str());
                         }
                     }
@@ -94,25 +94,26 @@ namespace GE
                 std::string mat_type = m_MeshNameToCreate.substr(0, 1);
                 std::string mat_name = m_MeshNameToCreate.substr(1, m_MeshNameToCreate.size() - 1);
 
-                if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+                if (m_fileDialogInstance.Display("ChooseFileDlgKey"))
                 {
-                    if (ImGuiFileDialog::Instance()->IsOk())
+                    if (m_fileDialogInstance.IsOk())
                     {
-                        std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+                        std::string filepath = m_fileDialogInstance.GetFilePathName();
 
                         MeshManager::CreateMesh(m_MeshNameToCreate, filepath);
 
                         GE_CORE_INFO("Created Mesh {} at {}", m_MeshNameToCreate, filepath);
                     }
-                    ImGuiFileDialog::Instance()->Close();
+                    m_fileDialogInstance.Close();
                     m_MeshNameToCreate = "";
                 }
             }
         }
 
     private:
-        bool        m_open             = false;
-        int         m_selectedMeshID   = -1;
-        std::string m_MeshNameToCreate = "";
+        ImGuiFileDialog m_fileDialogInstance;
+        bool            m_open             = false;
+        int             m_selectedMeshID   = -1;
+        std::string     m_MeshNameToCreate = "";
     };
 } // namespace GE

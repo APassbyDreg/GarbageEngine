@@ -39,7 +39,7 @@ namespace GE
         }
     };
 
-    class CameraComponent : public ComponentBase
+    class GE_API CameraComponent : public ComponentBase
     {
         GE_COMPONENT_COMMON(CameraComponent);
 

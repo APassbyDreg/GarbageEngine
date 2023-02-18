@@ -9,8 +9,6 @@
 #include "Runtime/core/Math/Math.h"
 
 #include "Mesh.h"
-#include "vulkan/vulkan_core.h"
-#include <memory>
 
 namespace GE
 {
@@ -145,5 +143,7 @@ namespace GE
         GpuBuffer m_indexBuffer;
 
         std::shared_ptr<TriangleMeshResource> m_meshResource;
+
+        ImGuiFileDialog m_fileDialogInstance;
     };
 } // namespace GE

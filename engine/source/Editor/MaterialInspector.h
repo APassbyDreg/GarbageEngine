@@ -58,7 +58,7 @@ namespace GE
                             if (ImGui::Selectable(name.c_str()))
                             {
                                 m_materialNameToCreate = "F" + name;
-                                ImGuiFileDialog::Instance()->OpenDialog(
+                                m_fileDialogInstance.OpenDialog(
                                     "ChooseFileDlgKey", "Choose File", ".ge.mat,.*", workdir.string().c_str());
                             }
                         }
@@ -71,7 +71,7 @@ namespace GE
                             if (ImGui::Selectable(name.c_str()))
                             {
                                 m_materialNameToCreate = "D" + name;
-                                ImGuiFileDialog::Instance()->OpenDialog(
+                                m_fileDialogInstance.OpenDialog(
                                     "ChooseFileDlgKey", "Choose File", ".ge.mat,.*", workdir.string().c_str());
                             }
                         }
@@ -128,11 +128,11 @@ namespace GE
                 std::string mat_type = m_materialNameToCreate.substr(0, 1);
                 std::string mat_name = m_materialNameToCreate.substr(1, m_materialNameToCreate.size() - 1);
 
-                if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+                if (m_fileDialogInstance.Display("ChooseFileDlgKey"))
                 {
-                    if (ImGuiFileDialog::Instance()->IsOk())
+                    if (m_fileDialogInstance.IsOk())
                     {
-                        std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+                        std::string filepath = m_fileDialogInstance.GetFilePathName();
 
                         if (mat_type == "F")
                         {
@@ -145,15 +145,16 @@ namespace GE
 
                         GE_CORE_INFO("Created Material {} at {}", m_materialNameToCreate, filepath);
                     }
-                    ImGuiFileDialog::Instance()->Close();
+                    m_fileDialogInstance.Close();
                     m_materialNameToCreate = "";
                 }
             }
         }
 
     private:
-        bool        m_open                 = false;
-        int         m_selectedMaterialID   = -1;
-        std::string m_materialNameToCreate = "";
+        ImGuiFileDialog m_fileDialogInstance;
+        bool            m_open                 = false;
+        int             m_selectedMaterialID   = -1;
+        std::string     m_materialNameToCreate = "";
     };
 } // namespace GE

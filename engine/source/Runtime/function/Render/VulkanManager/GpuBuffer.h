@@ -2,6 +2,7 @@
 
 #include "GE_pch.h"
 
+#include "CommandPool.h"
 #include "VulkanCore.h"
 #include "vulkan/vulkan_core.h"
 
@@ -77,11 +78,11 @@ namespace GE
     private:
         static VkCommandPool GetBufferTransferCmdPool()
         {
-            static VkCommandPool pool = VK_NULL_HANDLE;
-            if (pool == VK_NULL_HANDLE)
+            static CommandPool pool;
+            if (!pool.IsValid())
             {
-                pool = VulkanCore::CreateTransferCmdPool(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT |
-                                                         VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+                auto flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+                pool       = {VkInit::GetCommandPoolCreateInfo(VulkanCore::GetTransferQueueFamilyIndex(), flags)};
             }
             return pool;
         }

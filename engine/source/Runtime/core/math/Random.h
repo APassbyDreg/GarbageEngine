@@ -5,7 +5,7 @@
 
 namespace GE
 {
-    class Random
+    class RandomEngine
     {
     public:
         template<class T>
@@ -31,4 +31,32 @@ namespace GE
         std::uniform_int_distribution<int64_t> default_int_dist;
         std::uniform_real_distribution<double> default_real_dist;
     };
+
+    namespace Math
+    {
+        class Random
+        {
+        public:
+            template<class T>
+            requires std::is_integral_v<T> static inline T RandInt(T min, T max)
+            {
+                return GetRandomEngine().RandInt(min, max);
+            }
+            template<class T>
+            requires std::is_floating_point_v<T> static inline T Rand(T min, T max)
+            {
+                return GetRandomEngine().Rand(min, max);
+            }
+
+            static inline int64_t RandInt() { return GetRandomEngine().RandInt(); }
+            static inline double  Rand() { return GetRandomEngine().Rand(); }
+
+        private:
+            static const Random& GetRandomEngine()
+            {
+                static Random rand;
+                return rand;
+            }
+        };
+    } // namespace Math
 } // namespace GE

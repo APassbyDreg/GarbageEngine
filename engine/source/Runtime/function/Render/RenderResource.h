@@ -6,10 +6,13 @@
 #include "Runtime/core/Json.h"
 
 #include "VulkanManager/AutoGpuBuffer.h"
+#include "VulkanManager/CommandPool.h"
+#include "VulkanManager/DescriptorPool.h"
 #include "VulkanManager/FrameBuffer.h"
 #include "VulkanManager/GpuImage.h"
 #include "VulkanManager/Synchronization.h"
 #include "VulkanManager/VulkanCore.h"
+#include <memory>
 
 namespace GE
 {
@@ -63,19 +66,21 @@ private: \
                 info.maxSets                       = 1000 * 11;
                 info.poolSizeCount                 = 11;
                 info.pPoolSizes                    = sizes;
-                m_descPool                         = VulkanCore::CreateDescriptorPool(info);
+                m_descPool                         = std::make_shared<DescriptorPool>(info);
             }
             {
-                m_graphicsCmdPool = VulkanCore::CreateGraphicsCmdPool();
-                m_computeCmdPool  = VulkanCore::CreateComputeCmdPool();
+                m_graphicsCmdPool = std::make_shared<CommandPool>(
+                    VkInit::GetCommandPoolCreateInfo(VulkanCore::GetGraphicsQueueFamilyIndex()));
+                m_computeCmdPool = std::make_shared<CommandPool>(
+                    VkInit::GetCommandPoolCreateInfo(VulkanCore::GetComputeQueueFamilyIndex()));
             }
         }
 
         inline void Reset()
         {
-            VulkanCore::ResetDescriptorPool(m_descPool);
-            VulkanCore::ResetCmdPool(m_graphicsCmdPool);
-            VulkanCore::ResetCmdPool(m_computeCmdPool);
+            VulkanCore::ResetDescriptorPool(*m_descPool);
+            VulkanCore::ResetCmdPool(*m_graphicsCmdPool);
+            VulkanCore::ResetCmdPool(*m_computeCmdPool);
         }
 
         IMPLEMENT_RENDER_RESOURCE_TYPE(StaticBuffer,
@@ -95,21 +100,21 @@ private: \
                                        std::make_shared<Fence>(std::forward<TArgs>(args)...));
         IMPLEMENT_RENDER_RESOURCE_TYPE(DescriptorSet,
                                        VkDescriptorSet,
-                                       VulkanCore::AllocDescriptorSets(m_descPool, std::forward<TArgs>(args)...)[0]);
+                                       VulkanCore::AllocDescriptorSets(*m_descPool, std::forward<TArgs>(args)...)[0]);
         IMPLEMENT_RENDER_RESOURCE_TYPE(GraphicsCmdBuffer,
                                        VkCommandBuffer,
-                                       VulkanCore::CreateCmdBuffers(m_graphicsCmdPool,
+                                       VulkanCore::CreateCmdBuffers(*m_graphicsCmdPool,
                                                                     1,
                                                                     std::forward<TArgs>(args)...)[0]);
         IMPLEMENT_RENDER_RESOURCE_TYPE(ComputeCmdBuffer,
                                        VkCommandBuffer,
-                                       VulkanCore::CreateCmdBuffers(m_computeCmdPool,
+                                       VulkanCore::CreateCmdBuffers(*m_computeCmdPool,
                                                                     1,
                                                                     std::forward<TArgs>(args)...)[0]);
 
     private:
-        VkDescriptorPool m_descPool;
-        VkCommandPool    m_graphicsCmdPool, m_computeCmdPool;
+        std::shared_ptr<DescriptorPool> m_descPool;
+        std::shared_ptr<CommandPool>    m_graphicsCmdPool, m_computeCmdPool;
 
 #undef IMPLEMENT_RENDER_RESOURCE_TYPE
     };

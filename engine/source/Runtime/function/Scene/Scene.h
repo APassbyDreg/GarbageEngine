@@ -13,6 +13,7 @@
 #include "Manager/MeshManager.h"
 
 #include "Settings/SceneSettingsFactory.h"
+#include <memory>
 
 namespace GE
 {
@@ -26,7 +27,7 @@ public: \
 private: \
     Scene##name m_##name;
 
-    class GE_API Scene
+    class GE_API Scene : public std::enable_shared_from_this<Scene>
     {
         friend class Entity;
 
@@ -63,9 +64,9 @@ private: \
             }
             return entities;
         }
+        inline std::map<uint, std::shared_ptr<Entity>>& GetAllEntities() { return m_entities; }
 
         void InspectSettings();
-        void InspectStructure();
         void InspectFocusedEntity();
 
         json Serialize() const;
@@ -88,7 +89,6 @@ private: \
         std::map<std::string, std::shared_ptr<SettingsBase>> m_sceneSettings;
 
         std::string m_name = "GE_scene";
-        char        m_nameBuffer[256];
 
     private:
         int                           m_focusEntityID     = -1;
@@ -97,6 +97,7 @@ private: \
 
         void SetupEntityInheritance();
         void Setup();
+        void Destroy();
     };
 
 #undef DEFINE_SCENE_MANAGER

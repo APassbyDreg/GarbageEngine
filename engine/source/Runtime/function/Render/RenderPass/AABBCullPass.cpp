@@ -74,7 +74,7 @@ namespace GE
 
         // get AABB of all renderable objects
         auto                  sc          = Application::GetInstance().GetActiveScene();
-        auto                  renderables = sc->GetMeshManager().FrustrumCull(data.camera_vp);
+        auto                  renderables = sc->GetMeshManager().FrustumCull(data.camera_vp);
         uint                  num_aabbs   = renderables.size();
         std::vector<Bounds3f> aabbs {renderables.size()};
         for (auto&& e : renderables)

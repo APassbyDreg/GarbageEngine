@@ -79,8 +79,8 @@ namespace GE
     void ForwardShadingPass::Run(RenderPassRunData run_data, ForwardShadingPassData pass_data)
     {
         // unpack data
-        auto&& [frame_idx, _, wait_semaphores, signal_semaphores, fence]      = run_data;
-        auto&& [viewport_size, instances, mesh, material, clear, clear_color] = pass_data;
+        auto&& [frame_idx, _, wait_semaphores, signal_semaphores, fence] = run_data;
+        auto&& [viewport_size, instances, mesh, material]                = pass_data;
         auto&& cmd = m_resourceManager.GetPerFrameGraphicsCmdBuffer(frame_idx, FullIdentifier("Main"));
 
         // begin cmd buffer and render pass
@@ -89,33 +89,6 @@ namespace GE
             cmd_info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
             cmd_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
             GE_VK_ASSERT(vkBeginCommandBuffer(cmd, &cmd_info));
-
-            // clear if needed
-            if (clear)
-            {
-                {
-                    VkClearColorValue       clear_value = {clear_color[0], clear_color[1], clear_color[2], 1.0f};
-                    VkImageSubresourceRange ranges = RenderUtils::AllImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
-                    RenderUtils::TransitionImageLayout(cmd,
-                                                       m_colorTargets[frame_idx]->GetImage(),
-                                                       VK_IMAGE_LAYOUT_UNDEFINED,
-                                                       VK_IMAGE_LAYOUT_GENERAL,
-                                                       ranges);
-                    vkCmdClearColorImage(
-                        cmd, m_colorTargets[frame_idx]->GetImage(), VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1u, &ranges);
-                }
-                {
-                    VkClearDepthStencilValue clear_value = {1.0f, 0};
-                    VkImageSubresourceRange  ranges = RenderUtils::AllImageSubresourceRange(VK_IMAGE_ASPECT_DEPTH_BIT);
-                    RenderUtils::TransitionImageLayout(cmd,
-                                                       m_depthTargets[frame_idx]->GetImage(),
-                                                       VK_IMAGE_LAYOUT_UNDEFINED,
-                                                       VK_IMAGE_LAYOUT_GENERAL,
-                                                       ranges);
-                    vkCmdClearDepthStencilImage(
-                        cmd, m_depthTargets[frame_idx]->GetImage(), VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1u, &ranges);
-                }
-            }
 
             VkRenderPassBeginInfo rp_info = {};
             rp_info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -190,7 +163,7 @@ namespace GE
     void CombinedForwardShadingPass::Run(RenderPassRunData run_data, CombinedForwardShadingPassData pass_data)
     {
         auto&& [frame_idx, _, wait_semaphores, signal_semaphores, fence] = run_data;
-        auto&& [renderables, clear_color]                                = pass_data;
+        auto&& [renderables]                                             = pass_data;
 
         uint                     num_dispatched            = 0;
         uint                     total_dispatch            = renderables.size();
@@ -234,12 +207,10 @@ namespace GE
 
             /* ------------------------ dispatch pass ----------------------- */
             ForwardShadingPassData pass_data = {
-                m_size,                                               // viewport size
-                instances,                                            // entity instances
-                mesh,                                                 // mesh instance
-                std::dynamic_pointer_cast<ForwardMaterial>(material), // material instance
-                num_dispatched == 1,                                  // clear
-                clear_color                                           // clear color
+                m_size,
+                instances,
+                mesh,
+                std::dynamic_pointer_cast<ForwardMaterial>(material),
             };
             pass->Run(run_data, pass_data);
         }

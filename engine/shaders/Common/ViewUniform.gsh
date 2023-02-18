@@ -45,6 +45,11 @@ cbuffer ViewUniformBuffer
     ViewUniform view;
 }
 
+float4 TransformVertex(float3 vposWS)
+{
+    return mul(view.curr_cam.world_to_clip, float4(vposWS, 1.0));
+}
+
 float3 TransformWorldSpaceToViewSpace(float3 posWS)
 {
     return HomogeneousTransform(posWS, view.curr_cam.world_to_view);

@@ -13,7 +13,7 @@ namespace GE
              operator std::tuple<std::string, int, int>() { return {name, layer, tag}; }
     };
 
-    class TagComponent : public ComponentBase
+    class GE_API TagComponent : public ComponentBase
     {
         GE_COMPONENT_COMMON(TagComponent);
 

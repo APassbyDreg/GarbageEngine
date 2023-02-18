@@ -39,13 +39,13 @@ namespace GE
                 if (ImGui::MenuItem("Open Workspace"))
                 {
                     m_pressedItem = MenuItem::OpenWorkspace;
-                    ImGuiFileDialog::Instance()->OpenDialog("ChooseDirDlgKey", "Choose Directory", nullptr, ".");
+                    m_fileDialogInstance.OpenDialog("ChooseDirDlgKey", "Choose Directory", nullptr, ".");
                 }
                 if (ImGui::MenuItem("Open Scene"))
                 {
                     m_pressedItem    = MenuItem::OpenScene;
                     fs::path workdir = app.GetWorkDirectory();
-                    ImGuiFileDialog::Instance()->OpenDialog(
+                    m_fileDialogInstance.OpenDialog(
                         "ChooseFileDlgKey", "Choose File", ".json,.*", workdir.string().c_str());
                 }
                 if (ImGui::MenuItem("Save"))
@@ -56,7 +56,7 @@ namespace GE
                 {
                     m_pressedItem    = MenuItem::SaveAs;
                     fs::path workdir = app.GetWorkDirectory();
-                    ImGuiFileDialog::Instance()->OpenDialog(
+                    m_fileDialogInstance.OpenDialog(
                         "ChooseDirDlgKey", "Choose Directory to Save To", nullptr, workdir.string().c_str());
                 }
                 ImGui::EndMenu();
@@ -106,6 +106,7 @@ namespace GE
         }
 
     private:
+        ImGuiFileDialog m_fileDialogInstance;
         MenuItem m_pressedItem;
 
         inline void HandleOpenWorkspace()
@@ -113,15 +114,15 @@ namespace GE
             if (m_pressedItem != MenuItem::OpenWorkspace)
                 return;
 
-            if (ImGuiFileDialog::Instance()->Display("ChooseDirDlgKey"))
+            if (m_fileDialogInstance.Display("ChooseDirDlgKey"))
             {
-                if (ImGuiFileDialog::Instance()->IsOk())
+                if (m_fileDialogInstance.IsOk())
                 {
-                    std::string workspace = ImGuiFileDialog::Instance()->GetCurrentPath();
+                    std::string workspace = m_fileDialogInstance.GetCurrentPath();
                     Application::GetInstance().SetWorkDirectory(workspace);
                     GE_CORE_INFO("Opening workspace: {}", workspace);
                 }
-                ImGuiFileDialog::Instance()->Close();
+                m_fileDialogInstance.Close();
             }
         }
 
@@ -130,17 +131,17 @@ namespace GE
             if (m_pressedItem != MenuItem::OpenScene)
                 return;
 
-            if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+            if (m_fileDialogInstance.Display("ChooseFileDlgKey"))
             {
-                if (ImGuiFileDialog::Instance()->IsOk())
+                if (m_fileDialogInstance.IsOk())
                 {
-                    std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+                    std::string filepath = m_fileDialogInstance.GetFilePathName();
 
                     auto scene = Application::GetInstance().GetActiveScene();
                     scene->Load(filepath);
                     GE_CORE_INFO("Open Scene: {0}", filepath);
                 }
-                ImGuiFileDialog::Instance()->Close();
+                m_fileDialogInstance.Close();
             }
         }
 
@@ -158,18 +159,18 @@ namespace GE
         {
             if (m_pressedItem != MenuItem::SaveAs)
                 return;
-            if (ImGuiFileDialog::Instance()->Display("ChooseDirDlgKey"))
+            if (m_fileDialogInstance.Display("ChooseDirDlgKey"))
             {
-                if (ImGuiFileDialog::Instance()->IsOk())
+                if (m_fileDialogInstance.IsOk())
                 {
-                    std::string root  = ImGuiFileDialog::Instance()->GetCurrentPath();
+                    std::string root  = m_fileDialogInstance.GetCurrentPath();
                     auto        scene = Application::GetInstance().GetActiveScene();
                     fs::path    path  = root / fs::path(scene->GetName() + ".json");
                     scene->Save(path, true);
                     Application::GetInstance().SetWorkDirectory(root);
                     GE_CORE_INFO("Saving to: {}", path.string());
                 }
-                ImGuiFileDialog::Instance()->Close();
+                m_fileDialogInstance.Close();
             }
         }
     };

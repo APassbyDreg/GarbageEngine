@@ -456,7 +456,7 @@ namespace GE
         GetPipelineDepthStencilStateCreateInfo(bool             depthTest   = false,
                                                bool             depthWrite  = false,
                                                VkCompareOp      depthOp     = VK_COMPARE_OP_LESS_OR_EQUAL,
-                                               float2           depthBounds = float2(-1, 1),
+                                               float2           depthBounds = float2(0, 1),
                                                bool             stencilTest = false,
                                                VkStencilOpState front       = {},
                                                VkStencilOpState back        = {})

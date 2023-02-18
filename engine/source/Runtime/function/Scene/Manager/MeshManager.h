@@ -47,7 +47,7 @@ namespace GE
         float3                                        size;
         float3                                        center;
         std::shared_ptr<SceneOctreeNode>              parent = nullptr;
-        std::vector<std::shared_ptr<SceneOctreeNode>> children;
+        std::vector<std::weak_ptr<SceneOctreeNode>>   children;
         std::vector<std::shared_ptr<Entity>>          elements;
 
     private:
@@ -62,8 +62,9 @@ namespace GE
     public:
         SceneMeshManager(Scene& sc) : m_scene(sc) {}
         void Setup();
+        void Destroy();
 
-        std::vector<std::shared_ptr<Entity>> FrustrumCull(float4x4& vp_matrix);
+        std::vector<std::shared_ptr<Entity>> FrustumCull(float4x4& vp_matrix);
 
     private:
         void AddEntity(Entity& entity);

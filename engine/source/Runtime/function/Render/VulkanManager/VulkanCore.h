@@ -10,9 +10,10 @@
 #include "vma/vk_mem_alloc.h"
 
 #include "Runtime/core/Base/Singleton.h"
+#include "Runtime/core/Log/LogSystem.h"
 #include "Runtime/core/Math/Math.h"
 #include "vulkan/vulkan_core.h"
-#include <vcruntime.h>
+#include <stdint.h>
 
 namespace GE
 {
@@ -45,18 +46,43 @@ namespace GE
         static inline VkDevice         GetDevice() { return GetInstance().ensure_ready().m_device; }
         static inline VkSurfaceKHR     GetSurface() { return GetInstance().ensure_ready().m_surface; }
 
+        static inline VkQueue GetQueue(VkQueueFlagBits type)
+        {
+            switch (type)
+            {
+                case VK_QUEUE_GRAPHICS_BIT:
+                    return GetInstance().ensure_ready().m_graphicsQueue;
+                case VK_QUEUE_COMPUTE_BIT:
+                    return GetInstance().ensure_ready().m_computeQueue;
+                case VK_QUEUE_TRANSFER_BIT:
+                    return GetInstance().ensure_ready().m_transferQueue;
+                default:
+                    GE_CORE_CRITICAL("[VulkanCore::GetQueue] Invalid queue type {:#x}", (uint64_t)type);
+                    return VK_NULL_HANDLE;
+            }
+        }
         static inline VkQueue GetGraphicsQueue() { return GetInstance().ensure_ready().m_graphicsQueue; }
-        static inline VkQueue GetPresentQueue() { return GetInstance().ensure_ready().m_presentQueue; }
         static inline VkQueue GetComputeQueue() { return GetInstance().ensure_ready().m_computeQueue; }
         static inline VkQueue GetTransferQueue() { return GetInstance().ensure_ready().m_transferQueue; }
 
+        static inline uint32_t GetQueueFamilyIndex(VkQueueFlagBits type)
+        {
+            switch (type)
+            {
+                case VK_QUEUE_GRAPHICS_BIT:
+                    return GetInstance().ensure_ready().m_graphicsQueueFamilyIndex;
+                case VK_QUEUE_COMPUTE_BIT:
+                    return GetInstance().ensure_ready().m_computeQueueFamilyIndex;
+                case VK_QUEUE_TRANSFER_BIT:
+                    return GetInstance().ensure_ready().m_transferQueueFamilyIndex;
+                default:
+                    GE_CORE_CRITICAL("[VulkanCore::GetQueueFamilyIndex] Invalid queue type {:#x}", (uint64_t)type);
+                    return 0;
+            }
+        }
         static inline uint32_t GetGraphicsQueueFamilyIndex()
         {
             return GetInstance().ensure_ready().m_graphicsQueueFamilyIndex;
-        }
-        static inline uint32_t GetPresentQueueFamilyIndex()
-        {
-            return GetInstance().ensure_ready().m_presentQueueFamilyIndex;
         }
         static inline uint32_t GetComputeQueueFamilyIndex()
         {
@@ -70,13 +96,17 @@ namespace GE
         }
 
         /* ---------------------------- commands ---------------------------- */
+        static inline VkCommandPool CreateCmdPool(VkCommandPoolCreateInfo info)
+        {
+            VkCommandPool command_pool;
+            vkCreateCommandPool(GetDevice(), &info, nullptr, &command_pool);
+            return command_pool;
+        }
         static inline VkCommandPool CreateGraphicsCmdPool()
         {
             VkCommandPoolCreateInfo create_info = VkInit::GetCommandPoolCreateInfo(GetGraphicsQueueFamilyIndex());
             VkCommandPool           command_pool;
             vkCreateCommandPool(GetDevice(), &create_info, nullptr, &command_pool);
-            GetInstance().m_destroyActionStack.push_back(
-                [=]() { vkDestroyCommandPool(GetDevice(), command_pool, nullptr); });
             return command_pool;
         }
         static inline VkCommandPool CreateComputeCmdPool()
@@ -84,8 +114,6 @@ namespace GE
             VkCommandPoolCreateInfo create_info = VkInit::GetCommandPoolCreateInfo(GetComputeQueueFamilyIndex());
             VkCommandPool           command_pool;
             vkCreateCommandPool(GetDevice(), &create_info, nullptr, &command_pool);
-            GetInstance().m_destroyActionStack.push_back(
-                [=]() { vkDestroyCommandPool(GetDevice(), command_pool, nullptr); });
             return command_pool;
         }
         static inline VkCommandPool CreateTransferCmdPool(VkCommandPoolCreateFlags flags = 0)
@@ -94,8 +122,6 @@ namespace GE
                 VkInit::GetCommandPoolCreateInfo(GetTransferQueueFamilyIndex(), flags);
             VkCommandPool command_pool;
             vkCreateCommandPool(GetDevice(), &create_info, nullptr, &command_pool);
-            GetInstance().m_destroyActionStack.push_back(
-                [=]() { vkDestroyCommandPool(GetDevice(), command_pool, nullptr); });
             return command_pool;
         }
         static inline std::vector<VkCommandBuffer>
@@ -155,8 +181,6 @@ namespace GE
             auto&&           instance = GetInstance().ensure_ready();
             VkDescriptorPool pool;
             GE_VK_ASSERT(vkCreateDescriptorPool(instance.m_device, &info, nullptr, &pool));
-            instance.m_destroyActionStack.push_back(
-                [=]() { vkDestroyDescriptorPool(GetInstance().ensure_ready().m_device, pool, nullptr); });
             return pool;
         }
         static inline VkDescriptorSetLayout CreateDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo info)

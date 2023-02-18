@@ -54,7 +54,7 @@ namespace GE
             if (ImGui::Button(LABEL_WITH_NAME("Select From File")))
             {
                 fs::path workdir = Application::GetInstance().GetWorkDirectory();
-                ImGuiFileDialog::Instance()->OpenDialog(
+                GetImGuiFileDialogInstance().OpenDialog(
                     "ChooseFileDlgKey", "Choose Material Asset", ".ge.mat,.*", workdir.string().c_str());
             }
             HandleOpenFile();
@@ -90,13 +90,13 @@ namespace GE
     void MaterialComponent::HandleOpenFile()
     {
         std::string filepath = "";
-        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        if (GetImGuiFileDialogInstance().Display("ChooseFileDlgKey"))
         {
-            if (ImGuiFileDialog::Instance()->IsOk())
+            if (GetImGuiFileDialogInstance().IsOk())
             {
-                filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+                filepath = GetImGuiFileDialogInstance().GetFilePathName();
             }
-            ImGuiFileDialog::Instance()->Close();
+            GetImGuiFileDialogInstance().Close();
         }
         if (filepath.ends_with(".ge.material"))
         {

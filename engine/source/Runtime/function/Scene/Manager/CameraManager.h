@@ -25,6 +25,7 @@ namespace GE
     public:
         SceneCameraManager(Scene& sc) : m_scene(sc) {}
         void Setup();
+        void Destroy();
 
         CameraInfo GetActiveCameraInfo(float aspect);
         CameraInfo GetCameraInfo(std::shared_ptr<Entity> e, float aspect);

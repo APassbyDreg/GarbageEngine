@@ -31,6 +31,15 @@ namespace GE
         ComponentHook<CameraComponent>::AddDestructHook(BIND_CLASS_FN(UpdateEntity), sc_name);
     }
 
+    void SceneCameraManager::Destroy()
+    {
+        m_activeCamera = nullptr;
+        m_VMatrixCache.clear();
+        m_PMatrixCache.clear();
+        m_VPMatrixCache.clear();
+        m_ClipCache.clear();
+    }
+
     void SceneCameraManager::UpdateEntity(Entity& entity)
     {
         bool has_active_camera = m_activeCamera != nullptr;

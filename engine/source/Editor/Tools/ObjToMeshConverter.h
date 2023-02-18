@@ -34,7 +34,7 @@ namespace GE
                 if (ImGui::Button("Select OBJ Path"))
                 {
                     m_target = SelectionTarget::OBJ;
-                    ImGuiFileDialog::Instance()->OpenDialog(
+                    m_fileDialogInstance.OpenDialog(
                         "ChooseFileDlgKey", "Choose OBJ File", ".obj,.*", workdir.string().c_str());
                 }
                 HandleFileSelect();
@@ -43,7 +43,7 @@ namespace GE
                 if (ImGui::Button("Select Mesh Path"))
                 {
                     m_target = SelectionTarget::MESH;
-                    ImGuiFileDialog::Instance()->OpenDialog(
+                    m_fileDialogInstance.OpenDialog(
                         "ChooseFileDlgKey", "Choose Mesh File", ".ge.trianglemesh,.*", workdir.string().c_str());
                 }
                 HandleFileSelect();
@@ -81,11 +81,11 @@ namespace GE
 
         inline void HandleFileSelect()
         {
-            if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+            if (m_fileDialogInstance.Display("ChooseFileDlgKey"))
             {
-                if (ImGuiFileDialog::Instance()->IsOk())
+                if (m_fileDialogInstance.IsOk())
                 {
-                    std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+                    std::string filepath = m_fileDialogInstance.GetFilePathName();
                     if (m_target == SelectionTarget::OBJ)
                     {
                         m_objPath = filepath;
@@ -95,7 +95,7 @@ namespace GE
                         m_meshPath = filepath;
                     }
                 }
-                ImGuiFileDialog::Instance()->Close();
+                m_fileDialogInstance.Close();
             }
         }
 
@@ -109,6 +109,7 @@ namespace GE
     private:
         std::function<void()> m_onexit;
 
+        ImGuiFileDialog m_fileDialogInstance;
         SelectionTarget m_target;
         bool            m_showTip  = false;
         std::string     m_objPath  = "";

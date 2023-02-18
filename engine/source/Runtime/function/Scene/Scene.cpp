@@ -10,7 +10,7 @@ namespace GE
 
     Scene::Scene() : SETUP_SCENE_MANAGERS()
     {
-        Random rand;
+        RandomEngine rand;
         m_name = std::format("GE_scene_{}", rand.RandInt<uint>(0, (1 << 16) - 1));
         Setup();
     }
@@ -19,13 +19,19 @@ namespace GE
 
     Scene::Scene(const fs::path path) : SETUP_SCENE_MANAGERS() { Load(path); }
 
-    Scene::~Scene() {}
+    Scene::~Scene() { Destroy(); }
 
     void Scene::Setup()
     {
         m_MeshManager.Setup();
         m_CameraManager.Setup();
         SceneSettingsFactory::InitializeSettingsMap(m_sceneSettings);
+    }
+
+    void Scene::Destroy()
+    {
+        m_CameraManager.Destroy();
+        m_MeshManager.Destroy();
     }
 
     std::shared_ptr<Entity> Scene::CreateEntity(uint eid, std::string tagname, int layer, int tag)
@@ -101,32 +107,6 @@ namespace GE
             {
                 setting->Inspect();
             }
-        }
-    }
-
-    void Scene::InspectStructure()
-    {
-        strcpy(m_nameBuffer, m_name.c_str());
-        ImGui::InputText("Scene Name", m_nameBuffer, 256);
-        m_name = m_nameBuffer;
-
-        ImGui::Separator();
-        ImGui::Text("Entities");
-
-        int idx = 0;
-        for (auto&& [eid, e] : m_entities)
-        {
-            TagComponent& tag  = e->GetComponent<TagComponent>();
-            std::string   name = tag.GetTagName();
-            if (name.empty())
-            {
-                name = "unnamed entity";
-            }
-            if (ImGui::Selectable(name.c_str(), m_focusEntityID == idx))
-            {
-                m_focusEntityID = eid;
-            }
-            idx++;
         }
     }
 

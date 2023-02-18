@@ -8,7 +8,7 @@ namespace GE
 {
     typedef std::shared_ptr<Mesh> MeshComponentCore;
 
-    class MeshComponent : public ComponentBase
+    class GE_API MeshComponent : public ComponentBase
     {
         GE_COMPONENT_COMMON(MeshComponent);
 
@@ -21,5 +21,11 @@ namespace GE
 
     private:
         void HandleOpenFile();
+
+        static ImGuiFileDialog& GetImGuiFileDialogInstance()
+        {
+            static ImGuiFileDialog instance;
+            return instance;
+        }
     };
 } // namespace GE

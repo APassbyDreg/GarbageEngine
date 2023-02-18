@@ -67,7 +67,7 @@ namespace GE
         VkExtent2D      m_viewportSize  = {0, 0};
         uint            m_frameRendered = 0;
         Time::TimeStamp m_tInit, m_tLastFrame;
-        Random          m_rand;
+        RandomEngine    m_rand;
         CameraInfo      m_currCamInfo, m_prevCamInfo;
 
     private:

@@ -27,6 +27,33 @@ namespace GE
             }
         }
 
+        inline void InspectSceneStructure(std::shared_ptr<Scene> sc)
+        {
+            char name_buffer[256];
+            strcpy(name_buffer, sc->GetName().c_str());
+            ImGui::InputText("Scene Name", name_buffer, 256);
+            sc->SetName(name_buffer);
+
+            ImGui::Separator();
+            ImGui::Text("Entities");
+
+            int idx = 0;
+            for (auto&& [eid, e] : sc->GetAllEntities())
+            {
+                TagComponent& tag  = e->GetComponent<TagComponent>();
+                std::string   name = tag.GetTagName();
+                if (name.empty())
+                {
+                    name = "unnamed entity";
+                }
+                if (ImGui::Selectable(name.c_str(), m_focusedEntityID == idx))
+                {
+                    m_focusedEntityID = eid;
+                }
+                idx++;
+            }
+        }
+
         inline void OnImGuiRender(ImGuiContext* ctx) override
         {
             ImGui::SetCurrentContext(ctx);
@@ -35,7 +62,7 @@ namespace GE
             std::shared_ptr<Scene> sc  = app.GetActiveScene();
 
             ImGui::Begin("Scene Inspector");
-            sc->InspectStructure();
+            InspectSceneStructure(sc);
             ImGui::End();
 
             ImGui::Begin("Entity Inspector");
@@ -51,5 +78,6 @@ namespace GE
         }
 
         bool m_openSceneSettings = false;
+        int  m_focusedEntityID   = -1;
     };
 } // namespace GE

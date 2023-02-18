@@ -10,6 +10,8 @@
 
 #include "../VulkanManager/RenderUtils.h"
 #include "vulkan/vulkan_core.h"
+#include <functional>
+#include <memory>
 
 namespace GE
 {
@@ -119,10 +121,12 @@ namespace GE
         }
 
         /* ------------------------- command buffer ------------------------- */
+        m_renderResourceManager.ReservePerFrameGraphicsCmdBuffer("RenderTargetTransion");
         m_renderResourceManager.ReservePerFrameGraphicsCmdBuffer("OutputTransion");
 
         /* ------------------------- control values ------------------------- */
-        m_renderResourceManager.ReservePerFrameSemaphore("ForwardPassFinished");
+        m_renderResourceManager.ReservePerFrameSemaphore("RenderTargetTransition");
+        m_renderResourceManager.ReservePerFrameSemaphore("ForwardPass");
 
         /* ----------------------- init render passes ----------------------- */
         m_forwardPass.Init(n_frames);
@@ -155,14 +159,14 @@ namespace GE
         cam_view_uniform_buffer->Upload((byte*)&cam_view_uniform, sizeof(ViewUniform));
 
         // create and group renderables
-        auto&& renderables        = sc->GetMeshManager().FrustrumCull(cam_view_uniform.curr_cam.world_to_clip);
-        using MeshMaterialPairKey = std::tuple<std::string, std::string>;
+        auto&& renderables        = sc->GetMeshManager().FrustumCull(cam_view_uniform.curr_cam.world_to_clip);
+        using MeshMaterialPairKey = std::tuple<Mesh*, Material*>;
         std::map<MeshMaterialPairKey, std::vector<std::shared_ptr<Entity>>> renderable_groups;
         for (auto&& r : renderables)
         {
-            auto&& mat_name  = r->GetComponent<MaterialComponent>().GetCoreValue()->GetType();
-            auto&& mesh_name = r->GetComponent<MeshComponent>().GetCoreValue()->GetType();
-            renderable_groups[{mesh_name, mat_name}].push_back(r);
+            auto mat_id  = r->GetComponent<MaterialComponent>().GetCoreValue().get();
+            auto mesh_id = r->GetComponent<MeshComponent>().GetCoreValue().get();
+            renderable_groups[{mesh_id, mat_id}].push_back(r);
         }
         auto forward_renderables  = StdUtils::FilterKey(renderable_groups, [&](const MeshMaterialPairKey& key) {
             return renderable_groups[key][0]->GetComponent<MaterialComponent>().GetCoreValue()->GetMode() == "forward";
@@ -171,15 +175,57 @@ namespace GE
             return renderable_groups[key][0]->GetComponent<MaterialComponent>().GetCoreValue()->GetMode() == "deferred";
         });
 
-        // forward pass
+        // transition render target
         std::vector<float> clear_color = sc->GetSetting("TestSceneSetting")["Clear Color"].get<std::vector<float>>();
         {
-            std::vector<VkSemaphore> wait_semaphores   = routine_wait_semaphores;
+            auto&& cmd = m_renderResourceManager.GetPerFrameGraphicsCmdBuffer(frame_index, "RenderTargetTransion");
+            RenderUtils::BeginOneTimeSubmitCmdBuffer(cmd);
+            {
+                VkImage           rt = m_renderResourceManager.GetPerFrameImage(frame_index, "ColorRT")->GetImage();
+                VkClearColorValue clear_value  = {clear_color[0], clear_color[1], clear_color[2], 1.0f};
+                VkImageSubresourceRange ranges = RenderUtils::AllImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
+                RenderUtils::TransitionImageLayout(cmd, rt, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, ranges);
+                vkCmdClearColorImage(cmd, rt, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1u, &ranges);
+            }
+            {
+                VkImage rt = m_renderResourceManager.GetPerFrameImage(frame_index, "DepthRT")->GetImage();
+                VkClearDepthStencilValue clear_value = {1.0f, 0};
+                VkImageSubresourceRange  ranges      = RenderUtils::AllImageSubresourceRange(VK_IMAGE_ASPECT_DEPTH_BIT);
+                RenderUtils::TransitionImageLayout(cmd, rt, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, ranges);
+                vkCmdClearDepthStencilImage(cmd, rt, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1u, &ranges);
+            }
+            RenderUtils::EndCmdBuffer(cmd);
+            // submit
+            {
+                std::vector<VkSemaphore> wait_semaphores   = routine_wait_semaphores;
+                std::vector<VkSemaphore> signal_semaphores = {
+                    m_renderResourceManager.GetPerFrameSemaphore(frame_index, "RenderTargetTransition")->Get()};
+
+                VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                VkSubmitInfo         info       = {};
+                info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                info.waitSemaphoreCount         = wait_semaphores.size();
+                info.pWaitSemaphores            = wait_semaphores.data();
+                info.pWaitDstStageMask          = &wait_stage;
+                info.commandBufferCount         = 1;
+                info.pCommandBuffers            = &cmd;
+                info.signalSemaphoreCount       = signal_semaphores.size();
+                info.pSignalSemaphores          = signal_semaphores.data();
+                VulkanCore::SubmitToGraphicsQueue(info, VK_NULL_HANDLE);
+            }
+        }
+
+        // forward pass
+        bool need_forward_pass = forward_renderables.size() > 0;
+        if (need_forward_pass)
+        {
+            std::vector<VkSemaphore> wait_semaphores = {
+                m_renderResourceManager.GetPerFrameSemaphore(frame_index, "RenderTargetTransition")->Get()};
             std::vector<VkSemaphore> signal_semaphores = {
-                m_renderResourceManager.GetPerFrameSemaphore(frame_index, "ForwardPassFinished")->Get()};
+                m_renderResourceManager.GetPerFrameSemaphore(frame_index, "ForwardPass")->Get()};
             RenderPassRunData run_data = {
                 frame_index, VK_NULL_HANDLE, wait_semaphores, signal_semaphores, VK_NULL_HANDLE};
-            CombinedForwardShadingPassData pass_data = {forward_renderables, clear_color};
+            CombinedForwardShadingPassData pass_data = {forward_renderables};
             m_forwardPass.Run(run_data, pass_data);
         }
 
@@ -200,7 +246,9 @@ namespace GE
             // submit
             {
                 std::vector<VkSemaphore> wait_semaphores = {
-                    m_renderResourceManager.GetPerFrameSemaphore(frame_index, "ForwardPassFinished")->Get()};
+                    need_forward_pass ?
+                        m_renderResourceManager.GetPerFrameSemaphore(frame_index, "ForwardPass")->Get() :
+                        m_renderResourceManager.GetPerFrameSemaphore(frame_index, "RenderTargetTransition")->Get()};
                 std::vector<VkSemaphore> signal_semaphores = routine_signal_semaphores;
 
                 VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;

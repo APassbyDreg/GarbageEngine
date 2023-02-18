@@ -7,6 +7,8 @@
 #include "../Components/Mesh.h"
 #include "../Components/Transform.h"
 
+#include "Runtime/core/Math/ConvexVolumn.h"
+
 #define BIND_CLASS_FN(fn) std::bind(&SceneMeshManager::fn, this, std::placeholders::_1)
 
 namespace GE
@@ -14,7 +16,8 @@ namespace GE
     static bool IsManagable(Entity& e)
     {
         return e.HasComponent<TransformComponent>() && e.HasComponent<MaterialComponent>() &&
-               e.HasComponent<MeshComponent>();
+               e.HasComponent<MeshComponent>() && e.GetComponent<MaterialComponent>().GetCoreValue() != nullptr &&
+               e.GetComponent<MeshComponent>().GetCoreValue();
     }
 
     void SceneOctreeNode::RemoveElement(int eid, bool is_leaf)
@@ -63,8 +66,9 @@ namespace GE
         {
             Bounds3f aabb = EntityAABBLogic::GetInstance().GetAABB(*e);
             bool     fit  = false;
-            for (auto&& child : children)
+            for (auto&& pchild : children)
             {
+                auto&& child = pchild.lock();
                 if (child->Fits(aabb))
                 {
                     child->AddElement(e);
@@ -84,8 +88,9 @@ namespace GE
 
     void SceneOctreeNode::MergeChild()
     {
-        for (auto&& child : children)
+        for (auto&& pchild : children)
         {
+            auto&& child = pchild.lock();
             child->MergeChild();
             for (auto&& e : child->elements)
             {
@@ -120,8 +125,9 @@ namespace GE
         {
             auto aabb = EntityAABBLogic::GetInstance().GetAABB(*elem);
             bool fit  = false;
-            for (auto&& child : children)
+            for (auto&& pchild : children)
             {
+                auto&& child = pchild.lock();
                 if (child->Fits(aabb))
                 {
                     child->AddElement(elem);
@@ -149,6 +155,13 @@ namespace GE
         ComponentHook<MaterialComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
         ComponentHook<MaterialComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
         ComponentHook<MaterialComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
+    }
+
+    void SceneMeshManager::Destroy()
+    {
+        m_entityToNode.clear();
+        m_largeEntities.clear();
+        m_root.clear();
     }
 
     void SceneMeshManager::AddEntity(Entity& e)
@@ -214,14 +227,15 @@ namespace GE
     }
 
     void
-    FrustrumCullNode(float4x4& vp, std::shared_ptr<SceneOctreeNode> node, std::vector<std::shared_ptr<Entity>>& results)
+    FrustumCullNode(float4x4& vp, std::shared_ptr<SceneOctreeNode> node, std::vector<std::shared_ptr<Entity>>& results)
     {
-        auto is = FrustrumAABBIntersection(vp, node->GetAABB());
-        if (is == BoundsIntersectionState::INSIDE)
+        auto view_frustum = ConvexVolumn::ViewFrustumFromVP(vp);
+        auto is           = view_frustum.TestAABBInclusive(node->GetAABB());
+        if (is == VolumnBoxRelation::Inside)
         {
             results.insert(results.end(), node->elements.begin(), node->elements.end());
         }
-        else if (is == BoundsIntersectionState::INTERSECT)
+        else if (is == VolumnBoxRelation::Intersect)
         {
             if (node->children.empty())
             {
@@ -229,15 +243,16 @@ namespace GE
             }
             else
             {
-                for (auto&& child : node->children)
+                for (auto&& pchild : node->children)
                 {
-                    FrustrumCullNode(vp, child, results);
+                    auto&& child = pchild.lock();
+                    FrustumCullNode(vp, child, results);
                 }
             }
         }
     }
 
-    std::vector<std::shared_ptr<Entity>> SceneMeshManager::FrustrumCull(float4x4& vp)
+    std::vector<std::shared_ptr<Entity>> SceneMeshManager::FrustumCull(float4x4& vp)
     {
         // do fursturm test on each root node
         std::map<TupledInt3, std::vector<std::shared_ptr<Entity>>> results;
@@ -245,7 +260,7 @@ namespace GE
         for (auto&& [idx, node] : m_root)
         {
             results[idx] = std::vector<std::shared_ptr<Entity>>();
-            jobs.push_back(std::thread(FrustrumCullNode, std::ref(vp), node, std::ref(results[idx])));
+            jobs.push_back(std::thread(FrustumCullNode, std::ref(vp), node, std::ref(results[idx])));
         }
         for (auto&& job : jobs)
         {

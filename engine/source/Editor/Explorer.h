@@ -36,17 +36,17 @@ namespace GE
                 ImGui::SameLine();
                 if (ImGui::Button("Open Workspace"))
                 {
-                    ImGuiFileDialog::Instance()->OpenDialog("ChooseDirDlgKey", "Choose Workspace", nullptr, ".");
+                    m_fileDialogInstance.OpenDialog("ChooseDirDlgKey", "Choose Workspace", nullptr, ".");
                 }
-                if (ImGuiFileDialog::Instance()->Display("ChooseDirDlgKey"))
+                if (m_fileDialogInstance.Display("ChooseDirDlgKey"))
                 {
-                    if (ImGuiFileDialog::Instance()->IsOk())
+                    if (m_fileDialogInstance.IsOk())
                     {
-                        std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+                        std::string filePath = m_fileDialogInstance.GetCurrentPath();
                         GE_CORE_INFO("Opening workspace: {}", filePath);
                         Application::GetInstance().SetWorkDirectory(filePath);
                     }
-                    ImGuiFileDialog::Instance()->Close();
+                    m_fileDialogInstance.Close();
                 }
             }
             else
@@ -100,6 +100,7 @@ namespace GE
         }
 
     private:
+        ImGuiFileDialog m_fileDialogInstance;
         fs::path m_root;
         fs::path m_current;
     };

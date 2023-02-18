@@ -19,14 +19,14 @@
 
 namespace GE
 {
+    using MeshMaterialPairKey = std::tuple<Mesh*, Material*>;
+
     struct ForwardShadingPassData
     {
         VkExtent2D                           viewport_size;
         std::vector<std::shared_ptr<Entity>> renderables;
         std::shared_ptr<Mesh>                m_mesh;
         std::shared_ptr<ForwardMaterial>     m_material;
-        bool                                 clear       = false;
-        std::vector<float>                   clear_value = {0, 0, 0};
     };
 
     class ForwardShadingPass : public GraphicsPass, public std::enable_shared_from_this<ForwardShadingPass>
@@ -37,7 +37,12 @@ namespace GE
                            std::vector<std::shared_ptr<GpuImage>> color_targets,
                            std::vector<std::shared_ptr<GpuImage>> depth_targets,
                            RenderResourceManager&                 resource_manager) :
-            GraphicsPass(resource_manager, "ForwardShading-" + material->GetType() + "-" + mesh->GetType()),
+            GraphicsPass(resource_manager,
+                         std::format("ForwardShading-{}({})-{}({})",
+                                     material->GetType(),
+                                     (void*)material.get(),
+                                     mesh->GetType(),
+                                     (void*)mesh.get())),
             m_colorTargets(color_targets), m_depthTargets(depth_targets)
         {
             m_mesh      = mesh->GetType();
@@ -74,15 +79,11 @@ namespace GE
 
     struct CombinedForwardShadingPassData
     {
-        using MeshMaterialPairKey = std::tuple<std::string, std::string>;
         std::map<MeshMaterialPairKey, std::vector<std::shared_ptr<Entity>>> renderables;
-        std::vector<float>                                                  clear_color = {0, 0, 0};
     };
 
     class CombinedForwardShadingPass
     {
-        using MeshMaterialPairKey = std::tuple<std::string, std::string>;
-
     public:
         CombinedForwardShadingPass(RenderResourceManager& resource_manager) : m_resourceManager(resource_manager) {}
 
