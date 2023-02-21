@@ -19,7 +19,7 @@ end
 -- runtime
 target("runtime")
     set_languages("c++20")
-    set_kind("shared")
+    set_kind("static")
 
     -- defines
     GE_add_predefined_macros()
