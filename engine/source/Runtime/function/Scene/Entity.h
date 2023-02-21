@@ -45,15 +45,14 @@ namespace GE
 
             /* ---------------------- create component ---------------------- */
             m_srcReg.emplace<T>(m_registryID, shared_from_this(), std::forward<TArgs>(args)...);
-            ComponentHook<T>::CallConstructHooks(*this, m_sceneName);
+            ComponentHook<T>::CallConstructHooks(*this, m_sceneID);
 
-            
             T&          comp = GetComponent<T>();
             std::string name = T::GetNameStatic();
 
             /* ---------------------- updated callbacks --------------------- */
             comp.AddUpdatedCallback([&, this]() { MarkChanged(); });
-            comp.AddUpdatedCallback([&, this]() { ComponentHook<T>::CallChangedHooks(*this, m_sceneName); });
+            comp.AddUpdatedCallback([&, this]() { ComponentHook<T>::CallChangedHooks(*this, m_sceneID); });
 
             /* --------------------- register iterators --------------------- */
             m_compIters[name]      = [&, this](ComponentIteratorFunc f) { f(comp, *this); };
@@ -69,7 +68,7 @@ namespace GE
                 return;
             }
 
-            ComponentHook<T>::CallDestructHooks(*this, m_sceneName);
+            ComponentHook<T>::CallDestructHooks(*this, m_sceneID);
             m_srcReg.remove<T>(m_registryID);
 
             m_compIters.erase(T::GetNameStatic());
@@ -130,7 +129,7 @@ namespace GE
         void MarkChanged();
 
         Scene&                               m_scene;
-        std::string&                         m_sceneName;
+        const UniqueIdentifier&              m_sceneID;
         uint                                 m_version  = 0;
         int                                  m_entityID = -1; // valid entity id has to be greater than zero
         int                                  m_parentID = -1; // negative value indecates no parent

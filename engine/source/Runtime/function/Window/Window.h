@@ -101,8 +101,7 @@ namespace GE
         /* ------------------------- render routine ------------------------- */
         // TODO: move to dedicate manager
         int                  m_usingRenderRoutine = 0;
-        TestBasicRoutine     m_renderRoutine0;
-        BuiltinRenderRoutine m_renderRoutine1;
+        BuiltinRenderRoutine m_renderRoutine0;
 
         VkSampler                                 m_viewportSampler;
         std::vector<std::vector<VkDescriptorSet>> m_viewportDescriptorSets;

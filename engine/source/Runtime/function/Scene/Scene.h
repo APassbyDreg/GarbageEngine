@@ -4,6 +4,8 @@
 
 #include "Entity.h"
 
+#include "Runtime/core/Base/WithIdentifier.h"
+
 #include "Runtime/function/Scene/Components/ComponentFactory.h"
 
 #include "Runtime/resource/Managers/ResourceManager.h"
@@ -13,7 +15,6 @@
 #include "Manager/MeshManager.h"
 
 #include "Settings/SceneSettingsFactory.h"
-#include <memory>
 
 namespace GE
 {
@@ -27,9 +28,12 @@ public: \
 private: \
     Scene##name m_##name;
 
-    class GE_API Scene : public std::enable_shared_from_this<Scene>
+    class SceneInspectorLayer;
+
+    class GE_API Scene : public std::enable_shared_from_this<Scene>, public WithIdentifier
     {
         friend class Entity;
+        friend class SceneInspectorLayer;
 
         DEFINE_SCENE_MANAGER(MeshManager);
         DEFINE_SCENE_MANAGER(CameraManager);
@@ -64,10 +68,6 @@ private: \
             }
             return entities;
         }
-        inline std::map<uint, std::shared_ptr<Entity>>& GetAllEntities() { return m_entities; }
-
-        void InspectSettings();
-        void InspectFocusedEntity();
 
         json Serialize() const;
         void Deserialize(const json& data);

@@ -275,7 +275,7 @@ namespace GE
         ViewUniform data  = {};
         data.debug_flag   = 0;
         data.frame_number = m_frameRendered;
-        data.random       = m_rand.RandInt();
+        data.random       = m_rand.RandInt<uint>();
         data.time         = Time::ToSeconds(t - m_tInit);
         data.delta_time   = Time::ToSeconds(t - m_tLastFrame);
         return data;

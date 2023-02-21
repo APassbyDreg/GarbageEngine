@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GE_pch.h"
+#include <limits>
 #include <type_traits>
 
 namespace GE
@@ -9,21 +10,19 @@ namespace GE
     {
     public:
         template<class T>
-        requires std::is_integral_v<T> inline T RandInt(T min, T max)
+        requires std::is_integral_v<T> inline T RandInt(T min = std::numeric_limits<T>::min(),
+                                                        T max = std::numeric_limits<T>::max())
         {
             std::uniform_int_distribution<T> dist {min, max};
             return dist(random_engine);
         }
 
         template<class T>
-        requires std::is_floating_point_v<T> inline T Rand(T min, T max)
+        requires std::is_floating_point_v<T> inline T Rand(T min = 0.0, T max = 1.0)
         {
             std::uniform_real_distribution<T> dist {min, max};
             return dist(random_engine);
         }
-
-        inline int64_t RandInt() { return default_int_dist(random_engine); }
-        inline double  Rand() { return default_real_dist(random_engine); }
 
     private:
         std::random_device                     random_device;
@@ -38,23 +37,21 @@ namespace GE
         {
         public:
             template<class T>
-            requires std::is_integral_v<T> static inline T RandInt(T min, T max)
+            requires std::is_integral_v<T> static inline T RandInt(T min = std::numeric_limits<T>::min(),
+                                                                   T max = std::numeric_limits<T>::max())
             {
                 return GetRandomEngine().RandInt(min, max);
             }
             template<class T>
-            requires std::is_floating_point_v<T> static inline T Rand(T min, T max)
+            requires std::is_floating_point_v<T> static inline T Rand(T min = 0.0, T max = 1.0)
             {
                 return GetRandomEngine().Rand(min, max);
             }
 
-            static inline int64_t RandInt() { return GetRandomEngine().RandInt(); }
-            static inline double  Rand() { return GetRandomEngine().Rand(); }
-
         private:
-            static const Random& GetRandomEngine()
+            static RandomEngine& GetRandomEngine()
             {
-                static Random rand;
+                static RandomEngine rand;
                 return rand;
             }
         };

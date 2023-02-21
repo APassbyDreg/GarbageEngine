@@ -100,23 +100,12 @@ namespace GE
             }
 
 #ifdef GE_DEBUG
-            // std::vector<VkExtensionProperties> properties = {};
-            // uint32_t                           prop_count = 0;
-            // VkResult                           err        = VK_INCOMPLETE;
-            // while (err == VK_INCOMPLETE)
-            // {
-            //     err = vkEnumerateInstanceExtensionProperties(nullptr, &prop_count, nullptr);
-            //     properties.resize(prop_count);
-            //     err = vkEnumerateInstanceExtensionProperties(nullptr, &prop_count, properties.data());
-            // }
-            // std::vector<std::string> props;
-            // for (int i = 0; i < prop_count; i++)
-            // {
-            //     props.emplace_back(properties[i].extensionName);
-            // }
-            // builder.enable_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
-
-            builder.request_validation_layers(true).set_debug_callback(__debug_messenger);
+            builder.request_validation_layers(true)
+                .set_debug_callback(__debug_messenger)
+                .set_debug_messenger_severity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+                                              VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+                .set_debug_messenger_type(VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                          VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
 #endif
             VKB_CHECK_RETURN(builder.build(), m_vkbInstance);
             m_instance = m_vkbInstance.instance;
@@ -241,7 +230,7 @@ namespace GE
         vulkanFunctions.vkGetDeviceProcAddr   = &vkGetDeviceProcAddr;
 
         VmaAllocatorCreateInfo allocatorCreateInfo = {};
-        allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_2;
+        allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_3;
         allocatorCreateInfo.physicalDevice         = m_physicalDevice;
         allocatorCreateInfo.device                 = m_device;
         allocatorCreateInfo.instance               = m_instance;

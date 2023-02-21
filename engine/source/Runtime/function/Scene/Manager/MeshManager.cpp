@@ -8,6 +8,8 @@
 #include "../Components/Transform.h"
 
 #include "Runtime/core/Math/ConvexVolumn.h"
+#include "Runtime/core/Utils/ContainerUtils.h"
+#include <memory>
 
 #define BIND_CLASS_FN(fn) std::bind(&SceneMeshManager::fn, this, std::placeholders::_1)
 
@@ -16,8 +18,13 @@ namespace GE
     static bool IsManagable(Entity& e)
     {
         return e.HasComponent<TransformComponent>() && e.HasComponent<MaterialComponent>() &&
-               e.HasComponent<MeshComponent>() && e.GetComponent<MaterialComponent>().GetCoreValue() != nullptr &&
-               e.GetComponent<MeshComponent>().GetCoreValue();
+               e.HasComponent<MeshComponent>();
+    }
+
+    static bool IsRenderable(const Entity& e)
+    {
+        return e.GetComponent<MaterialComponent>().GetCoreValue() != nullptr &&
+               e.GetComponent<MeshComponent>().GetCoreValue() != nullptr;
     }
 
     void SceneOctreeNode::RemoveElement(int eid, bool is_leaf)
@@ -145,16 +152,16 @@ namespace GE
 
     void SceneMeshManager::Setup()
     {
-        auto sc_name = m_scene.GetName();
-        ComponentHook<MeshComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
-        ComponentHook<MeshComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
-        ComponentHook<MeshComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
-        ComponentHook<TransformComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
-        ComponentHook<TransformComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
-        ComponentHook<TransformComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
-        ComponentHook<MaterialComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), sc_name);
-        ComponentHook<MaterialComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), sc_name);
-        ComponentHook<MaterialComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
+        auto scene_id = m_scene.GetID();
+        ComponentHook<MeshComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), scene_id);
+        ComponentHook<MeshComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), scene_id);
+        ComponentHook<MeshComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), scene_id);
+        ComponentHook<TransformComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), scene_id);
+        ComponentHook<TransformComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), scene_id);
+        ComponentHook<TransformComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), scene_id);
+        ComponentHook<MaterialComponent>::AddConstructHook(BIND_CLASS_FN(AddEntity), scene_id);
+        ComponentHook<MaterialComponent>::AddDestructHook(BIND_CLASS_FN(RemoveEntity), scene_id);
+        ComponentHook<MaterialComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), scene_id);
     }
 
     void SceneMeshManager::Destroy()
@@ -233,13 +240,17 @@ namespace GE
         auto is           = view_frustum.TestAABBInclusive(node->GetAABB());
         if (is == VolumnBoxRelation::Inside)
         {
-            results.insert(results.end(), node->elements.begin(), node->elements.end());
+            auto renderables =
+                StdUtils::Filter(node->elements, [](const std::shared_ptr<Entity> e) { return IsRenderable(*e); });
+            results.insert(results.end(), renderables.begin(), renderables.end());
         }
         else if (is == VolumnBoxRelation::Intersect)
         {
             if (node->children.empty())
             {
-                results.insert(results.end(), node->elements.begin(), node->elements.end());
+                auto renderables =
+                    StdUtils::Filter(node->elements, [](const std::shared_ptr<Entity> e) { return IsRenderable(*e); });
+                results.insert(results.end(), renderables.begin(), renderables.end());
             }
             else
             {

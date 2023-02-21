@@ -20,15 +20,15 @@ namespace GE
 
     void SceneCameraManager::Setup()
     {
-        auto sc_name = m_scene.GetName();
-        ComponentHook<TransformComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
-        ComponentHook<CameraComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), sc_name);
+        auto scene_id = m_scene.GetID();
+        ComponentHook<TransformComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), scene_id);
+        ComponentHook<CameraComponent>::AddChangedHook(BIND_CLASS_FN(UpdateEntity), scene_id);
 
-        ComponentHook<TransformComponent>::AddConstructHook(BIND_CLASS_FN(UpdateEntity), sc_name);
-        ComponentHook<CameraComponent>::AddConstructHook(BIND_CLASS_FN(UpdateEntity), sc_name);
+        ComponentHook<TransformComponent>::AddConstructHook(BIND_CLASS_FN(UpdateEntity), scene_id);
+        ComponentHook<CameraComponent>::AddConstructHook(BIND_CLASS_FN(UpdateEntity), scene_id);
 
-        ComponentHook<TransformComponent>::AddDestructHook(BIND_CLASS_FN(UpdateEntity), sc_name);
-        ComponentHook<CameraComponent>::AddDestructHook(BIND_CLASS_FN(UpdateEntity), sc_name);
+        ComponentHook<TransformComponent>::AddDestructHook(BIND_CLASS_FN(UpdateEntity), scene_id);
+        ComponentHook<CameraComponent>::AddDestructHook(BIND_CLASS_FN(UpdateEntity), scene_id);
     }
 
     void SceneCameraManager::Destroy()
@@ -44,7 +44,7 @@ namespace GE
     {
         bool has_active_camera = m_activeCamera != nullptr;
 
-        if (!IsManagable(entity))
+         if (!IsManagable(entity))
         {
             if (has_active_camera && entity.GetEntityID() == m_activeCamera->GetEntityID())
             {

@@ -3,6 +3,7 @@
 #include "GE_pch.h"
 
 #include "Runtime/core/Base/Singleton.h"
+#include "Runtime/core/Base/WithIdentifier.h"
 
 #include "Components/ComponentBase.h"
 
@@ -15,35 +16,35 @@ namespace GE
     class ComponentHook : public Singleton<ComponentHook<T>>
     {
     public:
-        static void AddConstructHook(EntityCallback hook, std::string sc_name)
+        static void AddConstructHook(EntityCallback hook, UniqueIdentifier scene_id)
         {
-            ComponentHook<T>::GetInstance().m_constructHooks[sc_name].push_back(hook);
+            ComponentHook<T>::GetInstance().m_constructHooks[scene_id].push_back(hook);
         }
-        static void AddDestructHook(EntityCallback hook, std::string sc_name)
+        static void AddDestructHook(EntityCallback hook, UniqueIdentifier scene_id)
         {
-            ComponentHook<T>::GetInstance().m_destructHooks[sc_name].push_back(hook);
+            ComponentHook<T>::GetInstance().m_destructHooks[scene_id].push_back(hook);
         }
-        static void AddChangedHook(EntityCallback hook, std::string sc_name)
+        static void AddChangedHook(EntityCallback hook, UniqueIdentifier scene_id)
         {
-            ComponentHook<T>::GetInstance().m_changedHooks[sc_name].push_back(hook);
+            ComponentHook<T>::GetInstance().m_changedHooks[scene_id].push_back(hook);
         }
-        static void CallConstructHooks(Entity& e, std::string sc_name)
+        static void CallConstructHooks(Entity& e, UniqueIdentifier scene_id)
         {
-            for (auto& hook : ComponentHook<T>::GetInstance().m_constructHooks[sc_name])
+            for (auto& hook : ComponentHook<T>::GetInstance().m_constructHooks[scene_id])
                 hook(e);
         }
-        static void CallDestructHooks(Entity& e, std::string sc_name)
+        static void CallDestructHooks(Entity& e, UniqueIdentifier scene_id)
         {
-            for (auto& hook : ComponentHook<T>::GetInstance().m_destructHooks[sc_name])
+            for (auto& hook : ComponentHook<T>::GetInstance().m_destructHooks[scene_id])
                 hook(e);
         }
-        static void CallChangedHooks(Entity& e, std::string sc_name)
+        static void CallChangedHooks(Entity& e, UniqueIdentifier scene_id)
         {
-            for (auto& hook : ComponentHook<T>::GetInstance().m_changedHooks[sc_name])
+            for (auto& hook : ComponentHook<T>::GetInstance().m_changedHooks[scene_id])
                 hook(e);
         }
 
     private:
-        std::map<std::string, std::vector<EntityCallback>> m_constructHooks, m_destructHooks, m_changedHooks;
+        std::map<UniqueIdentifier, std::vector<EntityCallback>> m_constructHooks, m_destructHooks, m_changedHooks;
     };
 }; // namespace GE

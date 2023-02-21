@@ -17,7 +17,7 @@ namespace GE
 
         inline void Inspect() override
         {
-            ImGui::DragInt(LABEL_WITH_NAME("Render Routine"), &render_routine, 1, 0, 1);
+            ImGui::DragInt(LABEL_WITH_NAME("Render Routine"), &render_routine, 1, 0, 0);
             ImGui::DragFloat3(LABEL_WITH_NAME("Clear Color"), (float*)&clear_color, 0.01, 0.0, 1.0);
         }
 

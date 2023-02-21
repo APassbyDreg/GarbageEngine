@@ -117,11 +117,6 @@ namespace GE
                                            VK_NULL_HANDLE);
                 break;
             case 1:
-                m_renderRoutine1.DrawFrame(m_imguiWindow.FrameIndex,
-                                           {image_acquired_semaphore},
-                                           {viewport_complete_semaphore},
-                                           VK_NULL_HANDLE);
-                break;
             default:
                 GE_CORE_ERROR("Invalid Render Routine {}, valid range is [0, 1]", m_usingRenderRoutine);
         }
@@ -529,7 +524,6 @@ namespace GE
 
         // setup render routine
         m_renderRoutine0.Init(m_imguiWindow.ImageCount);
-        m_renderRoutine1.Init(m_imguiWindow.ImageCount);
 
         // setup semaphores
         for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
@@ -557,12 +551,6 @@ namespace GE
                                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                 m_viewportDescriptorSets[0].push_back(img);
             }
-            {
-                auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
-                                                       m_renderRoutine1.GetOutputImageView(frame_idx),
-                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                m_viewportDescriptorSets[1].push_back(img);
-            }
         }
     }
 
@@ -580,7 +568,6 @@ namespace GE
         {
             m_viewportSize = size;
             m_renderRoutine0.Resize(size.x, size.y);
-            m_renderRoutine1.Resize(size.x, size.y);
 
             // recreate viewport descriptor sets
             m_viewportDescriptorSets = {{}, {}};
@@ -591,12 +578,6 @@ namespace GE
                                                            m_renderRoutine0.GetOutputImageView(frame_idx),
                                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                     m_viewportDescriptorSets[0].push_back(img);
-                }
-                {
-                    auto img = ImGui_ImplVulkan_AddTexture(m_viewportSampler,
-                                                           m_renderRoutine1.GetOutputImageView(frame_idx),
-                                                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                    m_viewportDescriptorSets[1].push_back(img);
                 }
             }
 

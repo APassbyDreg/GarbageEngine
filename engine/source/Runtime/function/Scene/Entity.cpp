@@ -6,7 +6,7 @@
 
 namespace GE
 {
-    Entity::Entity(Scene& sc, int eid) : m_scene(sc), m_entityID(eid), m_srcReg(sc.m_registry), m_sceneName(sc.m_name)
+    Entity::Entity(Scene& sc, int eid) : m_scene(sc), m_entityID(eid), m_srcReg(sc.m_registry), m_sceneID(sc.GetID())
     {
         m_registryID = m_srcReg.create();
     }

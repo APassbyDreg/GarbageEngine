@@ -98,7 +98,7 @@ namespace GE
             }
             GetImGuiFileDialogInstance().Close();
         }
-        if (filepath.ends_with(".ge.material"))
+        if (filepath.ends_with(".ge.mat"))
         {
             m_core = MaterialManager::LoadMaterial(filepath);
         }

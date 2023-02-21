@@ -2,6 +2,7 @@
 
 #include "GE_pch.h"
 #include <concepts>
+#include <cstddef>
 #include <memory>
 #include <type_traits>
 #include <typeindex>
@@ -23,7 +24,7 @@ namespace GE
         {
             std::sort(m_singletons.begin(),
                       m_singletons.end(),
-                      [](const std::unique_ptr<SingletonBase>& a, const std::unique_ptr<SingletonBase>& b) {
+                      [](const std::shared_ptr<SingletonBase>& a, const std::shared_ptr<SingletonBase>& b) {
                           return a->destroy_priority < b->destroy_priority;
                       });
             while (!m_singletons.empty())
@@ -35,17 +36,17 @@ namespace GE
         template<std::derived_from<SingletonBase> T>
         static T& GetSingletonInstance()
         {
-            static bool created    = false;
-            static int  idx        = -1;
-            auto&&      singletons = GetInstance().m_singletons;
-            if (!created)
+            static std::shared_ptr<T> strong_instance = std::make_shared<T>();
+            static std::weak_ptr<T>   weak_instance   = strong_instance;
+
+            auto&& singletons = GetInstance().m_singletons;
+            if (strong_instance != nullptr)
             {
-                idx = singletons.size();
-                singletons.emplace_back(std::make_unique<T>());
-                created = true;
+                singletons.emplace_back(strong_instance);
+                strong_instance = nullptr;
             }
-            SingletonBase& instance = *singletons[idx];
-            return dynamic_cast<T&>(instance);
+
+            return dynamic_cast<T&>(*(weak_instance.lock()));
         }
 
         static SingletonManager& GetInstance()
@@ -54,7 +55,7 @@ namespace GE
             return instance;
         }
 
-        std::vector<std::unique_ptr<SingletonBase>> m_singletons;
+        std::vector<std::shared_ptr<SingletonBase>> m_singletons;
     };
 
     template<typename T, int DestroyPriority = 0>

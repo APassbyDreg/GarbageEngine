@@ -13,8 +13,6 @@ namespace GE
 {
     Editor::Editor()
     {
-        GE_APP_INFO("Constructing Editor");
-
         auto test_layer = std::make_shared<TestLayer>();
         PushLayer(test_layer);
 

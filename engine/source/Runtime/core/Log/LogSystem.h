@@ -33,7 +33,7 @@ namespace GE
         Critical
     };
 
-    class GE_API LogSystem final : public Singleton<LogSystem>
+    class GE_API LogSystem final : public Singleton<LogSystem, -1001>
     {
     public:
         LogSystem();
