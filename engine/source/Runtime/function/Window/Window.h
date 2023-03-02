@@ -11,7 +11,6 @@
 #include "Runtime/function/Event/EventSystem.h"
 
 #include "Runtime/function/Render/Routines/BuiltinRenderRoutine.h"
-#include "Runtime/function/Render/Routines/__TestBasicRoutine.h"
 
 namespace GE
 {

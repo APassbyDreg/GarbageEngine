@@ -121,8 +121,7 @@ namespace GE
         }
 
         /* ------------------------- command buffer ------------------------- */
-        m_renderResourceManager.ReservePerFrameGraphicsCmdBuffer("RenderTargetTransion");
-        m_renderResourceManager.ReservePerFrameGraphicsCmdBuffer("OutputTransion");
+        m_renderResourceManager.ReservePerFrameGraphicsCmdBuffer("Main");
 
         /* ------------------------- control values ------------------------- */
         m_renderResourceManager.ReservePerFrameSemaphore("RenderTargetTransition");
@@ -142,6 +141,10 @@ namespace GE
         m_renderResourceManager.NewFrame(index % m_frameCnt);
         Time::TimeStamp t                 = Time::CurrentTime();
         ViewUniform     base_view_uniform = GetBaseViewUniform(t);
+
+        // initialize cmd buffer
+        auto&& cmd = m_renderResourceManager.GetPerFrameGraphicsCmdBuffer(frame_index, "Main");
+        RenderUtils::BeginOneTimeSubmitCmdBuffer(cmd);
 
         // initialize view info
         auto&& sc          = Application::GetInstance().GetActiveScene();
@@ -178,8 +181,6 @@ namespace GE
         // transition render target
         std::vector<float> clear_color = sc->GetSetting("TestSceneSetting")["Clear Color"].get<std::vector<float>>();
         {
-            auto&& cmd = m_renderResourceManager.GetPerFrameGraphicsCmdBuffer(frame_index, "RenderTargetTransion");
-            RenderUtils::BeginOneTimeSubmitCmdBuffer(cmd);
             {
                 VkImage           rt = m_renderResourceManager.GetPerFrameImage(frame_index, "ColorRT")->GetImage();
                 VkClearColorValue clear_value  = {clear_color[0], clear_color[1], clear_color[2], 1.0f};
@@ -194,25 +195,6 @@ namespace GE
                 RenderUtils::TransitionImageLayout(cmd, rt, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, ranges);
                 vkCmdClearDepthStencilImage(cmd, rt, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1u, &ranges);
             }
-            RenderUtils::EndCmdBuffer(cmd);
-            // submit
-            {
-                std::vector<VkSemaphore> wait_semaphores   = routine_wait_semaphores;
-                std::vector<VkSemaphore> signal_semaphores = {
-                    m_renderResourceManager.GetPerFrameSemaphore(frame_index, "RenderTargetTransition")->Get()};
-
-                VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                VkSubmitInfo         info       = {};
-                info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                info.waitSemaphoreCount         = wait_semaphores.size();
-                info.pWaitSemaphores            = wait_semaphores.data();
-                info.pWaitDstStageMask          = &wait_stage;
-                info.commandBufferCount         = 1;
-                info.pCommandBuffers            = &cmd;
-                info.signalSemaphoreCount       = signal_semaphores.size();
-                info.pSignalSemaphores          = signal_semaphores.data();
-                VulkanCore::SubmitToGraphicsQueue(info, VK_NULL_HANDLE);
-            }
         }
 
         // forward pass
@@ -223,46 +205,35 @@ namespace GE
                 m_renderResourceManager.GetPerFrameSemaphore(frame_index, "RenderTargetTransition")->Get()};
             std::vector<VkSemaphore> signal_semaphores = {
                 m_renderResourceManager.GetPerFrameSemaphore(frame_index, "ForwardPass")->Get()};
-            RenderPassRunData run_data = {
-                frame_index, VK_NULL_HANDLE, wait_semaphores, signal_semaphores, VK_NULL_HANDLE};
+            RenderPassRunData              run_data  = {frame_index, cmd};
             CombinedForwardShadingPassData pass_data = {forward_renderables};
             m_forwardPass.Run(run_data, pass_data);
         }
 
         // transition output
         {
-            auto&& cmd = m_renderResourceManager.GetPerFrameGraphicsCmdBuffer(frame_index, "OutputTransion");
-            RenderUtils::BeginOneTimeSubmitCmdBuffer(cmd);
-
             auto output = m_renderResourceManager.GetPerFrameImage(frame_index, "ColorRT");
             RenderUtils::TransitionImageLayout(cmd,
                                                output->GetImage(),
                                                VK_IMAGE_LAYOUT_GENERAL,
                                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                                RenderUtils::AllImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
+        }
 
-            RenderUtils::EndCmdBuffer(cmd);
-
-            // submit
-            {
-                std::vector<VkSemaphore> wait_semaphores = {
-                    need_forward_pass ?
-                        m_renderResourceManager.GetPerFrameSemaphore(frame_index, "ForwardPass")->Get() :
-                        m_renderResourceManager.GetPerFrameSemaphore(frame_index, "RenderTargetTransition")->Get()};
-                std::vector<VkSemaphore> signal_semaphores = routine_signal_semaphores;
-
-                VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                VkSubmitInfo         info       = {};
-                info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                info.waitSemaphoreCount         = wait_semaphores.size();
-                info.pWaitSemaphores            = wait_semaphores.data();
-                info.pWaitDstStageMask          = &wait_stage;
-                info.commandBufferCount         = 1;
-                info.pCommandBuffers            = &cmd;
-                info.signalSemaphoreCount       = signal_semaphores.size();
-                info.pSignalSemaphores          = signal_semaphores.data();
-                VulkanCore::SubmitToGraphicsQueue(info, fence);
-            }
+        // submit
+        RenderUtils::EndCmdBuffer(cmd);
+        {
+            VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            VkSubmitInfo         info       = {};
+            info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            info.waitSemaphoreCount         = routine_wait_semaphores.size();
+            info.pWaitSemaphores            = routine_wait_semaphores.data();
+            info.pWaitDstStageMask          = &wait_stage;
+            info.commandBufferCount         = 1;
+            info.pCommandBuffers            = &cmd;
+            info.signalSemaphoreCount       = routine_signal_semaphores.size();
+            info.pSignalSemaphores          = routine_signal_semaphores.data();
+            VulkanCore::SubmitToGraphicsQueue(info, fence);
         }
 
         // finalize frame

@@ -11,42 +11,42 @@ namespace GE
 {
     struct CameraInfo;
 
+    // todo better handle pad bytes
     struct CameraUniform
     {
-        float4x4 world_to_view;
-        float4x4 view_to_clip;
-        float4x4 world_to_clip;
-        float4x4 clip_to_view;
-        float4x4 clip_to_world;
-        float3   pos;
-        float3   forward;
-        float3   up;
-        float3   right;
-        float2   clip;
-        float2   inv_clip;
-        float2x2 to_linear_depth;
-        float2x2 to_device_depth;
+        alignas(16) float4x4 world_to_view;
+        alignas(16) float4x4 view_to_clip;
+        alignas(16) float4x4 world_to_clip;
+        alignas(16) float4x4 clip_to_view;
+        alignas(16) float4x4 clip_to_world;
+        alignas(16) float3 pos;     // with 4 pad bytes
+        alignas(16) float3 forward; // with 4 pad bytes
+        alignas(16) float3 up;      // with 4 pad bytes
+        alignas(16) float3 right;   // with 4 pad bytes
+        alignas(8) float2 clip;
+        alignas(8) float2 inv_clip;
 
         static CameraUniform FromCameraInfo(CameraInfo& info);
     };
 
     // TODO: reference UE: Engine/Source/Runtime/Engine/Public/SceneView.h
+    // align with gpu address
     struct ViewUniform
     {
-        /* ----------------------------- states ----------------------------- */
-        float time;       // in seconds
-        float delta_time; // in seconds
-        uint  frame_number;
-        uint  random;
-        /* ----------------------------- screen ----------------------------- */
-        float2 resolution;
-        float2 inv_resolution;
         /* ----------------------------- camera ----------------------------- */
-        CameraUniform curr_cam;
-        CameraUniform prev_cam;
+        alignas(16) CameraUniform curr_cam;
+        alignas(16) CameraUniform prev_cam;
+        /* ----------------------------- screen ----------------------------- */
+        alignas(8) float2 resolution;
+        alignas(8) float2 inv_resolution;
+        /* ----------------------------- states ----------------------------- */
+        alignas(4) float time;       // in seconds
+        alignas(4) float delta_time; // in seconds
+        alignas(4) uint frame_number;
+        alignas(4) uint random;
         /* ---------------------------- settings ---------------------------- */
-        uint debug_flag     = 0;
-        uint has_prev_frame = 0;
+        alignas(4) uint debug_flag     = 0;
+        alignas(4) uint has_prev_frame = 0;
         // float4 taa_param;
         
 

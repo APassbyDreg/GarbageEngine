@@ -16,9 +16,6 @@ namespace GE
     {
         uint                     frame_idx         = std::numeric_limits<uint>::max();
         VkCommandBuffer          cmd               = VK_NULL_HANDLE;
-        std::vector<VkSemaphore> wait_semaphores   = {};
-        std::vector<VkSemaphore> signal_semaphores = {};
-        VkFence                  fence             = VK_NULL_HANDLE;
     };
 
     class RenderPassBase

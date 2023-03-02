@@ -32,11 +32,6 @@ namespace GE
         uniform.clip     = info.clip;
         uniform.inv_clip = 1.0f / info.clip;
 
-        // depth
-        uniform.to_device_depth =
-            float2x2(info.p_matrix[2][2], info.p_matrix[2][3], info.p_matrix[3][2], info.p_matrix[3][3]);
-        uniform.to_linear_depth = glm::inverse(uniform.to_device_depth);
-
         return uniform;
     }
 

@@ -42,14 +42,7 @@ namespace GE
     {
         m_name = "ForwardShadingPass";
 
-        // view uniform
-        m_pipeline.m_descriptorSetLayout.push_back(ViewUniform::GetDescriptorSetLayout());
-
         /* ------------------------ reserve resources ----------------------- */
-        // cmd buffer
-        m_resourceManager.ReservePerFrameGraphicsCmdBuffer(FullIdentifier("Main"));
-        // finished semaphore
-        m_resourceManager.ReservePerFrameSemaphore(FullIdentifier("Finished"));
 
         /* ------------------------- setup resources ------------------------ */
         // color
@@ -79,17 +72,11 @@ namespace GE
     void ForwardShadingPass::Run(RenderPassRunData run_data, ForwardShadingPassData pass_data)
     {
         // unpack data
-        auto&& [frame_idx, _, wait_semaphores, signal_semaphores, fence] = run_data;
-        auto&& [viewport_size, instances, mesh, material]                = pass_data;
-        auto&& cmd = m_resourceManager.GetPerFrameGraphicsCmdBuffer(frame_idx, FullIdentifier("Main"));
+        auto&& [frame_idx, cmd]                           = run_data;
+        auto&& [viewport_size, instances, mesh, material] = pass_data;
 
-        // begin cmd buffer and render pass
+        // begin render pass
         {
-            VkCommandBufferBeginInfo cmd_info = {};
-            cmd_info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            cmd_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            GE_VK_ASSERT(vkBeginCommandBuffer(cmd, &cmd_info));
-
             VkRenderPassBeginInfo rp_info = {};
             rp_info.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
             rp_info.renderPass            = GetRenderPass();
@@ -129,25 +116,9 @@ namespace GE
             }
         }
 
-        // end render pass and cmd buffer
+        // end render pass
         {
             vkCmdEndRenderPass(cmd);
-            GE_VK_ASSERT(vkEndCommandBuffer(cmd));
-        }
-
-        // submit
-        {
-            VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            VkSubmitInfo         info       = {};
-            info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            info.waitSemaphoreCount         = wait_semaphores.size();
-            info.pWaitSemaphores            = wait_semaphores.data();
-            info.pWaitDstStageMask          = &wait_stage;
-            info.commandBufferCount         = 1;
-            info.pCommandBuffers            = &cmd;
-            info.signalSemaphoreCount       = signal_semaphores.size();
-            info.pSignalSemaphores          = signal_semaphores.data();
-            VulkanCore::SubmitToGraphicsQueue(info, fence);
         }
     }
 
@@ -162,15 +133,11 @@ namespace GE
 
     void CombinedForwardShadingPass::Run(RenderPassRunData run_data, CombinedForwardShadingPassData pass_data)
     {
-        auto&& [frame_idx, _, wait_semaphores, signal_semaphores, fence] = run_data;
-        auto&& [renderables]                                             = pass_data;
+        auto&& [frame_idx, cmd] = run_data;
+        auto&& [renderables]    = pass_data;
 
         uint                     num_dispatched            = 0;
         uint                     total_dispatch            = renderables.size();
-        std::vector<VkSemaphore> subpass_wait_semaphores   = {};
-        std::vector<VkSemaphore> subpass_signal_semaphores = {};
-        std::vector<VkSemaphore> prev_signal_semaphores    = {};
-        VkFence                  subpass_fence             = VK_NULL_HANDLE;
         for (auto&& [k, instances] : renderables)
         {
             num_dispatched++;
@@ -189,23 +156,8 @@ namespace GE
                 m_passes[k]->Resize(m_size.width, m_size.height);
             }
 
-            // run pass
-            auto&& pass = m_passes[k];
-            /* ----------------------- control values ----------------------- */
-            subpass_wait_semaphores = subpass_signal_semaphores; // wait last dispatch
-            if (num_dispatched == 1)
-            {
-                subpass_wait_semaphores = wait_semaphores;
-            }
-            subpass_signal_semaphores = {pass->GetFinishedSemaphore(frame_idx)};
-            if (num_dispatched == total_dispatch)
-            {
-                subpass_signal_semaphores = signal_semaphores;
-            }
-            RenderPassRunData run_data = {
-                frame_idx, _, subpass_wait_semaphores, subpass_signal_semaphores, subpass_fence};
-
             /* ------------------------ dispatch pass ----------------------- */
+            auto&&                 pass      = m_passes[k];
             ForwardShadingPassData pass_data = {
                 m_size,
                 instances,

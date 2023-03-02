@@ -67,7 +67,7 @@ namespace GE
     void AABBCullPass::Run(RenderPassRunData& run_data, AABBCullPassData& data)
     {
         // unpack data
-        auto&& [frame_idx, cmd, wait_semaphores, signal_semaphores, fence] = run_data;
+        auto&& [frame_idx, cmd] = run_data;
         auto&& aabb_buffer   = m_resourceManager.GetPerFrameDynamicBuffer(frame_idx, FullIdentifier("AabbBuffer"));
         auto&& result_buffer = m_resourceManager.GetPerFrameDynamicBuffer(frame_idx, FullIdentifier("ResultBuffer"));
         auto&& desc_set      = m_resourceManager.GetPerFrameDescriptorSet(frame_idx, "Descriptor");
@@ -116,13 +116,8 @@ namespace GE
             VulkanCore::WriteDescriptors(writes);
         }
 
-        // bind, dispatch and end
+        // bind and dispatch
         {
-            VkCommandBufferBeginInfo info = {};
-            info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            GE_VK_ASSERT(vkBeginCommandBuffer(cmd, &info));
-
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, GetPipeline());
 
             vkCmdBindDescriptorSets(
@@ -133,23 +128,6 @@ namespace GE
                 cmd, GetPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(AABBCullPassPushConstants), &pc);
 
             vkCmdDispatch(cmd, num_aabbs, 1, 1);
-
-            GE_VK_ASSERT(vkEndCommandBuffer(cmd));
-        }
-
-        // submit
-        {
-            VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-            VkSubmitInfo         info       = {};
-            info.sType                      = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            info.waitSemaphoreCount         = wait_semaphores.size();
-            info.pWaitSemaphores            = wait_semaphores.data();
-            info.pWaitDstStageMask          = &wait_stage;
-            info.commandBufferCount         = 1;
-            info.pCommandBuffers            = &cmd;
-            info.signalSemaphoreCount       = signal_semaphores.size();
-            info.pSignalSemaphores          = signal_semaphores.data();
-            VulkanCore::SubmitToComputeQueue(info, fence);
         }
     }
 } // namespace GE

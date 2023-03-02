@@ -15,7 +15,6 @@
 #include "Runtime/resource/ResourceTypes/JsonResource.h"
 
 #include "Runtime/function/Scene/Entity.h"
-#include <vector>
 
 namespace GE
 {

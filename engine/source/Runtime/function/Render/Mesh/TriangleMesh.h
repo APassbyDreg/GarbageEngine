@@ -14,17 +14,18 @@ namespace GE
 {
     struct VertexInstanceData
     {
-        float4x4 model;
-        float4x4 t_inv_model;
+        alignas(16) float4x4 model;
+        alignas(16) float4x4 t_inv_model;
     };
 
+    // vertex data can be tightly packed
     struct Vertex
     {
         float3 position = {0.0f, 0.0f, 0.0f};
         float3 normal   = {0.0f, 0.0f, 0.0f};
         float3 tangent  = {0.0f, 0.0f, 0.0f};
-        float2 uv0      = {0.0f, 0.0f};
         uint   flags    = 0;
+        float2 uv0      = {0.0f, 0.0f};
 
         static inline VertexInputDescription& GetVertexInputDesc()
         {
@@ -65,21 +66,21 @@ namespace GE
                 tangentAttribute.offset                            = offsetof(Vertex, tangent);
                 description.attributes.push_back(tangentAttribute);
 
-                // UV0
-                VkVertexInputAttributeDescription texcoordAttribute = {};
-                texcoordAttribute.binding                           = 0;
-                texcoordAttribute.location                          = 3;
-                texcoordAttribute.format                            = VK_FORMAT_R32G32_SFLOAT;
-                texcoordAttribute.offset                            = offsetof(Vertex, uv0);
-                description.attributes.push_back(texcoordAttribute);
-
                 // flags
                 VkVertexInputAttributeDescription flagAttribute = {};
                 flagAttribute.binding                           = 0;
-                flagAttribute.location                          = 4;
+                flagAttribute.location                          = 3;
                 flagAttribute.format                            = VK_FORMAT_R32_UINT;
                 flagAttribute.offset                            = offsetof(Vertex, flags);
                 description.attributes.push_back(flagAttribute);
+
+                // UV0
+                VkVertexInputAttributeDescription texcoordAttribute = {};
+                texcoordAttribute.binding                           = 0;
+                texcoordAttribute.location                          = 4;
+                texcoordAttribute.format                            = VK_FORMAT_R32G32_SFLOAT;
+                texcoordAttribute.offset                            = offsetof(Vertex, uv0);
+                description.attributes.push_back(texcoordAttribute);
             }
 
             return description;
