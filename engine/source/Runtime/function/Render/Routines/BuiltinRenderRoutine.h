@@ -15,6 +15,8 @@
 
 #include "../Shared/ViewUniform.h"
 
+#include "../Manager/PerSceneDataManager.h"
+
 namespace GE
 {
     class BuiltinRenderRoutineFrameData
@@ -69,6 +71,8 @@ namespace GE
         Time::TimeStamp m_tInit, m_tLastFrame;
         RandomEngine    m_rand;
         CameraInfo      m_currCamInfo, m_prevCamInfo;
+
+        PerSceneDataManager m_perSceneDataManager;
 
     private:
         ViewUniform GetBaseViewUniform(Time::TimeStamp t);

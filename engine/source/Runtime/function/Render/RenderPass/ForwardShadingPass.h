@@ -13,9 +13,8 @@
 
 #include "../RenderResource.h"
 
+#include "../Manager/PerSceneDataManager.h"
 #include "../Shared/ViewUniform.h"
-#include "vulkan/vulkan_core.h"
-#include <memory>
 
 namespace GE
 {
@@ -25,11 +24,12 @@ namespace GE
     {
         VkExtent2D                           viewport_size;
         std::vector<std::shared_ptr<Entity>> renderables;
-        std::shared_ptr<Mesh>                m_mesh;
-        std::shared_ptr<ForwardMaterial>     m_material;
+        std::shared_ptr<Mesh>                mesh;
+        std::shared_ptr<ForwardMaterial>     material;
     };
 
-    class ForwardShadingPass : public GraphicsPass, public std::enable_shared_from_this<ForwardShadingPass>
+    class ForwardShadingPass : public GraphicsPass<ForwardShadingPass>,
+                               public std::enable_shared_from_this<ForwardShadingPass>
     {
     public:
         ForwardShadingPass(std::shared_ptr<Mesh>                  mesh,
@@ -38,24 +38,29 @@ namespace GE
                            std::vector<std::shared_ptr<GpuImage>> depth_targets,
                            RenderResourceManager&                 resource_manager) :
             GraphicsPass(resource_manager,
-                         std::format("ForwardShading-{}({})-{}({})",
+                         std::format("ForwardShading-[{}]{}-[{}]{}",
                                      material->GetType(),
-                                     (void*)material.get(),
+                                     material->GetID(),
                                      mesh->GetType(),
-                                     (void*)mesh.get())),
+                                     mesh->GetID())),
             m_colorTargets(color_targets), m_depthTargets(depth_targets)
         {
-            m_mesh      = mesh->GetType();
-            m_material  = material->GetType();
+            m_meshName     = mesh->GetType();
+            m_materialName = material->GetType();
             m_numFrames = color_targets.size();
-
-            m_pipelineSetupFunc = [=](GraphicsRenderPipeline& pipeline) {
-                mesh->SetupRenderPass(shared_from_this());
-                material->SetupShadingPipeline(pipeline);
-            };
+            m_pipelineSetupFns.push_back([=](GraphicsRenderPipeline& pipeline) {
+                mesh->SetupRenderPipeline(pipeline);
+                material->SetupRenderPipeline(pipeline);
+            });
+            m_passSetupFns.push_back([=](RenderPassBase& pass) {
+                auto& graphic_pass = dynamic_cast<GraphicsPassBase&>(pass);
+                mesh->SetupRenderPass(graphic_pass);
+                material->SetupRenderPass(graphic_pass);
+            });
         }
         ~ForwardShadingPass() {};
 
+        void Init(uint frame_cnt) override;
         void Resize(uint width, uint height) override;
 
         void Run(RenderPassRunData run_data, ForwardShadingPassData pass_data);
@@ -65,13 +70,11 @@ namespace GE
             return m_resourceManager.GetPerFrameSemaphore(frame_idx, FullIdentifier("Finished"))->Get();
         }
 
+        inline std::string GetPassID() const { return m_meshName + "-" + m_materialName; }
+
     protected:
-        virtual void InitInternal(uint frame_cnt) override;
-
     private:
-        std::string                                  m_mesh, m_material;
-        std::function<void(GraphicsRenderPipeline&)> m_pipelineSetupFunc;
-
+        std::string                               m_meshName, m_materialName;
         std::vector<std::shared_ptr<GpuImage>>    m_colorTargets, m_depthTargets;
         std::vector<std::shared_ptr<FrameBuffer>> m_frameBuffers;
         uint                                      m_numFrames = 0;

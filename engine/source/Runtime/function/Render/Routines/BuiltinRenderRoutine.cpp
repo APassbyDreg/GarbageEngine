@@ -15,9 +15,12 @@
 
 namespace GE
 {
-    BuiltinRenderRoutine::BuiltinRenderRoutine() {}
+    BuiltinRenderRoutine::BuiltinRenderRoutine() : m_perSceneDataManager(m_renderResourceManager) {}
 
-    BuiltinRenderRoutine::BuiltinRenderRoutine(uint n_frames) { Init(n_frames); }
+    BuiltinRenderRoutine::BuiltinRenderRoutine(uint n_frames) : m_perSceneDataManager(m_renderResourceManager)
+    {
+        Init(n_frames);
+    }
 
     BuiltinRenderRoutine::~BuiltinRenderRoutine() {}
 
@@ -83,6 +86,9 @@ namespace GE
         /* -------------------------- initial size -------------------------- */
         Resize(1280, 720);
 
+        /* ------------------------ per-scene uniform ----------------------- */
+        m_perSceneDataManager.Init(n_frames);
+
         /* -------------------------- view uniform -------------------------- */
         {
             // buffer
@@ -93,9 +99,8 @@ namespace GE
             m_renderResourceManager.ReservePerFrameStaticBuffer("ViewUniform/MainCamera", buffer_info, alloc_info);
 
             // set
-            std::vector<VkDescriptorSetLayout> layouts  = {ViewUniform::GetDescriptorSetLayout()};
-            VkDescriptorSetAllocateInfo        set_info = VkInit::GetDescriptorSetAllocateInfo(layouts);
-            m_renderResourceManager.ReservePerFramePersistantDescriptorSet("ViewUniform/MainCamera", set_info);
+            m_renderResourceManager.ReservePerFramePersistantDescriptorSet("ViewUniform/MainCamera",
+                                                                           ViewUniform::GetDescriptorSetLayout());
 
             // write to set
             auto&& buffers     = m_renderResourceManager.GetFramewiseStaticBuffer("ViewUniform/MainCamera");
@@ -141,6 +146,7 @@ namespace GE
         m_renderResourceManager.NewFrame(index % m_frameCnt);
         Time::TimeStamp t                 = Time::CurrentTime();
         ViewUniform     base_view_uniform = GetBaseViewUniform(t);
+        m_perSceneDataManager.UpdateData(frame_index);
 
         // initialize cmd buffer
         auto&& cmd = m_renderResourceManager.GetPerFrameGraphicsCmdBuffer(frame_index, "Main");

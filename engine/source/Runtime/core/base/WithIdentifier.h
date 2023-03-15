@@ -6,6 +6,7 @@
 
 #include "../Math/Math.h"
 #include "../Math/Random.h"
+#include <format>
 
 namespace GE
 {
@@ -49,6 +50,7 @@ namespace GE
         ~WithIdentifier() { IdentifierManager::RemoveID(id); }
 
         const UniqueIdentifier& GetID() const { return id; }
+        const std::string       GetIDString() const { return std::format("{:x}", id); }
 
     private:
         UniqueIdentifier id;

@@ -5,11 +5,11 @@
 
 /* ------------------------ register components here ------------------------ */
 #include "Camera.h"
+#include "Light.h"
 #include "Material.h"
 #include "Mesh.h"
 #include "Tag.h"
 #include "Transform.h"
-
 
 namespace GE
 {
@@ -28,6 +28,7 @@ namespace GE
             REGISTER_TYPE(TransformComponent);
             REGISTER_TYPE(MeshComponent);
             REGISTER_TYPE(MaterialComponent);
+            REGISTER_TYPE(LightComponent);
             m_initialized = true;
         }
     }

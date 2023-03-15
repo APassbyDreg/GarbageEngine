@@ -7,6 +7,7 @@
 
 #include "Runtime/core/Base/WatchedValue.h"
 #include "Runtime/core/ECS.h"
+#include "Runtime/core/Log/LogSystem.h"
 #include "Runtime/core/Math/Math.h"
 #include "Runtime/core/json.h"
 

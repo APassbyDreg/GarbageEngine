@@ -26,6 +26,7 @@ namespace GE
             m_buffer.Copy(src.m_buffer);
             m_currentSize  = src.m_currentSize;
             m_usedSize     = src.m_usedSize;
+            m_minSize      = src.m_minSize;
             m_tLastAdjust  = Time::CurrentTime();
         }
         AutoGpuBuffer(AutoGpuBuffer&& src) : m_buffer(std::move(src.m_buffer))
@@ -33,13 +34,15 @@ namespace GE
             // copy info and start update thread
             m_currentSize  = src.m_currentSize;
             m_usedSize     = src.m_usedSize;
+            m_minSize      = src.m_minSize;
             m_tLastAdjust  = Time::CurrentTime();
         }
-        AutoGpuBuffer(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)
+        AutoGpuBuffer(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info, size_t min_size = 16ull)
         {
-            Alloc(buffer_info, alloc_info);
             m_currentSize = m_usedSize = buffer_info.size;
+            m_minSize                  = min_size;
             m_tLastAdjust              = Time::CurrentTime();
+            Alloc(buffer_info, alloc_info);
         }
 
         void           Upload(byte* data, size_t size, size_t offset = 0, bool resize = true);
@@ -76,6 +79,7 @@ namespace GE
         }
 
         inline size_t                  GetSize() { return m_usedSize; }
+        inline size_t                  GetWholeSize() { return m_currentSize; }
         inline VkBuffer                GetBuffer() { return m_buffer.GetBuffer(); }
         inline VkBufferCreateInfo      GetBufferInfo() { return m_buffer.GetBufferInfo(); }
         inline VmaAllocationCreateInfo GetAllocInfo() { return m_buffer.GetAllocInfo(); }
@@ -84,7 +88,7 @@ namespace GE
     private:
         GpuBuffer m_buffer;
 
-        size_t          m_currentSize, m_usedSize;
+        size_t          m_currentSize, m_usedSize, m_minSize;
         Time::TimeStamp m_tLastAdjust;
 
         // Time weighted average size

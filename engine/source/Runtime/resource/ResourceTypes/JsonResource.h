@@ -14,6 +14,7 @@ namespace GE
         INSTANCED_COMPONENT,
         MATERIAL,
         MESH,
+        LIGHT,
         UNKNOWN
     };
 
@@ -62,6 +63,8 @@ namespace GE
                     return "MATERIAL";
                 case JsonIdentifier::MESH:
                     return "MESH";
+                case JsonIdentifier::LIGHT:
+                    return "LIGHT";
                 default:
                     return "UNKNOWN";
             }
@@ -76,6 +79,8 @@ namespace GE
                 return JsonIdentifier::MATERIAL;
             else if (id == "MESH")
                 return JsonIdentifier::MESH;
+            else if (id == "LIGHT")
+                return JsonIdentifier::LIGHT;
             else
                 return JsonIdentifier::UNKNOWN;
         }

@@ -23,6 +23,9 @@ namespace GE
 
         virtual std::shared_ptr<ShaderModule> Compile(std::string path, std::string entry) = 0;
 
+        inline void AddIncludeDir(std::string dir) { m_includeDirs.push_back(dir); }
+        inline void AddDefine(std::string define) { m_defines.push_back(define); }
+
         ShaderType               m_type;
         std::vector<std::string> m_includeDirs;
         std::vector<std::string> m_defines;

@@ -12,6 +12,7 @@
 #include "Runtime/resource/ResourceTypes/JsonResource.h"
 
 #include "Manager/CameraManager.h"
+#include "Manager/LightManager.h"
 #include "Manager/MeshManager.h"
 
 #include "Settings/SceneSettingsFactory.h"
@@ -37,6 +38,7 @@ private: \
 
         DEFINE_SCENE_MANAGER(MeshManager);
         DEFINE_SCENE_MANAGER(CameraManager);
+        DEFINE_SCENE_MANAGER(LightManager);
 
     public:
         Scene();

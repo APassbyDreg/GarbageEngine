@@ -32,7 +32,7 @@ namespace GE
         VkCommandBuffer                      cmd;
         VkPipelineLayout                     layout;
         std::vector<std::shared_ptr<Entity>> renderables;
-        std::shared_ptr<GraphicsPass>        resource_manager;
+        GraphicsPassBase&                    resource_manager;
     };
 
 #define GE_MESH_COMMON(type) \
@@ -61,12 +61,18 @@ public: \
     class Mesh
     {
     public:
+        const uint c_meshDataDescriptorID     = 2;
+        const uint c_instanceDataDescriptorID = 4;
+        const uint c_meshInstanceDataBinding  = 0;
+
+    public:
         Mesh(int id, fs::path path) :
             m_id(id), m_resource(ResourceManager::GetResource<JsonResource>(path, JsonIdentifier::MESH))
         {}
 
-        virtual void SetupRenderPass(std::shared_ptr<GraphicsPass> pass) = 0;
-        virtual void RunRenderPass(MeshRenderPassData data)              = 0;
+        virtual void SetupRenderPipeline(GraphicsRenderPipeline& pipeline) = 0;
+        virtual void SetupRenderPass(GraphicsPassBase& pass)               = 0;
+        virtual void RunRenderPass(MeshRenderPassData data)                = 0;
 
         inline int         GetID() const { return m_id; }
         inline std::string GetAlias() const { return m_alias.empty() ? "unnamed mesh" : m_alias; }

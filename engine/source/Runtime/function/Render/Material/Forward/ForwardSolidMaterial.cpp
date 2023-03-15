@@ -4,8 +4,36 @@
 
 #include "Runtime/function/Render/ShaderManager/HLSLCompiler.h"
 
+#include "Runtime/function/Render/RenderPass/ForwardShadingPass.h"
+
 namespace GE
 {
+    void ForwardSolidMaterial::SetupRenderPipeline(GraphicsRenderPipeline& pipeline)
+    {
+        // push constants
+        pipeline.AddPushConstant("color", VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(float4));
+
+        // shader
+        fs::path     fspath     = fs::path(Config::shader_dir) / "Passes/Forward/Solid.gsf";
+        HLSLCompiler fscompiler = {ShaderType::FRAGMENT};
+        pipeline.m_shaders.push_back(fscompiler.Compile(fspath.string(), "FSMain"));
+
+        // states
+        pipeline.m_rasterizationState = VkInit::GetPipelineRasterizationStateCreateInfo();
+    }
+
+    void ForwardSolidMaterial::SetupRenderPass(GraphicsPassBase& pass) {}
+
+    void ForwardSolidMaterial::RunShadingPass(MaterialRenderPassData data)
+    {
+        auto&& [frame_id, cmd, pass] = data;
+
+        auto& shading_pass = dynamic_cast<ForwardShadingPass&>(pass);
+        auto& pipeline     = shading_pass.GetPipelineObject();
+
+        pipeline.PushConstant("color", cmd, &m_color);
+    }
+
     bool ForwardSolidMaterial::IsOpaque() const { return m_color.a == 1.0; }
 
     void ForwardSolidMaterial::Deserialize(const json& data)
@@ -38,26 +66,5 @@ namespace GE
         m_alias = buf;
 
         ImGui::DragFloat4("Color", (float*)(&m_color), 0.005, 0.0, 1.0);
-    }
-
-    void ForwardSolidMaterial::SetupShadingPass(MaterialRenderPassData data)
-    {
-        auto&& [cmd, layout] = data;
-        vkCmdPushConstants(cmd, layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float4), &m_color);
-    }
-
-    void ForwardSolidMaterial::SetupShadingPipeline(GraphicsRenderPipeline& pipeline)
-    {
-        // push constants
-        auto pc_range = VkInit::GetPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(float4));
-        pipeline.m_pushConstantRanges.push_back(pc_range);
-
-        // shader
-        fs::path     fspath     = fs::path(Config::shader_dir) / "Passes/Forward/Solid.gsf";
-        HLSLCompiler fscompiler = {ShaderType::FRAGMENT};
-        pipeline.m_shaders.push_back(fscompiler.Compile(fspath.string(), "FSMain"));
-
-        // states
-        pipeline.m_rasterizationState = VkInit::GetPipelineRasterizationStateCreateInfo();
     }
 } // namespace GE

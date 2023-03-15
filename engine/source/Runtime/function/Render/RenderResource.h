@@ -12,7 +12,7 @@
 #include "VulkanManager/GpuImage.h"
 #include "VulkanManager/Synchronization.h"
 #include "VulkanManager/VulkanCore.h"
-#include <memory>
+#include <vector>
 
 namespace GE
 {
@@ -36,9 +36,9 @@ public: \
     } \
     inline void RegisterExternal##name(std::string identifier, type resource) \
     { \
-        GE_CORE_ASSERT(m_##name##s.find(identifier) == m_##name##s.end(), \
-                       "Trying to register an exsisting <" #name "> resource with identifier {}", \
-                       identifier); \
+        GE_CORE_CHECK(m_##name##s.find(identifier) == m_##name##s.end(), \
+                      "Trying to register an exsisting <" #name "> resource with identifier {}", \
+                      identifier); \
         m_##name##s[identifier] = resource; \
     } \
 \
@@ -100,7 +100,7 @@ private: \
                                        std::make_shared<Fence>(std::forward<TArgs>(args)...));
         IMPLEMENT_RENDER_RESOURCE_TYPE(DescriptorSet,
                                        VkDescriptorSet,
-                                       VulkanCore::AllocDescriptorSets(*m_descPool, std::forward<TArgs>(args)...)[0]);
+                                       VulkanCore::AllocDescriptorSet(*m_descPool, std::forward<TArgs>(args)...));
         IMPLEMENT_RENDER_RESOURCE_TYPE(GraphicsCmdBuffer,
                                        VkCommandBuffer,
                                        VulkanCore::CreateCmdBuffers(*m_graphicsCmdPool,

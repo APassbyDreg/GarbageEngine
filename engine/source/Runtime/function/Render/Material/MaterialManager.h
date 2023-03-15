@@ -210,6 +210,18 @@ namespace GE
             return nullptr;
         }
 
+        inline static void SaveAll()
+        {
+            for (auto&& mat : GetInstance().m_forwardMaterials)
+            {
+                mat->Save();
+            }
+            for (auto&& mat : GetInstance().m_deferredMaterials)
+            {
+                mat->Save();
+            }
+        }
+
     private:
         std::vector<std::shared_ptr<DeferredMaterial>> m_deferredMaterials;
         std::vector<std::shared_ptr<ForwardMaterial>>  m_forwardMaterials;

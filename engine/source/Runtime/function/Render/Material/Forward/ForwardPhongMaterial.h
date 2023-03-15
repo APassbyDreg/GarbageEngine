@@ -6,14 +6,20 @@
 
 namespace GE
 {
-    class ForwardSolidMaterial : public ForwardMaterial
+    struct PhongParams
     {
-        GE_FORWARD_MATERIAL_COMMON(ForwardSolidMaterial);
+        alignas(16) float3 kd;
+        alignas(16) float3 ks;
+        alignas(16) float3 ka;
+        float ns;
+    };
+
+    class ForwardPhongMaterial : public ForwardMaterial
+    {
+        GE_FORWARD_MATERIAL_COMMON(ForwardPhongMaterial);
 
     public:
-        ForwardSolidMaterial(int id, fs::path path, float4 color) : m_color(color), ForwardMaterial(id, path) {}
-
-        bool IsOpaque() const override;
+        inline bool IsOpaque() const override { return true; }
 
         void Deserialize(const json& data) override;
         json Serialize() override;
@@ -24,6 +30,6 @@ namespace GE
         void SetupRenderPass(GraphicsPassBase& pass) override;
 
     private:
-        float4 m_color;
+        PhongParams m_params;
     };
 } // namespace GE

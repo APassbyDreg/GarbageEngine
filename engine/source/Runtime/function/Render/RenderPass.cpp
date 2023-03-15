@@ -2,29 +2,51 @@
 
 #include "VulkanManager/VulkanCore.h"
 #include "VulkanManager/VulkanCreateInfoBuilder.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
-    GraphicsPass::~GraphicsPass()
+    void RenderPass::Build()
     {
-        if (m_ready)
+        if (m_built)
         {
-            vkDestroyRenderPass(VulkanCore::GetDevice(), m_renderPass, nullptr);
-            m_ready = false;
-        }
-    }
-
-    void GraphicsPass::BuildInternal()
-    {
-        if (m_ready)
-        {
-            GE_CORE_WARN("GraphicsPass [{}] is built repeatedly!", m_name);
             return;
         }
 
-        // __update_resource();
-        // we assume the resources is already in place
+        m_flattenAttachments.clear();
+        m_inputRefference.clear();
+        m_outputReference.clear();
+        /* ------- make references and flatten attachment descriptions ------ */
+        int ref_idx = 0;
+        // inputs
+        for (int i = 0; i < input.size(); i++, ref_idx++)
+        {
+            VkAttachmentReference ref = {};
+            ref.attachment            = ref_idx;
+            ref.layout                = input[i].layout;
+            m_flattenAttachments.push_back(input[i].desc);
+            m_flattenAttachmentBlendStates.push_back(input[i].blend);
+            m_inputRefference.push_back(ref);
+        }
+        // outputs
+        for (int i = 0; i < output.size(); i++, ref_idx++)
+        {
+            VkAttachmentReference ref = {};
+            ref.attachment            = ref_idx;
+            ref.layout                = output[i].layout;
+            m_flattenAttachments.push_back(output[i].desc);
+            m_flattenAttachmentBlendStates.push_back(output[i].blend);
+            m_outputReference.push_back(ref);
+        }
+        // depth / stencil
+        if (enableDepthStencil)
+        {
+            m_depthReference.attachment = ref_idx;
+            m_depthReference.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            m_flattenAttachments.push_back(depthAttachment);
+        }
 
+        /* ------------------------- setup subpasses ------------------------ */
         {
             VkSubpassDescription subpass = {};
             subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -32,7 +54,7 @@ namespace GE
             subpass.pInputAttachments    = m_inputRefference.data();
             subpass.colorAttachmentCount = m_outputReference.size();
             subpass.pColorAttachments    = m_outputReference.data();
-            if (m_enableDepthStencil)
+            if (enableDepthStencil)
             {
                 subpass.pDepthStencilAttachment = &m_depthReference;
             }
@@ -49,7 +71,7 @@ namespace GE
             dependency.dstAccessMask       = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             m_dependencies.push_back(dependency);
 
-            if (m_enableDepthStencil)
+            if (enableDepthStencil)
             {
                 VkSubpassDependency depth_dependency = {};
                 depth_dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;
@@ -64,69 +86,23 @@ namespace GE
             }
         }
 
-        {
-            VkRenderPassCreateInfo info =
-                VkInit::GetRenderPassCreateInfo(m_flattenAttachments, m_subpasses, m_dependencies);
-            GE_VK_ASSERT(vkCreateRenderPass(VulkanCore::GetDevice(), &info, nullptr, &m_renderPass));
-            m_ready = true;
-        }
+        /* ------------------------------ build ----------------------------- */
+        auto&& info = VkInit::GetRenderPassCreateInfo(m_flattenAttachments, m_subpasses, m_dependencies);
+        vkCreateRenderPass(VulkanCore::GetDevice(), &info, nullptr, &m_renderPass);
 
-        m_pipeline.Build(m_renderPass);
+        m_built = true;
     }
 
-    void GraphicsPass::__update_resource()
+    GraphicsPassBase::~GraphicsPassBase() {}
+
+    std::shared_ptr<GraphicsRenderPipeline> GraphicsPassBase::BuildPipeline()
     {
-        m_flattenAttachments.clear();
-        m_inputRefference.clear();
-        m_outputReference.clear();
-        /* ------- make references and flatten attachment descriptions ------ */
-        int ref_idx = 0;
-        // inputs
-        for (int i = 0; i < m_input.size(); i++, ref_idx++)
+        auto pipeline = std::make_shared<GraphicsRenderPipeline>();
+        for (auto&& fn : m_pipelineSetupFns)
         {
-            VkAttachmentReference ref = {};
-            ref.attachment            = ref_idx;
-            ref.layout                = m_input[i].layout;
-            m_flattenAttachments.push_back(m_input[i].desc);
-            m_flattenAttachmentBlendStates.push_back(m_input[i].blend);
-            m_inputRefference.push_back(ref);
+            fn(*pipeline);
         }
-        // outputs
-        for (int i = 0; i < m_output.size(); i++, ref_idx++)
-        {
-            VkAttachmentReference ref = {};
-            ref.attachment            = ref_idx;
-            ref.layout                = m_output[i].layout;
-            m_flattenAttachments.push_back(m_output[i].desc);
-            m_flattenAttachmentBlendStates.push_back(m_output[i].blend);
-            m_outputReference.push_back(ref);
-        }
-        // depth / stencil
-        if (m_enableDepthStencil)
-        {
-            m_depthReference.attachment = ref_idx;
-            m_depthReference.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            m_flattenAttachments.push_back(m_depthAttachment);
-        }
+        pipeline->Build(GetRenderPass());
+        return pipeline;
     }
-
-    ComputePass::~ComputePass()
-    {
-        if (m_ready)
-        {
-            m_ready = false;
-        }
-    }
-
-    void ComputePass::BuildInternal()
-    {
-        if (m_ready)
-        {
-            GE_CORE_WARN("ComputePass [{}] is built repeatedly!", m_name);
-            return;
-        }
-
-        m_pipeline.Build();
-    }
-
 } // namespace GE

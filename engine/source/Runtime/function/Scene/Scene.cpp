@@ -6,7 +6,7 @@
 
 namespace GE
 {
-#define SETUP_SCENE_MANAGERS() m_MeshManager(*this), m_CameraManager(*this)
+#define SETUP_SCENE_MANAGERS() m_MeshManager(*this), m_CameraManager(*this), m_LightManager(*this)
 
     Scene::Scene() : SETUP_SCENE_MANAGERS()
     {
@@ -25,6 +25,7 @@ namespace GE
     {
         m_MeshManager.Setup();
         m_CameraManager.Setup();
+        m_LightManager.Setup();
         SceneSettingsFactory::InitializeSettingsMap(m_sceneSettings);
     }
 

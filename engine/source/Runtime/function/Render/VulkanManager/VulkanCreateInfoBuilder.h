@@ -9,11 +9,11 @@ namespace GE
 {
     namespace VkInit
     {
-        inline VkFramebufferCreateInfo GetFramebufferCreateInfo(VkRenderPass              renderpass,
-                                                                VkExtent2D                size,
-                                                                std::vector<VkImageView>& attachments,
-                                                                uint                      layers = 1,
-                                                                VkFramebufferCreateFlags  flags  = 0)
+        inline VkFramebufferCreateInfo GetFramebufferCreateInfo(VkRenderPass                    renderpass,
+                                                                VkExtent2D                      size,
+                                                                const std::vector<VkImageView>& attachments,
+                                                                uint                            layers = 1,
+                                                                VkFramebufferCreateFlags        flags  = 0)
 
         {
             VkFramebufferCreateInfo info = {};
@@ -50,8 +50,9 @@ namespace GE
             return info;
         }
 
-        inline VkDescriptorSetAllocateInfo GetDescriptorSetAllocateInfo(std::vector<VkDescriptorSetLayout>& layouts,
-                                                                        VkDescriptorPool pool = VK_NULL_HANDLE)
+        inline VkDescriptorSetAllocateInfo
+        GetDescriptorSetAllocateInfo(const std::vector<VkDescriptorSetLayout>& layouts,
+                                     VkDescriptorPool                          pool = VK_NULL_HANDLE)
         {
             VkDescriptorSetAllocateInfo info = {};
             info.sType                       = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -75,8 +76,8 @@ namespace GE
         }
 
         inline VkDescriptorSetLayoutCreateInfo
-        GetDescriptorSetLayoutCreateInfo(std::vector<VkDescriptorSetLayoutBinding>& bindings,
-                                         VkDescriptorSetLayoutCreateFlags           flags = 0)
+        GetDescriptorSetLayoutCreateInfo(const std::vector<VkDescriptorSetLayoutBinding>& bindings,
+                                         VkDescriptorSetLayoutCreateFlags                 flags = 0)
         {
             VkDescriptorSetLayoutCreateInfo info = {};
             info.sType                           = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -391,7 +392,7 @@ namespace GE
          * @return VkPipelineColorBlendAttachmentState
          */
         inline VkPipelineColorBlendAttachmentState GetPipelineColorBlendAttachmentState(
-            bool                  blendEnable         = true,
+            bool                  blendEnable         = false,
             VkBlendFactor         srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
             VkBlendFactor         dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
             VkBlendOp             colorBlendOp        = VK_BLEND_OP_ADD,
@@ -416,10 +417,10 @@ namespace GE
         }
 
         inline VkPipelineColorBlendStateCreateInfo
-        GetPipelineColorBlendStateCreateInfo(std::vector<VkPipelineColorBlendAttachmentState>& attachments,
-                                             bool                                              logicOpEnable = false,
-                                             VkLogicOp                            logicOp = VK_LOGIC_OP_COPY,
-                                             VkPipelineColorBlendStateCreateFlags flags   = 0)
+        GetPipelineColorBlendStateCreateInfo(const std::vector<VkPipelineColorBlendAttachmentState>& attachments,
+                                             bool                                 logicOpEnable = false,
+                                             VkLogicOp                            logicOp       = VK_LOGIC_OP_COPY,
+                                             VkPipelineColorBlendStateCreateFlags flags         = 0)
         {
             VkPipelineColorBlendStateCreateInfo info = {};
 
@@ -439,8 +440,8 @@ namespace GE
         }
 
         inline VkPipelineDynamicStateCreateInfo
-        GetPipelineDynamicStateCreateInfo(std::vector<VkDynamicState>&      dynamicStates,
-                                          VkPipelineDynamicStateCreateFlags flags = 0)
+        GetPipelineDynamicStateCreateInfo(const std::vector<VkDynamicState>& dynamicStates,
+                                          VkPipelineDynamicStateCreateFlags  flags = 0)
         {
             VkPipelineDynamicStateCreateInfo info = {};
 

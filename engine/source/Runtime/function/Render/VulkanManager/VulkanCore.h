@@ -148,7 +148,7 @@ namespace GE
         {
             VkFence           fence;
             VkDevice          device = GetDevice();
-            VkFenceCreateInfo info = VkInit::GetFenceCreateInfo();
+            VkFenceCreateInfo info   = VkInit::GetFenceCreateInfo();
             GE_VK_ASSERT(vkCreateFence(device, &info, nullptr, &fence));
             return fence;
         }
@@ -156,7 +156,7 @@ namespace GE
         {
             VkSemaphore           semaphore;
             VkDevice              device = GetDevice();
-            VkSemaphoreCreateInfo info = VkInit::GetSemaphoreCreateInfo(flags);
+            VkSemaphoreCreateInfo info   = VkInit::GetSemaphoreCreateInfo(flags);
             GE_VK_ASSERT(vkCreateSemaphore(device, &info, nullptr, &semaphore));
             return semaphore;
         }
@@ -189,20 +189,28 @@ namespace GE
             GE_VK_ASSERT(vkCreateDescriptorSetLayout(GetDevice(), &info, nullptr, &layout));
             return layout;
         }
-        static inline std::vector<VkDescriptorSet> AllocDescriptorSets(VkDescriptorSetAllocateInfo info)
+        static inline std::vector<VkDescriptorSet> AllocDescriptorSet(VkDescriptorSetAllocateInfo info)
         {
             std::vector<VkDescriptorSet> sets(info.descriptorSetCount);
             info.descriptorPool = GetGlobalDescriptorPool();
             GE_VK_ASSERT(vkAllocateDescriptorSets(GetDevice(), &info, sets.data()));
             return sets;
         }
-        static inline std::vector<VkDescriptorSet> AllocDescriptorSets(VkDescriptorPool            pool,
-                                                                       VkDescriptorSetAllocateInfo info)
+        static inline std::vector<VkDescriptorSet> AllocDescriptorSet(VkDescriptorPool            pool,
+                                                                      VkDescriptorSetAllocateInfo info)
         {
             std::vector<VkDescriptorSet> sets(info.descriptorSetCount);
             info.descriptorPool = pool;
             GE_VK_ASSERT(vkAllocateDescriptorSets(GetDevice(), &info, sets.data()));
             return sets;
+        }
+        static inline VkDescriptorSet AllocDescriptorSet(VkDescriptorPool pool, VkDescriptorSetLayout layout)
+        {
+            std::vector<VkDescriptorSetLayout> layouts = {layout};
+            VkDescriptorSetAllocateInfo        info    = VkInit::GetDescriptorSetAllocateInfo(layouts, pool);
+            std::vector<VkDescriptorSet>       sets(info.descriptorSetCount);
+            GE_VK_ASSERT(vkAllocateDescriptorSets(GetDevice(), &info, sets.data()));
+            return sets[0];
         }
         static inline void UpdateDescriptors(std::vector<VkWriteDescriptorSet> writes,
                                              std::vector<VkCopyDescriptorSet>  copies)

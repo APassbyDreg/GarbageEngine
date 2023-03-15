@@ -3,8 +3,6 @@
 #include "Runtime/function/Scene/Manager/CameraManager.h"
 
 #include "Runtime/core/Math/Transforms.h"
-#include "glm/matrix.hpp"
-#include <memory>
 
 namespace GE
 {

@@ -1,6 +1,12 @@
 #ifndef COMMON_PIPELINE_FRAGMENTINPUTS_GSH_
 #define COMMON_PIPELINE_FRAGMENTINPUTS_GSH_
 
+#ifdef SHADOW_MAPPING_PASS
+struct FragmentInputs 
+{
+    [[vk::location(0)]] float4 posCS : SV_POSITION;
+};
+#else
 struct FragmentInputs 
 {
     [[vk::location(0)]] float4 posCS : SV_POSITION;
@@ -11,5 +17,6 @@ struct FragmentInputs
     [[vk::location(5)]] uint instanceID : TEXCOORD3;
     [[vk::location(6)]] uint flags : TEXCOORD4;
 };
+#endif
 
 #endif // COMMON_PIPELINE_FRAGMENTINPUTS_GSH_

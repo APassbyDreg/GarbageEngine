@@ -11,15 +11,17 @@ namespace GE
     {
     public:
         DescriptorSetLayout() {}
-        DescriptorSetLayout(VkDescriptorSetLayoutCreateInfo info)
-        {
-            layout = VulkanCore::CreateDescriptorSetLayout(info);
-        }
+        DescriptorSetLayout(VkDescriptorSetLayoutCreateInfo info) { Create(info); }
         DescriptorSetLayout(DescriptorSetLayout&& old) { layout = old.layout; }
 
         ~DescriptorSetLayout() { Destroy(); }
 
         inline VkDescriptorSetLayout Get() { return layout; }
+
+        inline void Create(VkDescriptorSetLayoutCreateInfo info)
+        {
+            layout = VulkanCore::CreateDescriptorSetLayout(info);
+        }
 
         inline void Destroy()
         {

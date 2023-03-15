@@ -6,10 +6,12 @@
 #include "Runtime/function/Scene/Components/Mesh.h"
 #include "Runtime/function/Scene/Components/Transform.h"
 
+#include "../Shared/LightUniform.h"
 #include "../Shared/ViewUniform.h"
 
 #include "../VulkanManager/RenderUtils.h"
-#include "glm/matrix.hpp"
+
+#include "../Manager/PerSceneDataManager.h"
 #include "vulkan/vulkan_core.h"
 
 namespace GE
@@ -38,35 +40,62 @@ namespace GE
         }
     }
 
-    void ForwardShadingPass::InitInternal(uint frame_cnt)
+    void ForwardShadingPass::Init(uint frame_cnt)
     {
         m_name = "ForwardShadingPass";
 
-        /* ------------------------ reserve resources ----------------------- */
-
-        /* ------------------------- setup resources ------------------------ */
-        // color
-        GraphicsColorResource color_output = {};
-        color_output.desc                  = VkInit::GetAttachmentDescription();
-        m_output.push_back(color_output);
-        // depth
-        m_enableDepthStencil = true;
-        m_depthAttachment    = VkInit::GetAttachmentDescription(VK_FORMAT_D32_SFLOAT);
-        __update_resource();
+        /* ---------------------- setup renderpass ---------------------- */
+        if (!s_renderPass.IsBuilt())
+        {
+            // color
+            GraphicsColorResource color_output = {};
+            color_output.desc                  = VkInit::GetAttachmentDescription();
+            color_output.blend                 = VkInit::GetPipelineColorBlendAttachmentState();
+            s_renderPass.output.push_back(color_output);
+            // depth
+            s_renderPass.enableDepthStencil = true;
+            s_renderPass.depthAttachment    = VkInit::GetAttachmentDescription(VK_FORMAT_D32_SFLOAT);
+            // build
+            s_renderPass.Build();
+        }
 
         /* ------------------------- setup pipeline ------------------------- */
-        m_pipelineSetupFunc(m_pipeline);
-        // states
-        m_pipeline.m_multisampleState = VkInit::GetPipelineMultisampleStateCreateInfo();
-        VkViewport viewport           = VkInit::GetViewport(m_extent);
-        VkRect2D   scissor            = {{0, 0}, m_extent};
-        m_pipeline.m_viewportState    = VkInit::GetPipelineViewportStateCreateInfo(viewport, scissor);
-        m_pipeline.m_colorBlendState  = VkInit::GetPipelineColorBlendStateCreateInfo(m_flattenAttachmentBlendStates);
-        m_pipeline.m_dynamicStates    = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-        m_pipeline.m_depthStencilState =
-            VkInit::GetPipelineDepthStencilStateCreateInfo(m_enableDepthStencil, m_enableDepthStencil);
-        // descriptors
-        m_pipeline.m_descriptorSetLayout.push_back(ViewUniform::GetDescriptorSetLayout());
+        if (m_pipeline == nullptr)
+        {
+            std::string pipeline_name = std::format("ForwardShading-{}-{}", m_meshName, m_materialName);
+            if (RenderPipelineManager::HasGraphicsPipeline(pipeline_name))
+            {
+                m_pipeline = RenderPipelineManager::GetGraphicsPipeline(pipeline_name);
+            }
+            else
+            {
+                m_pipelineSetupFns.push_back([=](GraphicsRenderPipeline& pipeline) {
+                    // per scene data
+                    PerSceneDataManager::SetupPipeline(pipeline);
+                    // per view data
+                    pipeline.AddDescriptorSetLayoutBinding(1, ViewUniform::GetDescriptorSetLayoutBinding());
+                    // states
+                    pipeline.m_multisampleState = VkInit::GetPipelineMultisampleStateCreateInfo();
+                    VkViewport viewport         = VkInit::GetViewport(m_extent);
+                    VkRect2D   scissor          = {{0, 0}, m_extent};
+                    pipeline.m_viewportState    = VkInit::GetPipelineViewportStateCreateInfo(viewport, scissor);
+                    pipeline.m_colorBlendState =
+                        VkInit::GetPipelineColorBlendStateCreateInfo(s_renderPass.GetFlattenColorBlendStates());
+                    pipeline.m_dynamicStates     = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+                    pipeline.m_depthStencilState = VkInit::GetPipelineDepthStencilStateCreateInfo(
+                        s_renderPass.enableDepthStencil, s_renderPass.enableDepthStencil);
+                    //    VK_COMPARE_OP_GREATER); // inverse z
+                });
+                m_pipeline = BuildPipeline();
+                RenderPipelineManager::RegisterGraphicsPipeline(pipeline_name, m_pipeline);
+            }
+        }
+
+        /* -------------------- run post build functions -------------------- */
+        for (auto&& fn : m_passSetupFns)
+        {
+            fn(*this);
+        }
     }
 
     void ForwardShadingPass::Run(RenderPassRunData run_data, ForwardShadingPassData pass_data)
@@ -98,20 +127,28 @@ namespace GE
             vkCmdSetViewport(cmd, 0, 1, &viewport);
             vkCmdSetScissor(cmd, 0, 1, &scissor);
 
+            // bind per scene data
+            auto&& per_scene_desc_sets =
+                m_resourceManager.GetPerFramePersistantDescriptorSet(frame_idx, "PerSceneData");
+            vkCmdBindDescriptorSets(
+                cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 0, 1, &per_scene_desc_sets, 0, nullptr);
+
             // bind view uniform
-            auto&& view_uniform_descriptor =
+            auto&& per_view_desc_sets =
                 m_resourceManager.GetPerFramePersistantDescriptorSet(frame_idx, "ViewUniform/MainCamera");
             vkCmdBindDescriptorSets(
-                cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 0, 1, &view_uniform_descriptor, 0, nullptr);
+                cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 1, 1, &per_view_desc_sets, 0, nullptr);
 
-            // run renderpass
-            auto&& layout = m_pipeline.GetPipelineLayout();
+            // bind material data
+            auto&& layout = m_pipeline->GetPipelineLayout();
             {
-                MaterialRenderPassData data = {cmd, layout};
-                material->SetupShadingPass(data);
+                MaterialRenderPassData data = {frame_idx, cmd, *this};
+                material->RunShadingPass(data);
             }
+
+            // bind mesh data and dispatch
             {
-                MeshRenderPassData data = {frame_idx, cmd, layout, instances, shared_from_this()};
+                MeshRenderPassData data = {frame_idx, cmd, layout, instances, *this};
                 mesh->RunRenderPass(data);
             }
         }
@@ -136,8 +173,8 @@ namespace GE
         auto&& [frame_idx, cmd] = run_data;
         auto&& [renderables]    = pass_data;
 
-        uint                     num_dispatched            = 0;
-        uint                     total_dispatch            = renderables.size();
+        uint num_dispatched = 0;
+        uint total_dispatch = renderables.size();
         for (auto&& [k, instances] : renderables)
         {
             num_dispatched++;
@@ -159,11 +196,7 @@ namespace GE
             /* ------------------------ dispatch pass ----------------------- */
             auto&&                 pass      = m_passes[k];
             ForwardShadingPassData pass_data = {
-                m_size,
-                instances,
-                mesh,
-                std::dynamic_pointer_cast<ForwardMaterial>(material),
-            };
+                m_size, instances, mesh, std::dynamic_pointer_cast<ForwardMaterial>(material)};
             pass->Run(run_data, pass_data);
         }
     }

@@ -52,15 +52,18 @@ namespace GE
 
     void AutoGpuBuffer::Alloc(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)
     {
+        m_usedSize       = buffer_info.size;
+        buffer_info.size = Max(buffer_info.size, m_minSize);
+        m_currentSize    = buffer_info.size;
+        m_tLastAdjust    = Time::CurrentTime();
         m_buffer.Alloc(buffer_info, alloc_info);
-        m_currentSize = m_usedSize = buffer_info.size;
-        m_tLastAdjust              = Time::CurrentTime();
 
         UpdateSize();
     }
 
     void AutoGpuBuffer::Resize(size_t target_size, size_t retain_start, size_t retain_size, bool force)
     {
+        target_size = Max(target_size, m_minSize);
         if (force)
         {
             m_buffer.Resize(target_size, retain_start, retain_size);
@@ -74,6 +77,7 @@ namespace GE
             if (IsValid() && Time::CurrentTime() - m_tLastAdjust < c_tActive && delta_size > 0)
             {
                 new_size = Max<size_t>(target_size + delta_size * 4, round(1.4 * m_usedSize));
+                new_size = Max(new_size, m_minSize);
             }
 
             if (new_size > m_currentSize)
@@ -82,7 +86,6 @@ namespace GE
                 m_currentSize = new_size;
                 m_tLastAdjust = Time::CurrentTime();
             }
-            m_usedSize = target_size;
 
             UpdateSize();
         }

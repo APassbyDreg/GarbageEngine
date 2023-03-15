@@ -221,7 +221,7 @@ namespace GE
 
     bool SceneMeshManager::Exists(int eid)
     {
-        return m_entityToNode.find(eid) != m_entityToNode.end() && m_largeEntities.find(eid) != m_largeEntities.end();
+        return m_entityToNode.find(eid) != m_entityToNode.end() || m_largeEntities.find(eid) != m_largeEntities.end();
     }
 
     void SceneMeshManager::UpdateEntity(Entity& e)

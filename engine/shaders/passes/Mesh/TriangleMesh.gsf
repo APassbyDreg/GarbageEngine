@@ -10,8 +10,8 @@ struct VertexInputs
     [[vk::location(0)]] float3 position : POSITION;
     [[vk::location(1)]] float3 normal   : NORMAL;
     [[vk::location(2)]] float3 tangent  : TANGENT;
-    [[vk::location(3)]] float2 uv0      : TEXCOORD0;
-    [[vk::location(4)]] uint flags      : TEXCOORD1;
+    [[vk::location(3)]] uint flags      : TEXCOORD1;
+    [[vk::location(4)]] float2 uv0      : TEXCOORD0;
 };
 
 struct InstanceData
@@ -20,13 +20,15 @@ struct InstanceData
     float4x4 t_inv_model_mat;
 };
 
-[[vk::binding(0, 1)]] cbuffer InstanceData { 
-    InstanceData instance_data[MAX_INSTANCE_COUNT];
-};
+[[vk::binding(0, 4)]]
+StructuredBuffer<InstanceData> instance_data;
 
 FragmentInputs VSMain(VertexInputs i, uint instanceID : SV_InstanceID)
 {
     FragmentInputs o;
+#ifdef SHADOW_MAPPING_PASS
+    o.posCS = TransformVertex(HomogeneousTransform(i.position, instance_data[instanceID].model_mat));
+#else
     o.posWS = HomogeneousTransform(i.position, instance_data[instanceID].model_mat);
     o.normalWS = HomogeneousTransformVector(i.normal, instance_data[instanceID].t_inv_model_mat);
     o.tangentWS = HomogeneousTransformVector(i.tangent, instance_data[instanceID].t_inv_model_mat);
@@ -34,5 +36,6 @@ FragmentInputs VSMain(VertexInputs i, uint instanceID : SV_InstanceID)
     o.posCS = TransformVertex(o.posWS);
     o.instanceID = instanceID;
     o.flags = i.flags;
+#endif
     return o;
 }

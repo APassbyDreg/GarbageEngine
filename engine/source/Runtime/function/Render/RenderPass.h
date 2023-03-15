@@ -9,13 +9,17 @@
 #include "RenderPipeline.h"
 
 #include "RenderResource.h"
+#include "vulkan/vulkan_core.h"
+#include <concepts>
+#include <cstddef>
+#include <memory>
 
 namespace GE
 {
     struct RenderPassRunData
     {
-        uint                     frame_idx         = std::numeric_limits<uint>::max();
-        VkCommandBuffer          cmd               = VK_NULL_HANDLE;
+        uint            frame_idx = std::numeric_limits<uint>::max();
+        VkCommandBuffer cmd       = VK_NULL_HANDLE;
     };
 
     class RenderPassBase
@@ -30,30 +34,18 @@ namespace GE
                 m_identifierPrefix += "/";
             }
         }
-        void Init(uint frame_cnt)
-        {
-            m_frameCnt        = frame_cnt;
-            m_signalSemaphore = VulkanCore::CreateSemaphore();
-            InitInternal(frame_cnt);
-            BuildInternal();
-        }
+        virtual ~RenderPassBase() = default;
 
-        virtual void Resize(uint2 size) {}
+        virtual void Init(uint frame_cnt)            = 0;
+        virtual void Resize(uint width, uint height) = 0;
 
-        inline VkSemaphore            GetSignaledSemaphore() { return m_signalSemaphore; }
         inline std::string            FullIdentifier(std::string suffix = "") { return m_identifierPrefix + suffix; }
         inline RenderResourceManager& GetResourceManager() { return m_resourceManager; }
-
-    protected:
-        virtual void InitInternal(uint frame_cnt) = 0; // Override by final class
-        virtual void BuildInternal() = 0; // Override by different pass type
 
     protected:
         std::string            m_identifierPrefix = "";
         std::string            m_name             = "";
         uint                   m_frameCnt         = 1;
-        bool                   m_ready            = false;
-        VkSemaphore            m_signalSemaphore  = VK_NULL_HANDLE;
         RenderResourceManager& m_resourceManager;
     };
 
@@ -71,51 +63,99 @@ namespace GE
         VkImageLayout                       layout;
     };
 
-    /**
-     * @brief warper for vulkan render pass, defaults to have only one subpass
-     */
-    class GraphicsPass : public RenderPassBase
+    class RenderPass
     {
     public:
-        GraphicsPass(RenderResourceManager& resource_manager, std::string identifier_prefix) :
-            RenderPassBase(resource_manager, "Graphics/" + identifier_prefix)
-        {}
-        virtual ~GraphicsPass();
+        ~RenderPass()
+        {
+            if (m_built && m_renderPass != VK_NULL_HANDLE)
+            {
+                vkDestroyRenderPass(VulkanCore::GetDevice(), m_renderPass, nullptr);
+            }
+        }
 
-        virtual void Resize(uint width, uint height) { m_extent = {width, height}; };
+        std::vector<GraphicsColorResource> input, output;
 
-        inline VkRenderPass     GetRenderPass() { return m_renderPass; }
-        inline VkPipeline       GetPipeline() { return m_pipeline.GetPipeline(); }
-        inline VkPipelineLayout GetPipelineLayout() { return m_pipeline.GetPipelineLayout(); }
+        bool                    enableDepthStencil = false;
+        VkAttachmentDescription depthAttachment;
 
-        inline GraphicsRenderPipeline& GetPipelineObject() { return m_pipeline; }
+        void Build();
 
-    protected:
-        virtual void BuildInternal() override;
-        void __update_resource();
+        inline VkRenderPass GetRenderPass()
+        {
+            GE_CORE_CHECK(m_built, "Trying to get an unintialized RenderPass");
+            return m_renderPass;
+        }
 
-    public:
-        std::vector<GraphicsColorResource> m_input, m_output;
+        inline bool IsBuilt() const { return m_built; }
 
-    protected:
-        VkRenderPass m_renderPass;
+        inline const std::vector<VkPipelineColorBlendAttachmentState>& GetFlattenColorBlendStates() const
+        {
+            GE_CORE_ASSERT(m_built, "Trying to get ColorBlendAttachmentState from an unintialized RenderPass");
+            return m_flattenAttachmentBlendStates;
+        }
 
-        bool m_ready = false;
-
-        bool                    m_enableDepthStencil = false;
-        VkAttachmentDescription m_depthAttachment;
-        VkAttachmentReference   m_depthReference;
-
+    private:
         std::vector<VkAttachmentDescription>             m_flattenAttachments;
         std::vector<VkPipelineColorBlendAttachmentState> m_flattenAttachmentBlendStates;
         std::vector<VkAttachmentReference>               m_inputRefference, m_outputReference;
-        std::vector<VkSubpassDependency>                 m_dependencies;
-        std::vector<VkSubpassDescription>                m_subpasses;
+        VkAttachmentReference                            m_depthReference;
 
-        GraphicsRenderPipeline m_pipeline;
+        std::vector<VkSubpassDependency>  m_dependencies;
+        std::vector<VkSubpassDescription> m_subpasses;
+
+        bool         m_built      = false;
+        VkRenderPass m_renderPass = VK_NULL_HANDLE;
+    };
+
+    /**
+     * @brief warper for vulkan render pass, defaults to have only one subpass
+     */
+    class GraphicsPassBase : public RenderPassBase
+    {
+    public:
+        GraphicsPassBase(RenderResourceManager& resource_manager, std::string identifier_prefix) :
+            RenderPassBase(resource_manager, "Graphics/" + identifier_prefix)
+        {}
+        virtual ~GraphicsPassBase();
+
+        virtual void Resize(uint width, uint height) { m_extent = {width, height}; };
+
+        virtual VkRenderPass GetRenderPass() = 0;
+
+        inline VkPipeline              GetPipeline() { return m_pipeline->GetPipeline(); }
+        inline VkPipelineLayout        GetPipelineLayout() { return m_pipeline->GetPipelineLayout(); }
+        inline GraphicsRenderPipeline& GetPipelineObject() { return *m_pipeline; }
+
+    protected:
+        std::shared_ptr<GraphicsRenderPipeline> BuildPipeline();
+
+    protected:
+        std::shared_ptr<GraphicsRenderPipeline> m_pipeline = nullptr;
 
         VkExtent2D m_extent = {1920, 1080};
+
+        std::vector<std::function<void(RenderPassBase&)>>         m_passSetupFns;     // called before pass is built
+        std::vector<std::function<void(GraphicsRenderPipeline&)>> m_pipelineSetupFns; // called before pipeline is built
+        std::vector<std::function<void(RenderPassBase&)>>         m_resourceSetupFns; // called after pipeline is built
     };
+
+    template<class TFinal>
+    class GraphicsPass : public GraphicsPassBase
+    {
+    public:
+        GraphicsPass(RenderResourceManager& resource_manager, std::string identifier_prefix) :
+            GraphicsPassBase(resource_manager, identifier_prefix)
+        {}
+
+        inline VkRenderPass GetRenderPass() override { return s_renderPass.GetRenderPass(); }
+        inline void         BuildRenderPass() { s_renderPass.Build(); }
+
+    protected:
+        static RenderPass s_renderPass;
+    };
+    template<class TFinal>
+    RenderPass GraphicsPass<TFinal>::s_renderPass;
 
     class ComputePass : public RenderPassBase
     {
@@ -123,17 +163,13 @@ namespace GE
         ComputePass(RenderResourceManager& resource_manager, std::string identifier_prefix) :
             RenderPassBase(resource_manager, "Compute/" + identifier_prefix)
         {}
-        virtual ~ComputePass();
+        virtual ~ComputePass() {};
 
-        inline VkPipeline       GetPipeline() { return m_pipeline.GetPipeline(); }
-        inline VkPipelineLayout GetPipelineLayout() { return m_pipeline.GetPipelineLayout(); }
-
-        inline ComputeRenderPipeline& GetPipelineObject() { return m_pipeline; }
-
-    protected:
-        virtual void BuildInternal() override;
+        inline VkPipeline             GetPipeline() { return m_pipeline->GetPipeline(); }
+        inline VkPipelineLayout       GetPipelineLayout() { return m_pipeline->GetPipelineLayout(); }
+        inline ComputeRenderPipeline& GetPipelineObject() { return *m_pipeline; }
 
     protected:
-        ComputeRenderPipeline m_pipeline;
+        std::shared_ptr<ComputeRenderPipeline> m_pipeline;
     };
 } // namespace GE

@@ -4,18 +4,28 @@
 
 namespace GE
 {
+    /**
+     * We use left hand coordinate system:
+     * - left: x+
+     * - up: y+
+     * - forward: z+
+     */
     struct TransformComponentCore
     {
         float3 position = {0, 0, 0};
         float3 scale    = {1, 1, 1};
         quat   rotation = {1, 0, 0, 0};
 
-        bool operator==(TransformComponentCore&& rhs)
+        inline float3 Forward() { return rotation * float3(0, 0, 1); }
+        inline float3 Up() { return rotation * float3(0, 1, 0); }
+        inline float3 Right() { return rotation * float3(1, 0, 0); }
+
+        inline bool operator==(TransformComponentCore&& rhs)
         {
             return position == rhs.position && scale == rhs.scale && rotation == rhs.rotation;
         }
 
-        operator std::tuple<float3, float3, quat>() { return {position, scale, rotation}; }
+        inline operator std::tuple<float3, float3, quat>() { return {position, scale, rotation}; }
     };
 
     class GE_API TransformComponent : public ComponentBase

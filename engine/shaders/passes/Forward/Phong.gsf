@@ -1,0 +1,37 @@
+#include "Common/Pipeline/FragmentInputs.gsh"
+#include "Common/BSDF/Lighting.gsh"
+#include "Common/ViewUniform.gsh"
+
+[[vk::push_constant]] struct PushConstants {
+    float3 kd;
+    float3 ks;
+    float3 ka;
+    float ns;
+} pc;
+
+float4 FSMain(FragmentInputs i) : SV_TARGET
+{
+    float3 V = normalize(view.curr_cam.pos - i.posWS);
+    float3 color = 0.0f;
+    int light_id;
+    for (light_id = 0; light_id < point_light_count; ++light_id) 
+    {
+        float3 L;
+        float3 li;
+        IncidentPointLight(light_id, i.posWS, i.normalWS, li, L);
+        float3 H = normalize(L + V);
+        float NdotH = saturate(dot(i.normalWS, H));
+        color += li * (pc.kd + pc.ks * pow(NdotH, pc.ns));
+    }
+    for (light_id = 0; light_id < direction_light_count; ++light_id) 
+    {
+        float3 L;
+        float3 li;
+        IncidentDirectionLight(light_id, i.posWS, i.normalWS, li, L);
+        float3 H = normalize(L + V);
+        float NdotH = saturate(dot(i.normalWS, H));
+        color += li * (pc.kd + pc.ks * pow(NdotH, pc.ns));
+    }
+    color += pc.ka;
+    return float4(color, 1.0);
+}

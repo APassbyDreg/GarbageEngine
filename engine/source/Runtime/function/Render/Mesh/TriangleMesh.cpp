@@ -12,20 +12,6 @@
 
 namespace GE
 {
-    VkDescriptorSetLayout TriangleMesh::GetInstanceDataDescriptorSetLayout()
-    {
-        static std::shared_ptr<DescriptorSetLayout> layout = nullptr;
-        if (layout == nullptr)
-        {
-            std::vector<VkDescriptorSetLayoutBinding> bindings;
-            bindings.push_back(VkInit::GetDescriptorSetLayoutBinding(
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 0));
-            auto&& info = VkInit::GetDescriptorSetLayoutCreateInfo(bindings);
-            layout      = std::make_shared<DescriptorSetLayout>(info);
-        }
-        return layout->Get();
-    }
-
     void TriangleMesh::Activate()
     {
         GE_CORE_ASSERT(m_meshResource != nullptr, "Error trying to activate an invalid TriangleMesh");
@@ -77,10 +63,8 @@ namespace GE
 
     Bounds3f& TriangleMesh::BBox() { return m_meshResource->BBox(); }
 
-    void TriangleMesh::SetupRenderPass(std::shared_ptr<GraphicsPass> pass)
+    void TriangleMesh::SetupRenderPipeline(GraphicsRenderPipeline& pipeline)
     {
-        // setup pipeline
-        auto&& pipeline = pass->GetPipelineObject();
         {
             fs::path     path     = fs::path(Config::shader_dir) / "Passes/Mesh/TriangleMesh.gsf";
             HLSLCompiler compiler = {
@@ -93,27 +77,28 @@ namespace GE
                 VkInit::GetPipelineVertexInputStateCreateInfo(desc.bindings, desc.attributes, desc.flags);
             pipeline.m_inputAssemblyState = VkInit::GetPipelineInputAssemblyStateCreateInfo();
         }
-        pipeline.m_descriptorSetLayout.push_back(GetInstanceDataDescriptorSetLayout());
+        pipeline.AddDescriptorSetLayoutBinding(c_instanceDataDescriptorID,
+                                               VkInit::GetDescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                                                                     VK_SHADER_STAGE_ALL_GRAPHICS,
+                                                                                     c_meshInstanceDataBinding));
+    }
 
-        // setup resource
-        RenderResourceManager& resource_manager = pass->GetResourceManager();
+    void TriangleMesh::SetupRenderPass(GraphicsPassBase& pass)
+    {
+        RenderResourceManager& resource_manager = pass.GetResourceManager();
         {
+            resource_manager.ReservePerFramePersistantDescriptorSet(
+                pass.FullIdentifier("InstanceDataDescriptorSet"),
+                pass.GetPipelineObject().GetDescriptorSetLayout(c_instanceDataDescriptorID));
             // buffer
             auto buffer_info =
-                VkInit::GetBufferCreateInfo(64,
-                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                                                VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+                VkInit::GetBufferCreateInfo(sizeof(VertexInstanceData),
+                                            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                                VK_BUFFER_USAGE_TRANSFER_DST_BIT);
             auto alloc_info = VkInit::GetAllocationCreateInfo(VMA_MEMORY_USAGE_AUTO,
                                                               VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-            resource_manager.ReservePerFrameDynamicBuffer(
-                pass->FullIdentifier("InstanceData"), buffer_info, alloc_info);
-            // descriptor set
-            std::vector<VkDescriptorSetLayout> layouts  = {GetInstanceDataDescriptorSetLayout()};
-            VkDescriptorSetAllocateInfo        set_info = VkInit::GetDescriptorSetAllocateInfo(layouts);
-            resource_manager.ReservePerFramePersistantDescriptorSet(pass->FullIdentifier("InstanceData"), set_info);
+            resource_manager.ReservePerFrameDynamicBuffer(pass.FullIdentifier("InstanceData"), buffer_info, alloc_info);
         }
-        resource_manager.SetState(pass->FullIdentifier("InstanceDataDescriptorID"),
-                                  pipeline.m_descriptorSetLayout.size() - 1);
     }
 
     void TriangleMesh::RunRenderPass(MeshRenderPassData data)
@@ -121,26 +106,6 @@ namespace GE
         Activate();
 
         auto&& [frame_idx, cmd, layout, instances, pass] = data;
-        RenderResourceManager& resource_manager          = pass->GetResourceManager();
-
-        // true instance count
-        uint num_instance = instances.size();
-
-        // pad instances and upload to buffer
-        std::vector<VertexInstanceData> instance_data;
-        for (auto&& instance : instances)
-        {
-            float4x4 model_mat       = instance->GetComponent<TransformComponent>().GetTransformMatrix();
-            float4x4 t_inv_model_mat = glm::transpose(glm::inverse(model_mat));
-            instance_data.push_back({model_mat, t_inv_model_mat});
-        }
-        while (instance_data.size() % c_maxInstancePerDraw != 0)
-        {
-            instance_data.push_back({});
-        }
-        auto&& instance_buffer =
-            resource_manager.GetPerFrameDynamicBuffer(frame_idx, pass->FullIdentifier("InstanceData"));
-        instance_buffer->UploadAs(instance_data);
 
         // bind vertex buffer and index buffer
         {
@@ -150,41 +115,48 @@ namespace GE
             vkCmdBindIndexBuffer(cmd, m_indexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
         }
 
-        // write instance descriptor and dispatch
-        VkDescriptorSet instance_data_descriptor =
-            resource_manager.GetPerFramePersistantDescriptorSet(frame_idx, pass->FullIdentifier("InstanceData"));
-        uint instance_data_descriptor_id =
-            resource_manager.GetState<uint>(pass->FullIdentifier("InstanceDataDescriptorID"));
-        for (uint start_id = 0; start_id < num_instance; start_id += c_maxInstancePerDraw)
+        // generate and upload instance data
+        uint                            num_instance = instances.size();
+        std::vector<VertexInstanceData> instance_data;
+        instance_data.reserve(num_instance);
+        for (auto&& instance : instances)
         {
-            {
-                VkDescriptorBufferInfo instance_buffer_info = {};
-                instance_buffer_info.buffer                 = instance_buffer->GetBuffer();
-                instance_buffer_info.offset                 = start_id * sizeof(VertexInstanceData);
-                instance_buffer_info.range                  = sizeof(VertexInstanceData);
-                VkWriteDescriptorSet write                  = {};
-                write.sType                                 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                write.dstSet                                = instance_data_descriptor;
-                write.descriptorType                        = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                write.descriptorCount                       = 1;
-                write.dstBinding                            = 0;
-                write.dstArrayElement                       = 0;
-                write.pBufferInfo                           = &instance_buffer_info;
-                VulkanCore::WriteDescriptors({write});
-
-                vkCmdBindDescriptorSets(cmd,
-                                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                        layout,
-                                        instance_data_descriptor_id,
-                                        1,
-                                        &instance_data_descriptor,
-                                        0,
-                                        nullptr);
-            }
-
-            uint num_dispatch = Min(num_instance - start_id, c_maxInstancePerDraw);
-            vkCmdDrawIndexed(cmd, m_meshResource->GetIndexCount(), num_dispatch, 0, 0, 0);
+            float4x4 model_mat       = instance->GetComponent<TransformComponent>().GetTransformMatrix();
+            float4x4 t_inv_model_mat = glm::transpose(glm::inverse(model_mat));
+            instance_data.push_back({model_mat, t_inv_model_mat});
         }
+        auto&& resource_manager = pass.GetResourceManager();
+        auto&& instance_buffer =
+            resource_manager.GetPerFrameDynamicBuffer(frame_idx, pass.FullIdentifier("InstanceData"));
+        instance_buffer->UploadAs(instance_data);
+
+        // write instance descriptor and dispatch
+        VkDescriptorSet per_instance_desc_set = resource_manager.GetPerFramePersistantDescriptorSet(
+            frame_idx, pass.FullIdentifier("InstanceDataDescriptorSet"));
+        VkDescriptorBufferInfo instance_buffer_info = {};
+        instance_buffer_info.buffer                 = instance_buffer->GetBuffer();
+        instance_buffer_info.offset                 = 0;
+        instance_buffer_info.range                  = sizeof(VertexInstanceData) * num_instance;
+        VkWriteDescriptorSet write                  = {};
+        write.sType                                 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet                                = per_instance_desc_set;
+        write.descriptorType                        = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        write.descriptorCount                       = 1;
+        write.dstBinding                            = c_meshInstanceDataBinding;
+        write.dstArrayElement                       = 0;
+        write.pBufferInfo                           = &instance_buffer_info;
+        VulkanCore::WriteDescriptors({write});
+
+        vkCmdBindDescriptorSets(cmd,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                layout,
+                                c_instanceDataDescriptorID,
+                                1,
+                                &per_instance_desc_set,
+                                0,
+                                nullptr);
+
+        vkCmdDrawIndexed(cmd, m_meshResource->GetIndexCount(), num_instance, 0, 0, 0);
     }
 
     void TriangleMesh::Inspect()

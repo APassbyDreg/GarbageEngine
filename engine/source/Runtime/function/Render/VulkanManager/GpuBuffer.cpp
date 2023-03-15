@@ -45,6 +45,7 @@ namespace GE
 
         m_bufferInfo = buffer_info;
         m_allocInfo  = alloc_info;
+        buffer_info.size = Max(buffer_info.size, 4ull);
         GE_VK_ASSERT(
             vmaCreateBuffer(VulkanCore::GetAllocator(), &buffer_info, &alloc_info, &m_buffer, &m_allocation, nullptr));
         m_alloced = true;
@@ -62,6 +63,11 @@ namespace GE
     void GpuBuffer::Upload(byte* data, size_t size, size_t offset, bool resize)
     {
         GE_CORE_ASSERT(m_alloced, "GpuBuffer is not alloced!");
+
+        if (size == 0)
+        {
+            return;
+        }
 
         if (resize && size + offset > GetSize())
         {
@@ -143,7 +149,7 @@ namespace GE
                        retain_start + retain_size,
                        size);
 
-        m_bufferInfo.size = size;
+        m_bufferInfo.size = Max(size, 4ull);
         if (retain_size == 0)
         {
             vmaDestroyBuffer(VulkanCore::GetAllocator(), m_buffer, m_allocation);

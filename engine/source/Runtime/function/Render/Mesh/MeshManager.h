@@ -118,6 +118,14 @@ namespace GE
             return mesh;
         }
 
+        inline static void SaveAll()
+        {
+            for (auto&& mesh : GetInstance().m_meshs)
+            {
+                mesh->Save();
+            }
+        }
+
     private:
         std::vector<std::shared_ptr<Mesh>>           m_meshs;
         std::map<std::string, std::shared_ptr<Mesh>> m_pathToMesh;

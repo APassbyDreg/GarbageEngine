@@ -120,7 +120,8 @@ namespace GE
 
         Bounds3f& BBox() override;
 
-        void SetupRenderPass(std::shared_ptr<GraphicsPass> pass) override;
+        void SetupRenderPipeline(GraphicsRenderPipeline& pipeline) override;
+        void SetupRenderPass(GraphicsPassBase& pass) override;
         void RunRenderPass(MeshRenderPassData data) override;
 
         void Activate();
@@ -129,7 +130,11 @@ namespace GE
         inline void SetMeshResource(std::shared_ptr<TriangleMeshResource> mesh) { m_meshResource = mesh; }
 
     private:
-        static VkDescriptorSetLayout GetInstanceDataDescriptorSetLayout();
+        static VkDescriptorSetLayoutBinding GetInstanceDataDescriptorSetLayoutBinding()
+        {
+            return {VkInit::GetDescriptorSetLayoutBinding(
+                VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 0)};
+        }
 
         bool Update();
 

@@ -1,6 +1,7 @@
 #include "MaterialManager.h"
 
 /* --------------------------------- forward -------------------------------- */
+#include "Forward/ForwardPhongMaterial.h"
 #include "Forward/ForwardSolidMaterial.h"
 
 /* -------------------------------- deferred -------------------------------- */
@@ -13,6 +14,7 @@ namespace GE
         {
             // add forward materials
             AddForwardMaterial<ForwardSolidMaterial>();
+            AddForwardMaterial<ForwardPhongMaterial>();
 
             // add deferred materials
 
