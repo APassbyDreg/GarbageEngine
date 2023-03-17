@@ -23,15 +23,12 @@ namespace GE
         pipeline.m_rasterizationState = VkInit::GetPipelineRasterizationStateCreateInfo();
     }
 
-    void ForwardPhongMaterial::SetupRenderPass(GraphicsPassBase& pass) {}
+    void ForwardPhongMaterial::SetupPassResources(GraphicsPassUnit& pass) {}
 
     void ForwardPhongMaterial::RunShadingPass(MaterialRenderPassData data)
     {
-        auto&& [frame_id, cmd, pass] = data;
-
-        auto&  shading_pass    = dynamic_cast<ForwardShadingPass&>(pass);
-        auto&  pipeline        = shading_pass.GetPipelineObject();
-
+        auto&& [frame_id, cmd, unit] = data;
+        auto&& pipeline              = unit.GetPipeline();
         pipeline.PushConstant("params", cmd, &m_params);
     }
 

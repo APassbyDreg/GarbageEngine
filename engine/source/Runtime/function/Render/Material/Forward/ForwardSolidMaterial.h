@@ -21,7 +21,7 @@ namespace GE
 
         void RunShadingPass(MaterialRenderPassData data) override;
         void SetupRenderPipeline(GraphicsRenderPipeline& pipeline) override;
-        void SetupRenderPass(GraphicsPassBase& pass) override;
+        void SetupPassResources(GraphicsPassUnit& pass) override;
 
     private:
         float4 m_color;

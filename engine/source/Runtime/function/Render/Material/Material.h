@@ -114,9 +114,9 @@ public: \
 
     struct MaterialRenderPassData
     {
-        uint            frame_id;
-        VkCommandBuffer cmd;
-        RenderPassBase& pass;
+        uint              frame_id;
+        VkCommandBuffer   cmd;
+        GraphicsPassUnit& unit;
     };
 
     class DeferredMaterial : public Material
@@ -128,9 +128,9 @@ public: \
         virtual void RunShadingPass(MaterialRenderPassData data) = 0;
 
         virtual void SetupGBufferPipeline(GraphicsRenderPipeline& pipeline) {};
-        virtual void SetupGBufferPass(GraphicsPassBase& pass) {};
+        virtual void SetupGBufferPassResources(GraphicsPassUnit& pass) {}
         virtual void SetupShdaingPipeline(GraphicsRenderPipeline& pipeline) {};
-        virtual void SetupShadingPass(GraphicsPassBase& pass) {};
+        virtual void SetupShadingPassResources(GraphicsPassUnit& pass) {}
     };
 
     class ForwardMaterial : public Material
@@ -143,6 +143,6 @@ public: \
         virtual void RunShadingPass(MaterialRenderPassData data) = 0;
 
         virtual void SetupRenderPipeline(GraphicsRenderPipeline& pipeline) {};
-        virtual void SetupRenderPass(GraphicsPassBase& pass) {};
+        virtual void SetupPassResources(GraphicsPassUnit& pass) {}
     };
 } // namespace GE

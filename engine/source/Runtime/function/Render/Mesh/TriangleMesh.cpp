@@ -83,13 +83,13 @@ namespace GE
                                                                                      c_meshInstanceDataBinding));
     }
 
-    void TriangleMesh::SetupRenderPass(GraphicsPassBase& pass)
+    void TriangleMesh::SetupPassResources(GraphicsPassUnit& unit)
     {
-        RenderResourceManager& resource_manager = pass.GetResourceManager();
+        RenderResourceManager& resource_manager = unit.GetPass().GetResourceManager();
         {
             resource_manager.ReservePerFramePersistantDescriptorSet(
-                pass.FullIdentifier("InstanceDataDescriptorSet"),
-                pass.GetPipelineObject().GetDescriptorSetLayout(c_instanceDataDescriptorID));
+                unit.FullIdentifier("InstanceDataDescriptorSet"),
+                unit.GetPipeline().GetDescriptorSetLayout(c_instanceDataDescriptorID));
             // buffer
             auto buffer_info =
                 VkInit::GetBufferCreateInfo(sizeof(VertexInstanceData),
@@ -97,7 +97,7 @@ namespace GE
                                                 VK_BUFFER_USAGE_TRANSFER_DST_BIT);
             auto alloc_info = VkInit::GetAllocationCreateInfo(VMA_MEMORY_USAGE_AUTO,
                                                               VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-            resource_manager.ReservePerFrameDynamicBuffer(pass.FullIdentifier("InstanceData"), buffer_info, alloc_info);
+            resource_manager.ReservePerFrameDynamicBuffer(unit.FullIdentifier("InstanceData"), buffer_info, alloc_info);
         }
     }
 
@@ -105,7 +105,7 @@ namespace GE
     {
         Activate();
 
-        auto&& [frame_idx, cmd, layout, instances, pass] = data;
+        auto&& [frame_idx, cmd, instances, unit] = data;
 
         // bind vertex buffer and index buffer
         {
@@ -125,14 +125,14 @@ namespace GE
             float4x4 t_inv_model_mat = glm::transpose(glm::inverse(model_mat));
             instance_data.push_back({model_mat, t_inv_model_mat});
         }
-        auto&& resource_manager = pass.GetResourceManager();
+        auto&& resource_manager = unit.GetPass().GetResourceManager();
         auto&& instance_buffer =
-            resource_manager.GetPerFrameDynamicBuffer(frame_idx, pass.FullIdentifier("InstanceData"));
+            resource_manager.GetPerFrameDynamicBuffer(frame_idx, unit.FullIdentifier("InstanceData"));
         instance_buffer->UploadAs(instance_data);
 
         // write instance descriptor and dispatch
         VkDescriptorSet per_instance_desc_set = resource_manager.GetPerFramePersistantDescriptorSet(
-            frame_idx, pass.FullIdentifier("InstanceDataDescriptorSet"));
+            frame_idx, unit.FullIdentifier("InstanceDataDescriptorSet"));
         VkDescriptorBufferInfo instance_buffer_info = {};
         instance_buffer_info.buffer                 = instance_buffer->GetBuffer();
         instance_buffer_info.offset                 = 0;
@@ -149,7 +149,7 @@ namespace GE
 
         vkCmdBindDescriptorSets(cmd,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                layout,
+                                unit.GetPipeline().GetPipelineLayout(),
                                 c_instanceDataDescriptorID,
                                 1,
                                 &per_instance_desc_set,

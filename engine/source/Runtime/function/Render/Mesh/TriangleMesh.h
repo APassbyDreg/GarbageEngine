@@ -121,7 +121,7 @@ namespace GE
         Bounds3f& BBox() override;
 
         void SetupRenderPipeline(GraphicsRenderPipeline& pipeline) override;
-        void SetupRenderPass(GraphicsPassBase& pass) override;
+        void SetupPassResources(GraphicsPassUnit& unit) override;
         void RunRenderPass(MeshRenderPassData data) override;
 
         void Activate();

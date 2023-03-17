@@ -58,7 +58,7 @@ namespace GE
     private:
         /* ----------------------------- passes ----------------------------- */
 
-        CombinedForwardShadingPass m_forwardPass {m_renderResourceManager};
+        OpaqueForwardShadingPass m_opaqueForwardShadingPass {m_renderResourceManager};
 
         RenderResourceManager m_renderResourceManager;
 

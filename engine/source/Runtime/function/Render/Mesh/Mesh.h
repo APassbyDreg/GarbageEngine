@@ -30,9 +30,8 @@ namespace GE
     {
         uint                                 frame_idx;
         VkCommandBuffer                      cmd;
-        VkPipelineLayout                     layout;
         std::vector<std::shared_ptr<Entity>> renderables;
-        GraphicsPassBase&                    resource_manager;
+        GraphicsPassUnit&                    unit;
     };
 
 #define GE_MESH_COMMON(type) \
@@ -71,7 +70,7 @@ public: \
         {}
 
         virtual void SetupRenderPipeline(GraphicsRenderPipeline& pipeline) = 0;
-        virtual void SetupRenderPass(GraphicsPassBase& pass)               = 0;
+        virtual void SetupPassResources(GraphicsPassUnit& unit)            = 0;
         virtual void RunRenderPass(MeshRenderPassData data)                = 0;
 
         inline int         GetID() const { return m_id; }

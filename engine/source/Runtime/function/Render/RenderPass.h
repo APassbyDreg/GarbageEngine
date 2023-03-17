@@ -10,9 +10,6 @@
 
 #include "RenderResource.h"
 #include "vulkan/vulkan_core.h"
-#include <concepts>
-#include <cstddef>
-#include <memory>
 
 namespace GE
 {
@@ -111,51 +108,40 @@ namespace GE
     /**
      * @brief warper for vulkan render pass, defaults to have only one subpass
      */
-    class GraphicsPassBase : public RenderPassBase
-    {
-    public:
-        GraphicsPassBase(RenderResourceManager& resource_manager, std::string identifier_prefix) :
-            RenderPassBase(resource_manager, "Graphics/" + identifier_prefix)
-        {}
-        virtual ~GraphicsPassBase();
-
-        virtual void Resize(uint width, uint height) { m_extent = {width, height}; };
-
-        virtual VkRenderPass GetRenderPass() = 0;
-
-        inline VkPipeline              GetPipeline() { return m_pipeline->GetPipeline(); }
-        inline VkPipelineLayout        GetPipelineLayout() { return m_pipeline->GetPipelineLayout(); }
-        inline GraphicsRenderPipeline& GetPipelineObject() { return *m_pipeline; }
-
-    protected:
-        std::shared_ptr<GraphicsRenderPipeline> BuildPipeline();
-
-    protected:
-        std::shared_ptr<GraphicsRenderPipeline> m_pipeline = nullptr;
-
-        VkExtent2D m_extent = {1920, 1080};
-
-        std::vector<std::function<void(RenderPassBase&)>>         m_passSetupFns;     // called before pass is built
-        std::vector<std::function<void(GraphicsRenderPipeline&)>> m_pipelineSetupFns; // called before pipeline is built
-        std::vector<std::function<void(RenderPassBase&)>>         m_resourceSetupFns; // called after pipeline is built
-    };
-
-    template<class TFinal>
-    class GraphicsPass : public GraphicsPassBase
+    class GraphicsPass : public RenderPassBase
     {
     public:
         GraphicsPass(RenderResourceManager& resource_manager, std::string identifier_prefix) :
-            GraphicsPassBase(resource_manager, identifier_prefix)
+            RenderPassBase(resource_manager, "Graphics/" + identifier_prefix)
         {}
+        virtual ~GraphicsPass() {};
 
-        inline VkRenderPass GetRenderPass() override { return s_renderPass.GetRenderPass(); }
-        inline void         BuildRenderPass() { s_renderPass.Build(); }
+        virtual void Resize(uint width, uint height) = 0;
+
+        inline VkRenderPass GetRenderPass() { return m_renderPass.GetRenderPass(); }
+        inline RenderPass&  GetRenderPassObject() { return m_renderPass; }
+        inline VkExtent2D   GetExtent() const { return m_extent; }
 
     protected:
-        static RenderPass s_renderPass;
+        VkExtent2D                                m_extent = {1920, 1080};
+        RenderPass                                m_renderPass;
+        std::vector<std::shared_ptr<FrameBuffer>> m_frameBuffers;
     };
-    template<class TFinal>
-    RenderPass GraphicsPass<TFinal>::s_renderPass;
+
+    class GraphicsPassUnit
+    {
+    public:
+        GraphicsPassUnit(GraphicsPass& pass) : m_pass(pass) {}
+
+        inline GraphicsRenderPipeline& GetPipeline() { return *m_pipeline; }
+        inline GraphicsPass&           GetPass() { return m_pass; }
+
+        virtual std::string FullIdentifier(std::string identifier) = 0;
+
+    protected:
+        std::shared_ptr<GraphicsRenderPipeline> m_pipeline;
+        GraphicsPass&                           m_pass;
+    };
 
     class ComputePass : public RenderPassBase
     {

@@ -92,17 +92,4 @@ namespace GE
 
         m_built = true;
     }
-
-    GraphicsPassBase::~GraphicsPassBase() {}
-
-    std::shared_ptr<GraphicsRenderPipeline> GraphicsPassBase::BuildPipeline()
-    {
-        auto pipeline = std::make_shared<GraphicsRenderPipeline>();
-        for (auto&& fn : m_pipelineSetupFns)
-        {
-            fn(*pipeline);
-        }
-        pipeline->Build(GetRenderPass());
-        return pipeline;
-    }
 } // namespace GE

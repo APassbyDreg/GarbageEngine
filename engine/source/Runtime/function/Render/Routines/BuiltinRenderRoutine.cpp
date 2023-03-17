@@ -66,7 +66,7 @@ namespace GE
             }
 
             // resize all passes
-            m_forwardPass.Resize(width, height);
+            m_opaqueForwardShadingPass.Resize(width, height);
         }
     }
 
@@ -82,9 +82,6 @@ namespace GE
         /* ------------------------- render targets ------------------------- */
         m_renderResourceManager.ReservePerFrameImage("ColorRT");
         m_renderResourceManager.ReservePerFrameImage("DepthRT");
-
-        /* -------------------------- initial size -------------------------- */
-        Resize(1280, 720);
 
         /* ------------------------ per-scene uniform ----------------------- */
         m_perSceneDataManager.Init(n_frames);
@@ -133,7 +130,10 @@ namespace GE
         m_renderResourceManager.ReservePerFrameSemaphore("ForwardPass");
 
         /* ----------------------- init render passes ----------------------- */
-        m_forwardPass.Init(n_frames);
+        m_opaqueForwardShadingPass.Init(n_frames);
+
+        /* -------------------------- initial size -------------------------- */
+        Resize(1280, 720);
     }
 
     void BuiltinRenderRoutine::DrawFrame(uint                     index,
@@ -212,8 +212,8 @@ namespace GE
             std::vector<VkSemaphore> signal_semaphores = {
                 m_renderResourceManager.GetPerFrameSemaphore(frame_index, "ForwardPass")->Get()};
             RenderPassRunData              run_data  = {frame_index, cmd};
-            CombinedForwardShadingPassData pass_data = {forward_renderables};
-            m_forwardPass.Run(run_data, pass_data);
+            OpaqueForwardShadingPassData   pass_data = {forward_renderables};
+            m_opaqueForwardShadingPass.Run(run_data, pass_data);
         }
 
         // transition output
