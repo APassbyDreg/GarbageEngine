@@ -4,9 +4,9 @@
 
 #include "Runtime/core/Concepts.h"
 
+#include "Runtime/core/Utils/ContainerUtils.h"
+
 #include "Mesh.h"
-#include <cstddef>
-#include <string>
 
 namespace GE
 {
@@ -92,6 +92,10 @@ namespace GE
         inline static std::shared_ptr<Mesh> LoadMesh(std::string path)
         {
             auto&& instance = GetInstance();
+            if (StdUtils::Exists(instance.m_pathToMesh, path))
+            {
+                return instance.m_pathToMesh[path];
+            }
 
             uint   id       = instance.m_meshs.size();
             auto&& resource = ResourceManager::GetResource<JsonResource>(path, JsonIdentifier::MESH);

@@ -1,5 +1,3 @@
-#pragma once
-
 #include "PerSceneDataManager.h"
 
 #include "Runtime/Application.h"
@@ -18,8 +16,8 @@ namespace GE
 
     VkDescriptorSetLayout PerSceneDataManager::GetPerSceneDataLayout()
     {
-        static VkDescriptorSetLayout layout = VK_NULL_HANDLE;
-        if (layout == VK_NULL_HANDLE)
+        static DescriptorSetLayout layout;
+        if (!layout.IsValid())
         {
             std::vector<VkDescriptorSetLayoutBinding> bindings = {};
             // Light Uniform
@@ -32,7 +30,7 @@ namespace GE
                 VkInit::GetDescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_ALL, 2));
             bindings.push_back(
                 VkInit::GetDescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_ALL, 3));
-            layout = VulkanCore::CreateDescriptorSetLayout(VkInit::GetDescriptorSetLayoutCreateInfo(bindings));
+            layout.Create(VkInit::GetDescriptorSetLayoutCreateInfo(bindings));
         }
         return layout;
     }

@@ -3,7 +3,6 @@
 #include "GE_pch.h"
 
 #include "VulkanCore.h"
-#include "vulkan/vulkan_core.h"
 
 namespace GE
 {

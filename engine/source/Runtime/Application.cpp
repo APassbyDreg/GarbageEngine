@@ -79,10 +79,11 @@ namespace GE
             fps = fps * 0.9 + 0.1 * 1.0f / (t1 - t0);
         }
 
+        Shutdown();
         GE_CORE_TRACE("Ending Application");
     }
 
-    void Application::Shutdown() { m_running = false; }
+    void Application::Shutdown() { GE_VK_ASSERT(vkDeviceWaitIdle(VulkanCore::GetDevice())); }
 
     void Application::OnEvent(Event& e)
     {

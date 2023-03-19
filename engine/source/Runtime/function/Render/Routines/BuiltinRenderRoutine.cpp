@@ -15,12 +15,9 @@
 
 namespace GE
 {
-    BuiltinRenderRoutine::BuiltinRenderRoutine() : m_perSceneDataManager(m_renderResourceManager) {}
+    BuiltinRenderRoutine::BuiltinRenderRoutine() {}
 
-    BuiltinRenderRoutine::BuiltinRenderRoutine(uint n_frames) : m_perSceneDataManager(m_renderResourceManager)
-    {
-        Init(n_frames);
-    }
+    BuiltinRenderRoutine::BuiltinRenderRoutine(uint n_frames) { Init(n_frames); }
 
     BuiltinRenderRoutine::~BuiltinRenderRoutine() {}
 
@@ -85,42 +82,10 @@ namespace GE
 
         /* ------------------------ per-scene uniform ----------------------- */
         m_perSceneDataManager.Init(n_frames);
+        m_perViewDataManager.Init(n_frames);
 
         /* -------------------------- view uniform -------------------------- */
-        {
-            // buffer
-            VmaAllocationCreateInfo alloc_info = VkInit::GetAllocationCreateInfo(
-                VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-            VkBufferCreateInfo buffer_info =
-                VkInit::GetBufferCreateInfo(sizeof(ViewUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-            m_renderResourceManager.ReservePerFrameStaticBuffer("ViewUniform/MainCamera", buffer_info, alloc_info);
-
-            // set
-            m_renderResourceManager.ReservePerFramePersistantDescriptorSet("ViewUniform/MainCamera",
-                                                                           ViewUniform::GetDescriptorSetLayout());
-
-            // write to set
-            auto&& buffers     = m_renderResourceManager.GetFramewiseStaticBuffer("ViewUniform/MainCamera");
-            auto&& descriptors = m_renderResourceManager.GetFramewisePersistantDescriptorSet("ViewUniform/MainCamera");
-            std::vector<VkWriteDescriptorSet> writes = {};
-            for (int frame = 0; frame < n_frames; frame++)
-            {
-                VkDescriptorBufferInfo buffer_info = {};
-                buffer_info.buffer                 = buffers[frame]->GetBuffer();
-                buffer_info.offset                 = 0;
-                buffer_info.range                  = VK_WHOLE_SIZE;
-                VkWriteDescriptorSet write         = {};
-                write.sType                        = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                write.dstSet                       = descriptors[frame];
-                write.descriptorType               = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                write.descriptorCount              = 1;
-                write.dstBinding                   = 0;
-                write.dstArrayElement              = 0;
-                write.pBufferInfo                  = &buffer_info;
-                writes.push_back(write);
-            }
-            VulkanCore::WriteDescriptors(writes);
-        }
+        m_perViewDataManager.RegisterView("MainCamera");
 
         /* ------------------------- command buffer ------------------------- */
         m_renderResourceManager.ReservePerFrameGraphicsCmdBuffer("Main");
@@ -163,9 +128,7 @@ namespace GE
         cam_view_uniform.has_prev_frame = uint(m_currCamInfo.eid != m_prevCamInfo.eid);
 
         // update camera uniform buffer
-        auto&& cam_view_uniform_buffer =
-            m_renderResourceManager.GetPerFrameStaticBuffer(frame_index, "ViewUniform/MainCamera");
-        cam_view_uniform_buffer->Upload((byte*)&cam_view_uniform, sizeof(ViewUniform));
+        m_perViewDataManager.UpdateView(frame_index, "MainCamera", cam_view_uniform);
 
         // create and group renderables
         auto&& renderables        = sc->GetMeshManager().FrustumCull(cam_view_uniform.curr_cam.world_to_clip);

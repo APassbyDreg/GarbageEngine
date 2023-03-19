@@ -67,7 +67,10 @@ public: \
     public:
         Mesh(int id, fs::path path) :
             m_id(id), m_resource(ResourceManager::GetResource<JsonResource>(path, JsonIdentifier::MESH))
-        {}
+        {
+            GE_CORE_TRACE("Created Mesh: {}", path.string());
+        }
+        virtual ~Mesh() { GE_CORE_TRACE("Destroyed Mesh: {}", GetPath().string()); }
 
         virtual void SetupRenderPipeline(GraphicsRenderPipeline& pipeline) = 0;
         virtual void SetupPassResources(GraphicsPassUnit& unit)            = 0;

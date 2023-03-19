@@ -12,7 +12,6 @@
 #include "VulkanManager/GpuImage.h"
 #include "VulkanManager/Synchronization.h"
 #include "VulkanManager/VulkanCore.h"
-#include <vector>
 
 namespace GE
 {

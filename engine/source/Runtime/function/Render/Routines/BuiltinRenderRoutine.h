@@ -16,6 +16,7 @@
 #include "../Shared/ViewUniform.h"
 
 #include "../Manager/PerSceneDataManager.h"
+#include "../Manager/PerViewDataManager.h"
 
 namespace GE
 {
@@ -56,23 +57,23 @@ namespace GE
         VkImageView GetOutputImageView(uint frame_idx);
 
     private:
-        /* ----------------------------- passes ----------------------------- */
-
-        OpaqueForwardShadingPass m_opaqueForwardShadingPass {m_renderResourceManager};
-
         RenderResourceManager m_renderResourceManager;
 
+        /* ----------------------------- states ----------------------------- */
         uint                                                        m_frameCnt = 0;
         std::vector<std::shared_ptr<BuiltinRenderRoutineFrameData>> m_frameData;
-
-        /* ----------------------------- states ----------------------------- */
         VkExtent2D      m_viewportSize  = {0, 0};
         uint            m_frameRendered = 0;
         Time::TimeStamp m_tInit, m_tLastFrame;
         RandomEngine    m_rand;
         CameraInfo      m_currCamInfo, m_prevCamInfo;
 
-        PerSceneDataManager m_perSceneDataManager;
+        /* ----------------------------- passes ----------------------------- */
+        OpaqueForwardShadingPass m_opaqueForwardShadingPass {m_renderResourceManager};
+
+        /* ---------------------------- managers ---------------------------- */
+        PerSceneDataManager m_perSceneDataManager {m_renderResourceManager};
+        PerViewDataManager  m_perViewDataManager {m_renderResourceManager};
 
     private:
         ViewUniform GetBaseViewUniform(Time::TimeStamp t);

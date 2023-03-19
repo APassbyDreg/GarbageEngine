@@ -12,7 +12,7 @@ namespace GE
     class SingletonBase
     {
     public:
-        virtual ~SingletonBase() {}
+        virtual ~SingletonBase() = default;
         SingletonBase(int destroy_priority) : destroy_priority(destroy_priority) {}
         const int destroy_priority;
     };
@@ -62,12 +62,19 @@ namespace GE
     class Singleton : public SingletonBase
     {
     protected:
-        Singleton() : SingletonBase(DestroyPriority) {}
+        static bool s_isAlive;
 
     public:
-        static T& GetInstance() { return SingletonManager::GetSingletonInstance<T>(); }
-        virtual ~Singleton() noexcept          = default;
+        Singleton() : SingletonBase(DestroyPriority) { s_isAlive = true; }
+        virtual ~Singleton() { s_isAlive = false; }
+
+        static T&   GetInstance() { return SingletonManager::GetSingletonInstance<T>(); }
+        static bool IsAlive() { return s_isAlive; }
+
         Singleton(const Singleton&)            = delete;
         Singleton& operator=(const Singleton&) = delete;
     };
+
+    template<typename T, int DestroyPriority>
+    bool Singleton<T, DestroyPriority>::s_isAlive = false;
 } // namespace GE

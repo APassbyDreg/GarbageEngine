@@ -3,8 +3,8 @@
 #include "GE_pch.h"
 
 #include "CommandPool.h"
+#include "Synchronization.h"
 #include "VulkanCore.h"
-#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -81,8 +81,10 @@ namespace GE
             static CommandPool pool;
             if (!pool.IsValid())
             {
-                auto flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-                pool       = {VkInit::GetCommandPoolCreateInfo(VulkanCore::GetTransferQueueFamilyIndex(), flags)};
+                auto device = VulkanCore::GetDevice();
+                auto flags  = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+                auto info   = VkInit::GetCommandPoolCreateInfo(VulkanCore::GetTransferQueueFamilyIndex(), flags);
+                pool.Create(info);
             }
             return pool;
         }
@@ -93,8 +95,8 @@ namespace GE
         VkBufferCreateInfo      m_bufferInfo;
         VmaAllocationCreateInfo m_allocInfo;
 
-        VkFence         m_actionCompleteFence = VK_NULL_HANDLE;
-        VkCommandBuffer m_transferCmd         = VK_NULL_HANDLE;
+        Fence           m_actionCompleteFence;
+        VkCommandBuffer m_transferCmd = VK_NULL_HANDLE;
 
         VkBuffer      m_buffer, m_oldBuffer;
         VmaAllocation m_allocation;

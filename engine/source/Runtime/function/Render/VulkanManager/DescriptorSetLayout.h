@@ -3,7 +3,6 @@
 #include "GE_pch.h"
 #include "GpuImage.h"
 #include "VulkanCore.h"
-#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -25,6 +24,8 @@ namespace GE
 
         inline void Destroy()
         {
+            GE_CORE_ASSERT(
+                VulkanCore::IsAlive(), "DescriptorSetLayout {} should be destroyed before VulkanCore", (void*)layout);
             if (layout != VK_NULL_HANDLE)
             {
                 vkDestroyDescriptorSetLayout(VulkanCore::GetDevice(), layout, nullptr);

@@ -3,7 +3,6 @@
 #include "GE_pch.h"
 #include "GpuImage.h"
 #include "VulkanCore.h"
-#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -15,6 +14,8 @@ namespace GE
         FrameBuffer(VkFramebufferCreateInfo info) { framebuffer = VulkanCore::CreateFramebuffer(info); }
         ~FrameBuffer()
         {
+            GE_CORE_ASSERT(
+                VulkanCore::IsAlive(), "Framebuffer {} should be destroyed before VulkanCore", (void*)framebuffer);
             if (framebuffer != VK_NULL_HANDLE)
             {
                 vkDestroyFramebuffer(VulkanCore::GetDevice(), framebuffer, nullptr);

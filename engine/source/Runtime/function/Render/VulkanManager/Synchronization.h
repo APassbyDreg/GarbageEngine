@@ -2,7 +2,6 @@
 
 #include "GE_pch.h"
 #include "VulkanCore.h"
-#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -13,6 +12,8 @@ namespace GE
         Semaphore(uint flags = 0) { semaphore = VulkanCore::CreateSemaphore(flags); }
         ~Semaphore()
         {
+            GE_CORE_ASSERT(
+                VulkanCore::IsAlive(), "Semaphore {} should be destroyed before VulkanCore", (void*)semaphore);
             if (semaphore != VK_NULL_HANDLE)
             {
                 vkDestroySemaphore(VulkanCore::GetDevice(), semaphore, nullptr);
@@ -34,6 +35,7 @@ namespace GE
         Fence(Fence&& old) { fence = old.fence; }
         ~Fence()
         {
+            GE_CORE_ASSERT(VulkanCore::IsAlive(), "Fence {} should be destroyed before VulkanCore", (void*)fence);
             if (fence != VK_NULL_HANDLE)
             {
                 vkDestroyFence(VulkanCore::GetDevice(), fence, nullptr);

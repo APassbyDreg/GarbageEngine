@@ -5,8 +5,8 @@
 #include "Runtime/core/Math/Math.h"
 
 #include "ShaderManager/ShaderModule.h"
+#include "VulkanManager/DescriptorSetLayout.h"
 #include "VulkanManager/VulkanCore.h"
-#include "vulkan/vulkan_core.h"
 #include <memory>
 
 namespace GE
@@ -118,6 +118,8 @@ namespace GE
         std::vector<VkDescriptorSetLayout>                     m_descriptorSetLayout;
         std::vector<VkPushConstantRange>                       m_pushConstantRanges;
         std::vector<std::vector<VkDescriptorSetLayoutBinding>> m_descriptorSetLayoutBindings;
+
+        std::vector<DescriptorSetLayout> m_pipelineSpecificDescriptorSetLayouts;
     };
 
     class ComputeRenderPipeline

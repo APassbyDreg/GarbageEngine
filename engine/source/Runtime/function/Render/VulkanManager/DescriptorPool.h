@@ -3,7 +3,6 @@
 #include "GE_pch.h"
 #include "GpuImage.h"
 #include "VulkanCore.h"
-#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -23,6 +22,8 @@ namespace GE
 
         inline void Destroy()
         {
+            GE_CORE_ASSERT(
+                VulkanCore::IsAlive(), "DescriptorPool {} should be destroyed before VulkanCore", (void*)pool);
             if (pool != VK_NULL_HANDLE)
             {
                 vkDestroyDescriptorPool(VulkanCore::GetDevice(), pool, nullptr);
@@ -33,7 +34,7 @@ namespace GE
 
         inline DescriptorPool& operator=(VkDescriptorPoolCreateInfo info)
         {
-            GE_CORE_ASSERT(pool == VK_NULL_HANDLE, "Re-assigning an created layout");
+            GE_CORE_ASSERT(pool == VK_NULL_HANDLE, "Re-assigning an created pool");
             Destroy();
             pool = VulkanCore::CreateDescriptorPool(info);
             return *this;

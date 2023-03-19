@@ -9,7 +9,6 @@
 #include "RenderPipeline.h"
 
 #include "RenderResource.h"
-#include "vulkan/vulkan_core.h"
 
 namespace GE
 {

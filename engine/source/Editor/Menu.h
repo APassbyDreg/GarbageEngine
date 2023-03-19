@@ -153,6 +153,9 @@ namespace GE
             auto     scene   = Application::GetInstance().GetActiveScene();
             fs::path path    = workdir / fs::path(scene->GetName() + ".json");
             scene->Save(path, false);
+
+            MeshManager::SaveAll();
+            MaterialManager::SaveAll();
         }
 
         inline void HandleSaveAs()

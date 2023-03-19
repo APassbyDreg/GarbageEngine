@@ -4,6 +4,7 @@
 #include "VulkanManager/VulkanCreateInfoBuilder.h"
 
 #include "RenderPass.h"
+#include <memory>
 
 namespace GE
 {
@@ -65,9 +66,9 @@ namespace GE
             {
                 continue;
             }
-            auto info                = VkInit::GetDescriptorSetLayoutCreateInfo(m_descriptorSetLayoutBindings[i]);
-            auto layout              = VulkanCore::CreateDescriptorSetLayout(info);
-            m_descriptorSetLayout[i] = layout;
+            auto info = VkInit::GetDescriptorSetLayoutCreateInfo(m_descriptorSetLayoutBindings[i]);
+            m_pipelineSpecificDescriptorSetLayouts.emplace_back(info);
+            m_descriptorSetLayout[i] = m_pipelineSpecificDescriptorSetLayouts.back();
         }
         for (int i = 0; i < m_descriptorSetLayout.size(); i++)
         {

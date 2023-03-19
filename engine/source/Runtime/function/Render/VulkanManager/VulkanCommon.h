@@ -5,7 +5,7 @@
 #include "Runtime/core/Log/LogSystem.h" // TODO: rethink layering
 #include "vma/vk_mem_alloc.h"
 #include "vulkan/vulkan.h"
-
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {

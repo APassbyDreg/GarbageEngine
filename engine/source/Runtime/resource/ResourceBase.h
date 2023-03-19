@@ -18,14 +18,24 @@ namespace GE
         IMAGE
     };
 
-#define GE_RESOURCE_SETUP() \
-    do \
+#define GE_RESOURCE_COMMON(name, type) \
+    name(fs::path file, bool init = false, bool use_cache = false, bool delayed_load = false) : \
+        Resource(type, file, init, use_cache, delayed_load) \
     { \
         if (!delayed_load) \
             Load(); \
         if (init && !m_valid) \
             Initialize(); \
-    } while (0);
+    } \
+    ~name() \
+    { \
+        if (IsValid()) \
+        { \
+            Save(); \
+        } \
+    } \
+    void Load() override; \
+    void Save() override;
 
     class ResourceBase
     {
@@ -37,14 +47,10 @@ namespace GE
                      bool         delayed_load = false) :
             m_type(type),
             m_filePath(file), m_cacheEnabled(use_cache)
-        {}
-        ~ResourceBase()
         {
-            if (IsValid())
-            {
-                Save();
-            }
+            GE_CORE_TRACE("Created Resource: {}", file.string());
         }
+        virtual ~ResourceBase() { GE_CORE_TRACE("Destroyed Resource: {}", m_filePath.string()); };
 
         inline void Setup(bool init, bool delayed_load)
         {

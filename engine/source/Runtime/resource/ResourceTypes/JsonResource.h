@@ -21,19 +21,21 @@ namespace GE
     class GE_API JsonResource : public Resource<json>
     {
     public:
+        GE_RESOURCE_COMMON(JsonResource, ResourceType::JSON);
+
         JsonResource(fs::path       file,
-                     JsonIdentifier type         = JsonIdentifier::UNKNOWN,
+                     JsonIdentifier type,
                      bool           init         = false,
                      bool           use_cache    = false,
                      bool           delayed_load = false) :
             Resource(ResourceType::JSON, file, init, use_cache, delayed_load),
             m_identifier(type)
         {
-            GE_RESOURCE_SETUP();
+            if (!delayed_load)
+                Load();
+            if (init && !m_valid)
+                Initialize();
         }
-
-        void Load() override;
-        void Save() override;
 
         void Invalid() override
         {
@@ -85,6 +87,6 @@ namespace GE
                 return JsonIdentifier::UNKNOWN;
         }
 
-        JsonIdentifier m_identifier;
+        JsonIdentifier m_identifier = JsonIdentifier::UNKNOWN;
     };
 } // namespace GE

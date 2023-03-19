@@ -51,8 +51,6 @@ namespace GE
         
 
         /* ---------------------------- functions --------------------------- */
-        static VkDescriptorSetLayout GetDescriptorSetLayout();
-
         static inline VkDescriptorSetLayoutBinding GetDescriptorSetLayoutBinding()
         {
             return VkInit::GetDescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL, 0);

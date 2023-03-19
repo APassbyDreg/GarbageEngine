@@ -499,8 +499,12 @@ namespace GE
 
     void Window::__cleanup_imgui()
     {
-        ImGui_ImplVulkanH_DestroyWindow(VulkanCore::GetVkInstance(), VulkanCore::GetDevice(), &m_imguiWindow, nullptr);
+        ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+
         vkDestroyDescriptorPool(VulkanCore::GetDevice(), m_imguiDescriptorPool, nullptr);
+        ImGui_ImplVulkanH_DestroyWindow(VulkanCore::GetVkInstance(), VulkanCore::GetDevice(), &m_imguiWindow, nullptr);
     }
 
     void Window::__init(const WindowProperties& props)
@@ -556,10 +560,23 @@ namespace GE
 
     void Window::__shutdown()
     {
-        __cleanup_imgui();
-        __cleanup_glfw();
+        GE_VK_CHECK(vkDeviceWaitIdle(VulkanCore::GetDevice()));
 
+        // sampler
         vkDestroySampler(VulkanCore::GetDevice(), m_viewportSampler, nullptr);
+
+        // semaphores
+        for (auto&& s : m_renderFinishedSemaphores)
+        {
+            vkDestroySemaphore(VulkanCore::GetDevice(), s, nullptr);
+        }
+        m_renderFinishedSemaphores.clear();
+
+        // imgui
+        __cleanup_imgui();
+
+        // glfw
+        __cleanup_glfw();
     }
 
     void Window::__viewport_resize(ImVec2 size)

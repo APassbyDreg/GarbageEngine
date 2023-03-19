@@ -7,13 +7,10 @@
 
 #include "GLFW/glfw3.h" // GLFW must be included after Vulkan
 #include "VkBootstrap.h"
-#include "vma/vk_mem_alloc.h"
 
 #include "Runtime/core/Base/Singleton.h"
 #include "Runtime/core/Log/LogSystem.h"
 #include "Runtime/core/Math/Math.h"
-#include "vulkan/vulkan_core.h"
-#include <stdint.h>
 
 namespace GE
 {
@@ -246,6 +243,12 @@ namespace GE
             VkFramebuffer framebuffer;
             GE_VK_ASSERT(vkCreateFramebuffer(GetDevice(), &info, nullptr, &framebuffer));
             return framebuffer;
+        }
+
+        /* -------------------------- destroy stack ------------------------- */
+        static inline void PushDestroyAction(std::function<void()> action)
+        {
+            GetInstance().m_destroyActionStack.push_back(action);
         }
 
     private:

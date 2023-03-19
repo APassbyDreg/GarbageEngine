@@ -5,11 +5,7 @@
 namespace GE
 {
 
-    void GpuBuffer::Setup()
-    {
-        m_actionCompleteFence = VulkanCore::CreateFence();
-        m_transferCmd         = VulkanCore::CreateCmdBuffers(GetBufferTransferCmdPool())[0];
-    }
+    void GpuBuffer::Setup() { m_transferCmd = VulkanCore::CreateCmdBuffers(GetBufferTransferCmdPool())[0]; }
 
     GpuBuffer::GpuBuffer(VkBufferCreateInfo buffer_info, VmaAllocationCreateInfo alloc_info)
     {
@@ -24,7 +20,7 @@ namespace GE
         Setup();
     }
 
-    GpuBuffer::GpuBuffer(GpuBuffer&& src)
+    GpuBuffer::GpuBuffer(GpuBuffer&& src) : m_actionCompleteFence(std::move(src.m_actionCompleteFence))
     {
         m_alloced = src.m_alloced;
         if (m_alloced)
@@ -33,7 +29,6 @@ namespace GE
             m_allocInfo           = src.m_allocInfo;
             m_buffer              = src.m_buffer;
             m_allocation          = src.m_allocation;
-            m_actionCompleteFence = src.m_actionCompleteFence;
         }
     }
 
@@ -53,6 +48,7 @@ namespace GE
 
     void GpuBuffer::Destroy()
     {
+        GE_CORE_ASSERT(VulkanCore::IsAlive(), "Buffer {} should be destroyed before VulkanCore", (void*)m_buffer);
         if (m_alloced)
         {
             vmaDestroyBuffer(VulkanCore::GetAllocator(), m_buffer, m_allocation);
@@ -176,6 +172,7 @@ namespace GE
                                         {},
                                         m_actionCompleteFence);
             VulkanCore::WaitForFence(m_actionCompleteFence, c_waitTimeout);
+            GE_VK_ASSERT(vkResetCommandBuffer(m_transferCmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT));
 
             // destroy old buffer
             vmaDestroyBuffer(VulkanCore::GetAllocator(), old_buffer, old_alloc);

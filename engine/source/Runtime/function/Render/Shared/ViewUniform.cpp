@@ -3,6 +3,7 @@
 #include "Runtime/function/Scene/Manager/CameraManager.h"
 
 #include "Runtime/core/Math/Transforms.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -31,19 +32,5 @@ namespace GE
         uniform.inv_clip = 1.0f / info.clip;
 
         return uniform;
-    }
-
-    VkDescriptorSetLayout ViewUniform::GetDescriptorSetLayout()
-    {
-        static std::shared_ptr<DescriptorSetLayout> layout = nullptr;
-        if (layout == nullptr)
-        {
-            std::vector<VkDescriptorSetLayoutBinding> bindings;
-            bindings.push_back(
-                VkInit::GetDescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL, 0));
-            auto&& info = VkInit::GetDescriptorSetLayoutCreateInfo(bindings);
-            layout      = std::make_shared<DescriptorSetLayout>(info);
-        }
-        return layout->Get();
     }
 } // namespace GE

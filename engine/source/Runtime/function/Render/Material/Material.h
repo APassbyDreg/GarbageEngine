@@ -82,7 +82,11 @@ public: \
     public:
         Material(int id, fs::path path) :
             m_id(id), m_resource(ResourceManager::GetResource<JsonResource>(path, JsonIdentifier::MATERIAL))
-        {}
+        {
+            GE_CORE_TRACE("Created Materia from: {}", path.string());
+        }
+
+        virtual ~Material() { GE_CORE_TRACE("Destroyed Material: {}", GetPath().string()); }
 
         inline void Save()
         {

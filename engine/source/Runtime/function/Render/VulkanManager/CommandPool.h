@@ -3,7 +3,6 @@
 #include "GE_pch.h"
 #include "GpuImage.h"
 #include "VulkanCore.h"
-#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -19,8 +18,16 @@ namespace GE
 
         inline VkCommandPool Get() { return pool; }
 
+        inline CommandPool& Create(VkCommandPoolCreateInfo info)
+        {
+            GE_CORE_ASSERT(pool == VK_NULL_HANDLE, "Cannot re-create a created pool");
+            pool = VulkanCore::CreateCmdPool(info);
+            return *this;
+        }
+
         inline void Destroy()
         {
+            GE_CORE_ASSERT(VulkanCore::IsAlive(), "CommandPool {} should be destroyed before VulkanCore", (void*)pool);
             if (pool != VK_NULL_HANDLE)
             {
                 vkDestroyCommandPool(VulkanCore::GetDevice(), pool, nullptr);
@@ -29,13 +36,7 @@ namespace GE
 
         inline operator VkCommandPool() { return pool; }
 
-        inline CommandPool& operator=(VkCommandPoolCreateInfo info)
-        {
-            GE_CORE_ASSERT(pool == VK_NULL_HANDLE, "Re-assigning an created layout");
-            Destroy();
-            pool = VulkanCore::CreateCmdPool(info);
-            return *this;
-        }
+        inline CommandPool& operator=(VkCommandPoolCreateInfo info) { return Create(info); }
 
         inline bool IsValid() { return pool != VK_NULL_HANDLE; }
 

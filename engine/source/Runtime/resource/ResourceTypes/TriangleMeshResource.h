@@ -28,7 +28,10 @@ namespace GE
             Resource(ResourceType::MESH, file, init, use_cache, delayed_load),
             m_trueResource(file, ByteResourceMagicNumber::MESH, use_cache, delayed_load)
         {
-            GE_RESOURCE_SETUP();
+            if (!delayed_load)
+                Load();
+            if (init && !m_valid)
+                Initialize();
         }
 
         void Load() override;

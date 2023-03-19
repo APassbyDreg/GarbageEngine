@@ -1,8 +1,6 @@
 #include "VulkanCore.h"
 
 #include "Runtime/core/Log/LogSystem.h"
-#include "vulkan/vulkan_core.h"
-#include <stdint.h>
 
 namespace GE
 {
@@ -109,11 +107,10 @@ namespace GE
 #endif
             VKB_CHECK_RETURN(builder.build(), m_vkbInstance);
             m_instance = m_vkbInstance.instance;
-            m_destroyActionStack.push_back([this]() { vkb::destroy_instance(m_vkbInstance); });
+            m_destroyActionStack.push_back([&]() { vkb::destroy_instance(m_vkbInstance); });
 #ifdef GE_DEBUG
             m_debugMessenger = m_vkbInstance.debug_messenger;
-            m_destroyActionStack.push_back(
-                [this]() { vkb::destroy_debug_utils_messenger(m_instance, m_debugMessenger); });
+            m_destroyActionStack.push_back([&]() { vkb::destroy_debug_utils_messenger(m_instance, m_debugMessenger); });
 #endif
         }
 
@@ -122,7 +119,8 @@ namespace GE
             GE_VK_ASSERT(glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface));
 
             // add destroy action
-            m_destroyActionStack.push_back([this]() { vkb::destroy_surface(m_vkbInstance, m_surface); });
+            // this is destroyed by imgui
+            // m_destroyActionStack.push_back([&]() { vkb::destroy_surface(m_vkbInstance, m_surface); });
         }
 
         // Choose and create device
@@ -200,7 +198,7 @@ namespace GE
             pool_info.poolSizeCount                 = 11;
             pool_info.pPoolSizes                    = pool_sizes;
             GE_VK_ASSERT(vkCreateDescriptorPool(m_device, &pool_info, nullptr, &m_descriptorPool));
-            m_destroyActionStack.push_back([this]() { vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr); });
+            m_destroyActionStack.push_back([&]() { vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr); });
         }
 
         // create global transfer command pool
@@ -208,7 +206,7 @@ namespace GE
         {
             auto info = VkInit::GetCommandPoolCreateInfo(m_transferQueueFamilyIndex);
             GE_VK_ASSERT(vkCreateCommandPool(m_device, &info, nullptr, &m_transferCmdPool));
-            m_destroyActionStack.push_back([this]() { vkDestroyCommandPool(m_device, m_transferCmdPool, nullptr); });
+            m_destroyActionStack.push_back([&]() { vkDestroyCommandPool(m_device, m_transferCmdPool, nullptr); });
         }
     }
 
