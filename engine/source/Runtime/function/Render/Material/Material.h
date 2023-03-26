@@ -10,6 +10,8 @@
 #include "Runtime/resource/Managers/ResourceManager.h"
 #include "Runtime/resource/ResourceTypes/JsonResource.h"
 
+#include "../Shared/MaterialUniform.h"
+
 #include "../RenderPass.h"
 #include "../RenderPipeline.h"
 
@@ -131,9 +133,9 @@ public: \
         virtual void RunGBufferPass(MaterialRenderPassData data) = 0;
         virtual void RunShadingPass(MaterialRenderPassData data) = 0;
 
-        virtual void SetupGBufferPipeline(GraphicsRenderPipeline& pipeline) {};
+        virtual void SetupGBufferPipeline(GraphicsRenderPipeline& pipeline) {}
         virtual void SetupGBufferPassResources(GraphicsPassUnit& pass) {}
-        virtual void SetupShdaingPipeline(GraphicsRenderPipeline& pipeline) {};
+        virtual void SetupShdaingPipeline(GraphicsRenderPipeline& pipeline) {}
         virtual void SetupShadingPassResources(GraphicsPassUnit& pass) {}
     };
 

@@ -38,7 +38,6 @@ target("runtime")
 
     set_configvar("GE_ASSET_DIR", path.join(os.scriptdir(), "engine/assets"), {escape = true})
     set_configvar("GE_SHADER_DIR", path.join(os.scriptdir(), "engine/shaders"), {escape = true})
-    set_configvar("SOME_VAR", 1)
     set_configdir(path.join(os.scriptdir(), "engine/source/Runtime/config"))
     add_configfiles("engine/source/runtime/**.in")
 

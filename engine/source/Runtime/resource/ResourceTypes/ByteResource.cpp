@@ -10,33 +10,33 @@ namespace GE
         {
             // load basic data
             uint64        cmp_size, full_size;
-            char*         cmp_data;
+            byte*         cmp_data;
             std::ifstream file(m_filePath.string(), std::ios::binary);
             file.read((char*)&m_magicnumber, sizeof(uint64));
             file.read((char*)&full_size, sizeof(uint64));
             file.read((char*)&cmp_size, sizeof(uint64));
 
             // alloc memory
-            cmp_data = new char[cmp_size];
+            cmp_data = new byte[cmp_size];
             file.read((char*)cmp_data, cmp_size);
 
             // decompress
-            byte* tmp;
             if (full_size > cmp_size)
             {
-                tmp = new byte[full_size + 10];
+                byte* tmp = new byte[full_size + 10];
                 Packing::DecompressData((uchar*)cmp_data, cmp_size, (uchar**)&tmp, full_size);
+                m_data = std::vector<byte>(tmp, tmp + full_size);
+                delete[] tmp;
             }
             else if (full_size == cmp_size)
             {
-                tmp = (byte*)cmp_data;
+                m_data = std::vector<byte>(cmp_data, cmp_data + full_size);
             }
             else
             {
                 GE_CORE_ERROR("[ByteResource::Load]: full_size < cmp_size");
                 return;
             }
-            m_data = std::vector<byte>(tmp, tmp + full_size);
 
             // cleanup
             file.close();
@@ -63,5 +63,8 @@ namespace GE
         file.write((char*)&cmp_size, sizeof(uint64));
         file.write((char*)cmp_data, cmp_size);
         file.close();
+
+        // cleanup
+        delete[] cmp_data;
     }
 } // namespace GE
