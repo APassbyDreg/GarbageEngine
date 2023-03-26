@@ -42,6 +42,12 @@ namespace GE
         };
     }
 
+    void GraphicsRenderPipeline::AddShaderModule(std::unique_ptr<ShaderModule> shaderModule)
+    {
+        auto stage       = shaderModule->GetShaderStage().stage;
+        m_shaders[stage] = std::move(shaderModule);
+    }
+
     void GraphicsRenderPipeline::PushConstant(std::string identifier, VkCommandBuffer cmd, void* data)
     {
         m_pushConstantFns[identifier](cmd, data);
@@ -50,7 +56,7 @@ namespace GE
     void GraphicsRenderPipeline::Build(VkRenderPass pass, VkPipelineCache cache)
     {
         std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {};
-        for (auto& shader : m_shaders)
+        for (auto& [stage, shader] : m_shaders)
         {
             shader_stages.push_back(shader->GetShaderStage());
         }

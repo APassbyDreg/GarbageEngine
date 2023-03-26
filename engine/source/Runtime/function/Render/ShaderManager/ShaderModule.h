@@ -11,10 +11,15 @@
 #include "Runtime/function/Render/VulkanManager/VulkanCore.h"
 #include "Runtime/function/Render/VulkanManager/VulkanCreateInfoBuilder.h"
 
+#include "spirv_cross/spirv.hpp"
+#include "spirv_cross/spirv_common.hpp"
+#include "spirv_cross/spirv_cross.hpp"
+#include <stdint.h>
+
 namespace GE
 {
     // NOTE: copied from VkShaderStageFlagBits
-    namespace __Warper
+    namespace __Warpper
     {
         enum ShaderType
         {
@@ -45,12 +50,37 @@ namespace GE
             RAY_CALLABLE     = 0x00002000,
         };
     }
-    typedef __Warper::ShaderType ShaderType;
+    typedef __Warpper::ShaderType ShaderType;
+
+    // NOTE: one-to-one mapping with spirv_cross::ShaderResources
+    enum class ShaderResourceType
+    {
+        UNIFORM_BUFFER,
+        STORAGE_BUFFER,
+        STAGE_INPUT,
+        STAGE_OUTPUT,
+        SUBPASS_INPUT,
+        STORAGE_IMAGE,
+        SAMPLED_IMAGE,
+        ATOMIC_COUNTER,
+        ACCLERAION_STRUCTURE,
+        PUSH_CONSTANT_BUFFER,
+        SEPERATE_IMAGE,
+        SEPERATE_SAMPLER,
+        // BUILTIN_INPUT,
+        // BUILTIN_OUTPUT,
+    };
 
     class ShaderModule
     {
+        struct ShaderResourceInfo
+        {
+            ShaderResourceType type;
+            spirv_cross::ID    id;
+        };
+
     public:
-        ShaderModule(std::vector<uint32_t> spv, ShaderType type, const std::string& entry = "main");
+        ShaderModule(std::vector<uint32_t>& spv, ShaderType type, const std::string& entry = "main");
         ~ShaderModule();
 
         inline VkShaderModule GetShaderModule()
@@ -64,11 +94,20 @@ namespace GE
             return m_stage;
         }
 
+        inline uint32_t GetDecoration(std::string name, spv::Decoration decoration)
+        {
+            return m_spvCompiler.get_decoration(m_reflectionData[name].id, decoration);
+        }
+
     private:
         bool                            m_ready = false;
         std::string                     m_entry = "main";
         VkShaderModule                  m_module;
         VkPipelineShaderStageCreateInfo m_stage;
+
+        std::vector<uint32_t>                     m_spvSource;
+        std::map<std::string, ShaderResourceInfo> m_reflectionData;
+        spirv_cross::Compiler                     m_spvCompiler;
     };
 
 } // namespace GE

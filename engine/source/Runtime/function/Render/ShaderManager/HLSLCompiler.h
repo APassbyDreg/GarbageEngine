@@ -4,8 +4,6 @@
 
 #include "ShaderCompiler.h"
 
-#include <atlbase.h>
-
 namespace GE
 {
     class HLSLCompiler : public ShaderCompiler
@@ -16,7 +14,7 @@ namespace GE
                      std::vector<std::string> defines      = {}) :
             ShaderCompiler(type, include_dirs, defines) {};
 
-        std::shared_ptr<ShaderModule> Compile(std::string path, std::string entry) override;
+        std::unique_ptr<ShaderModule> Compile(std::string path, std::string entry) override;
 
     private:
         std::vector<std::wstring> __setup_compile_args(std::string path, std::string entry);

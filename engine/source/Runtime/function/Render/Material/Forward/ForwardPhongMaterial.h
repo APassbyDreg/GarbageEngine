@@ -6,14 +6,6 @@
 
 namespace GE
 {
-    struct PhongParams
-    {
-        alignas(16) float3 kd;
-        alignas(16) float3 ks;
-        alignas(16) float3 ka;
-        float ns;
-    };
-
     class ForwardPhongMaterial : public ForwardMaterial
     {
         GE_FORWARD_MATERIAL_COMMON(ForwardPhongMaterial);

@@ -92,6 +92,12 @@ namespace GE
         std::vector<Vertex>   m_vertices;
         std::vector<uint32_t> m_indices;
 
+        ~TriangleMeshData()
+        {
+            GE_CORE_INFO(
+                "Deconstucted TriangleMeshData with {} vertices and {} indices", GetVertexCount(), GetIndexCount());
+        }
+
         inline uint32_t GetTriangleCount() const { return m_indices.size() / 3; }
         inline uint32_t GetVertexCount() const { return m_vertices.size(); }
         inline uint32_t GetIndexCount() const { return m_indices.size(); }

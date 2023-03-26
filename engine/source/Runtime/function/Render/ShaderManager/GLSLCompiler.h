@@ -40,7 +40,7 @@ namespace GE
                      std::vector<std::string> defines      = {}) :
             ShaderCompiler(type, include_dirs, defines) {};
 
-        std::shared_ptr<ShaderModule> Compile(std::string path, std::string entry = "main") override;
+        std::unique_ptr<ShaderModule> Compile(std::string path, std::string entry = "main") override;
 
     private:
         shaderc::Compiler m_compiler;

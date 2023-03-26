@@ -7,7 +7,6 @@
 #include "ShaderManager/ShaderModule.h"
 #include "VulkanManager/DescriptorSetLayout.h"
 #include "VulkanManager/VulkanCore.h"
-#include <memory>
 
 namespace GE
 {
@@ -92,9 +91,9 @@ namespace GE
         void AddPushConstant(std::string identifier, VkShaderStageFlagBits stage, uint size);
         void PushConstant(std::string identifier, VkCommandBuffer cmd, void* data);
 
-    public:
-        std::vector<std::shared_ptr<ShaderModule>> m_shaders;
+        void AddShaderModule(std::unique_ptr<ShaderModule> shaderModule);
 
+    public:
         VkPipelineVertexInputStateCreateInfo   m_vertexInputState   = {};
         VkPipelineInputAssemblyStateCreateInfo m_inputAssemblyState = {};
         VkPipelineTessellationStateCreateInfo  m_tessellationState  = {};
@@ -108,6 +107,8 @@ namespace GE
 
     private:
         bool m_ready = false;
+
+        std::map<VkShaderStageFlagBits, std::unique_ptr<ShaderModule>> m_shaders;
 
         std::map<VkShaderStageFlagBits, std::vector<uint>> m_pushConstantsLayouts;
         std::map<VkShaderStageFlagBits, uint>              m_pushConstantsSizes;

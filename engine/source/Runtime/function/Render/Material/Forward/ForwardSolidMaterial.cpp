@@ -16,7 +16,7 @@ namespace GE
         // shader
         fs::path     fspath     = fs::path(Config::shader_dir) / "Passes/Forward/Solid.gsf";
         HLSLCompiler fscompiler = {ShaderType::FRAGMENT};
-        pipeline.m_shaders.push_back(fscompiler.Compile(fspath.string(), "FSMain"));
+        pipeline.AddShaderModule(fscompiler.Compile(fspath.string(), "FSMain"));
 
         // states
         pipeline.m_rasterizationState = VkInit::GetPipelineRasterizationStateCreateInfo();

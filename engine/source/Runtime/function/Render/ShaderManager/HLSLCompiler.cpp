@@ -1,10 +1,12 @@
 #include "HLSLCompiler.h"
 
+#include <atlbase.h>
+
 #include "dxc/dxcapi.h"
 
 namespace GE
 {
-    std::shared_ptr<ShaderModule> HLSLCompiler::Compile(std::string shader_path, std::string entry)
+    std::unique_ptr<ShaderModule> HLSLCompiler::Compile(std::string shader_path, std::string entry)
     {
         // Create compiler and utils.
         CComPtr<IDxcUtils>     pUtils;
@@ -65,7 +67,7 @@ namespace GE
         std::vector<uint32_t> shader_binary = std::vector<uint32_t>(binary_size);
         memcpy(shader_binary.data(), pShader->GetBufferPointer(), pShader->GetBufferSize());
 
-        return std::make_shared<ShaderModule>(shader_binary, m_type, entry);
+        return std::make_unique<ShaderModule>(shader_binary, m_type, entry);
     }
 
     static std::wstring __to_wstring(std::string s) { return std::wstring(s.begin(), s.end()); }

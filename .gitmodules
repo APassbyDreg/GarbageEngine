@@ -27,3 +27,6 @@
 [submodule "engine/3rdparty/vk-bootstrap"]
 	path = engine/3rdparty/vk-bootstrap
 	url = https://github.com/APassbyDreg/vk-bootstrap.git
+[submodule "engine/3rdparty/spirv-cross"]
+	path = engine/3rdparty/spirv-cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git

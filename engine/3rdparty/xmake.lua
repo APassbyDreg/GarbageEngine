@@ -34,16 +34,38 @@ function GE_link_vulkan()
     local vk_dir = os.getenv("VULKAN_SDK")
     add_includedirs(path.join(vk_dir, "Include"))
     add_links(path.join(vk_dir, "Lib/vulkan-1"))
-end
-
--------------------------------- dxc
---------------------------------
-function GE_link_dxc() 
-    local vk_dir = os.getenv("VULKAN_SDK")
-    add_includedirs(path.join(vk_dir, "Include"))
     add_links(path.join(vk_dir, "Lib/dxcompiler"))
+    if is_mode("debug") then 
+        add_links(path.join(vk_dir, "Lib/shaderc_combinedd"))
+    else
+        add_links(path.join(vk_dir, "Lib/shaderc_combined"))
+    end
 end
 
+
+-------------------------------- spirv cross
+--------------------------------
+package("GE_spirv_cross")
+    add_deps("cmake")
+    set_sourcedir(rel_local_path("spirv-cross"))
+    on_install(
+        function (package)
+            local configs = {}
+            table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:debug() and "Debug" or "Release"))
+            table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
+            import("package.tools.cmake").install(package, configs)
+        end
+    )
+    on_test(
+        function (package)
+        end
+    )
+package_end()
+
+function GE_link_spirv_cross()
+    add_includedirs(rel_local_path("spirv-cross"))
+    add_packages("GE_spirv_cross")
+end
 
 -------------------------------- imgui --------------------------------
 function GE_link_imgui() 
@@ -82,13 +104,6 @@ function GE_link_entt()
 end
 
 
--------------------------------- shaderc --------------------------------
-function GE_link_shaderc() 
-    add_includedirs(rel_local_path("shaderc/include"))
-    add_links(rel_local_path("shaderc/lib/shaderc_combined"))
-end
-
-
 -------------------------------- miniz --------------------------------
 function GE_link_miniz() 
     add_includedirs(rel_local_path("miniz"))
@@ -119,16 +134,16 @@ function GE_link_3rdparty()
     GE_link_vkb()
     GE_link_json()
     GE_link_entt()
-    GE_link_shaderc()
     GE_link_miniz()
     GE_link_stb()
-    GE_link_dxc()
     GE_link_objloader()
 
     add_packages("openssl")
+    add_packages("GE_spirv_cross")
 end
 
 
 function GE_load_3rdparty()
     add_requires("openssl")
+    add_requires("GE_spirv_cross")
 end

@@ -134,7 +134,7 @@ namespace GE
 
     /* ---------------------------- GLSL Compiler --------------------------- */
 
-    std::shared_ptr<ShaderModule> GLSLCompiler::Compile(std::string path, std::string entry)
+    std::unique_ptr<ShaderModule> GLSLCompiler::Compile(std::string path, std::string entry)
     {
         std::string ext = fs::path(path).extension().string();
 
@@ -158,6 +158,6 @@ namespace GE
                        result.GetErrorMessage());
         auto spv = std::vector<uint32_t>(result.cbegin(), result.cend());
 
-        return std::make_shared<ShaderModule>(spv, m_type);
+        return std::make_unique<ShaderModule>(spv, m_type);
     }
 } // namespace GE
