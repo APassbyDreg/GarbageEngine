@@ -75,7 +75,7 @@ namespace GE
 
         byte* mapped;
         GE_VK_ASSERT(vmaMapMemory(VulkanCore::GetAllocator(), m_allocation, (void**)&mapped));
-        memcpy(mapped, data + offset, size);
+        memcpy(mapped + offset, data, size);
         vmaUnmapMemory(VulkanCore::GetAllocator(), m_allocation);
     }
 
@@ -162,17 +162,14 @@ namespace GE
                 VulkanCore::GetAllocator(), &m_bufferInfo, &m_allocInfo, &m_buffer, &m_allocation, nullptr));
 
             // transfer
-            RenderUtils::TransferBuffer(m_transferCmd,
-                                        old_buffer,
-                                        m_buffer,
-                                        retain_size,
-                                        retain_start,
-                                        retain_start,
-                                        {},
-                                        {},
-                                        m_actionCompleteFence);
-            VulkanCore::WaitForFence(m_actionCompleteFence, c_waitTimeout);
-            GE_VK_ASSERT(vkResetCommandBuffer(m_transferCmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT));
+            auto&& ctx = RenderUtils::GetOneTimeTransferContext();
+            ctx.Run([&](VkCommandBuffer cmd) {
+                VkBufferCopy copyRegion {};
+                copyRegion.srcOffset = retain_start;
+                copyRegion.dstOffset = retain_start;
+                copyRegion.size      = retain_size;
+                vkCmdCopyBuffer(cmd, old_buffer, m_buffer, 1, &copyRegion);
+            });
 
             // destroy old buffer
             vmaDestroyBuffer(VulkanCore::GetAllocator(), old_buffer, old_alloc);

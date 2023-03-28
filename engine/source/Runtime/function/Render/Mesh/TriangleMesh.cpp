@@ -1,6 +1,7 @@
 #include "TriangleMesh.h"
 
 #include "../ShaderManager/HLSLCompiler.h"
+#include "../VulkanManager/RenderUtils.h"
 
 #include "Runtime/function/Scene/Components/Transform.h"
 
@@ -26,21 +27,44 @@ namespace GE
         if (!m_uploaded)
         {
             auto& data = m_meshResource->GetData();
+            size_t vertex_data_size = sizeof(Vertex) * data.GetVertexCount();
+            size_t index_data_size  = sizeof(uint32_t) * data.GetIndexCount();
 
-            auto alloc_info = VkInit::GetAllocationCreateInfo(VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-                                                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-            auto vertex_info =
-                VkInit::GetBufferCreateInfo(sizeof(Vertex) * data.GetVertexCount(),
-                                            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-            auto index_info =
-                VkInit::GetBufferCreateInfo(sizeof(uint32_t) * data.GetIndexCount(),
-                                            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-
-            m_vertexBuffer.Alloc(vertex_info, alloc_info);
-            m_indexBuffer.Alloc(index_info, alloc_info);
-
-            m_vertexBuffer.UploadAs(data.m_vertices);
-            m_indexBuffer.UploadAs(data.m_indices);
+            GpuBuffer stage_buffer;
+            {
+                auto alloc_info = VkInit::GetAllocationCreateInfo(
+                    VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+                auto stage_info =
+                    VkInit::GetBufferCreateInfo(vertex_data_size + index_data_size,
+                                                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+                stage_buffer.Alloc(stage_info, alloc_info);
+                stage_buffer.Upload((byte*)data.m_vertices.data(), vertex_data_size, 0);
+                stage_buffer.Upload((byte*)data.m_indices.data(), index_data_size, vertex_data_size);
+            }
+            {
+                auto alloc_info  = VkInit::GetAllocationCreateInfo(VMA_MEMORY_USAGE_GPU_ONLY);
+                auto vertex_info = VkInit::GetBufferCreateInfo(
+                    vertex_data_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+                auto index_info = VkInit::GetBufferCreateInfo(
+                    index_data_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+                m_vertexBuffer.Alloc(vertex_info, alloc_info);
+                m_indexBuffer.Alloc(index_info, alloc_info);
+            }
+            {
+                auto&& ctx = RenderUtils::GetOneTimeTransferContext();
+                ctx.Run([&](VkCommandBuffer cmd) {
+                    VkBufferCopy copy_vertex = {};
+                    copy_vertex.srcOffset    = 0;
+                    copy_vertex.dstOffset    = 0;
+                    copy_vertex.size         = vertex_data_size;
+                    vkCmdCopyBuffer(cmd, stage_buffer.GetBuffer(), m_vertexBuffer.GetBuffer(), 1, &copy_vertex);
+                    VkBufferCopy copy_index = {};
+                    copy_index.srcOffset    = vertex_data_size;
+                    copy_index.dstOffset    = 0;
+                    copy_index.size         = index_data_size;
+                    vkCmdCopyBuffer(cmd, stage_buffer.GetBuffer(), m_indexBuffer.GetBuffer(), 1, &copy_index);
+                });
+            }
             m_uploaded = true;
         }
     }

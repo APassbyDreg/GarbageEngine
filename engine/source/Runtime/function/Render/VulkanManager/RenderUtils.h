@@ -4,6 +4,8 @@
 
 #include "VulkanCore.h"
 
+#include "RenderUtils/Transfer.h"
+
 namespace GE
 {
     namespace RenderUtils
@@ -57,39 +59,5 @@ namespace GE
 
         static void EndCmdBuffer(VkCommandBuffer cmd) { GE_VK_ASSERT(vkEndCommandBuffer(cmd)); }
 
-        static void TransferBuffer(VkCommandBuffer          cmd, // should come from a transfer queue
-                                   VkBuffer                 src,
-                                   VkBuffer                 dst,
-                                   size_t                   size,
-                                   size_t                   src_offset        = 0,
-                                   size_t                   dst_offset        = 0,
-                                   std::vector<VkSemaphore> wait_semaphores   = {},
-                                   std::vector<VkSemaphore> signal_semaphores = {},
-                                   VkFence                  fence             = VK_NULL_HANDLE,
-                                   VkPipelineStageFlags     wait_stages       = VK_PIPELINE_STAGE_NONE)
-        {
-            // record
-            {
-                BeginOneTimeSubmitCmdBuffer(cmd);
-                VkBufferCopy copyRegion {};
-                copyRegion.srcOffset = src_offset;
-                copyRegion.dstOffset = dst_offset;
-                copyRegion.size      = size;
-                vkCmdCopyBuffer(cmd, src, dst, 1, &copyRegion);
-                EndCmdBuffer(cmd);
-            }
-            // submit
-            {
-                VkSubmitInfo info         = {};
-                info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                info.commandBufferCount   = 1;
-                info.pCommandBuffers      = &cmd;
-                info.signalSemaphoreCount = signal_semaphores.size();
-                info.pSignalSemaphores    = signal_semaphores.data();
-                info.waitSemaphoreCount   = wait_semaphores.size();
-                info.pWaitSemaphores      = wait_semaphores.data();
-                VulkanCore::SubmitToTransferQueue(info, fence);
-            }
-        }
     } // namespace RenderUtils
 } // namespace GE

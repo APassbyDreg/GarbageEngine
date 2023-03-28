@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <concepts>
 #include <filesystem>
 #include <format>
