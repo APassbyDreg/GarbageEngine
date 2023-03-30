@@ -48,7 +48,7 @@ namespace GE
         }
     }
 
-    json ForwardSolidMaterial::Serialize()
+    json ForwardSolidMaterial::Serialize() const
     {
         json data;
         data["color"] = {m_color.r, m_color.g, m_color.b, m_color.a};

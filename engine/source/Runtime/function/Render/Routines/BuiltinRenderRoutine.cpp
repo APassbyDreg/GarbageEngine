@@ -10,8 +10,6 @@
 
 #include "../VulkanManager/RenderUtils.h"
 #include "vulkan/vulkan_core.h"
-#include <functional>
-#include <memory>
 
 namespace GE
 {
@@ -57,9 +55,11 @@ namespace GE
             for (size_t i = 0; i < m_frameCnt; i++)
             {
                 color_images[i]->Delete();
-                color_images[i]->Alloc(color_image_info, color_view_info, alloc_info);
+                color_images[i]->Alloc(color_image_info, alloc_info);
+                color_images[i]->AddImageView(color_view_info);
                 depth_images[i]->Delete();
-                depth_images[i]->Alloc(depth_image_info, depth_view_info, alloc_info);
+                depth_images[i]->Alloc(depth_image_info, alloc_info);
+                depth_images[i]->AddImageView(depth_view_info);
             }
 
             // resize all passes
@@ -154,14 +154,30 @@ namespace GE
                 VkImage           rt = m_renderResourceManager.GetPerFrameImage(frame_index, "ColorRT")->GetImage();
                 VkClearColorValue clear_value  = {clear_color[0], clear_color[1], clear_color[2], 1.0f};
                 VkImageSubresourceRange ranges = RenderUtils::AllImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
-                RenderUtils::TransitionImageLayout(cmd, rt, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, ranges);
+                RenderUtils::TransitionImageLayout(cmd,
+                                                   rt,
+                                                   VK_IMAGE_LAYOUT_UNDEFINED,
+                                                   VK_IMAGE_LAYOUT_GENERAL,
+                                                   ranges,
+                                                   0,
+                                                   0,
+                                                   VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                                                   VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT);
                 vkCmdClearColorImage(cmd, rt, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1u, &ranges);
             }
             {
                 VkImage rt = m_renderResourceManager.GetPerFrameImage(frame_index, "DepthRT")->GetImage();
                 VkClearDepthStencilValue clear_value = {1.0f, 0};
                 VkImageSubresourceRange  ranges      = RenderUtils::AllImageSubresourceRange(VK_IMAGE_ASPECT_DEPTH_BIT);
-                RenderUtils::TransitionImageLayout(cmd, rt, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, ranges);
+                RenderUtils::TransitionImageLayout(cmd,
+                                                   rt,
+                                                   VK_IMAGE_LAYOUT_UNDEFINED,
+                                                   VK_IMAGE_LAYOUT_GENERAL,
+                                                   ranges,
+                                                   0,
+                                                   0,
+                                                   VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                                                   VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT);
                 vkCmdClearDepthStencilImage(cmd, rt, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1u, &ranges);
             }
         }
@@ -223,6 +239,8 @@ namespace GE
 
     VkImageView BuiltinRenderRoutine::GetOutputImageView(uint frame_idx)
     {
-        return m_renderResourceManager.GetPerFrameImage(frame_idx, "ColorRT")->GetImageView();
+        auto&& img              = m_renderResourceManager.GetPerFrameImage(frame_idx, "ColorRT");
+        auto&& output_view_info = VkInit::GetVkImageViewCreateInfo(img->GetImageInfo(), VK_IMAGE_ASPECT_COLOR_BIT);
+        return img->GetImageView(output_view_info, true);
     }
 } // namespace GE

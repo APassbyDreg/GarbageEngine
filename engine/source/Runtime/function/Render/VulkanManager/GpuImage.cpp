@@ -5,11 +5,9 @@
 
 namespace GE
 {
-    GpuImage::GpuImage(VkImageCreateInfo       image_info,
-                       VkImageViewCreateInfo   view_info,
-                       VmaAllocationCreateInfo alloc_info)
+    GpuImage::GpuImage(VkImageCreateInfo image_info, VmaAllocationCreateInfo alloc_info)
     {
-        Alloc(image_info, view_info, alloc_info);
+        Alloc(image_info, alloc_info);
     }
 
     GpuImage::~GpuImage() { Delete(); }
@@ -18,7 +16,8 @@ namespace GE
     {
         if (m_alloced)
         {
-            vkDestroyImageView(VulkanCore::GetDevice(), m_imageView, nullptr);
+            for (auto& [info, view] : m_imageViews)
+                vkDestroyImageView(VulkanCore::GetDevice(), view, nullptr);
 
             vmaDestroyImage(VulkanCore::GetAllocator(), m_image, m_allocation);
 
@@ -26,8 +25,7 @@ namespace GE
         }
     }
 
-    void
-    GpuImage::Alloc(VkImageCreateInfo image_info, VkImageViewCreateInfo view_info, VmaAllocationCreateInfo alloc_info)
+    void GpuImage::Alloc(VkImageCreateInfo image_info, VmaAllocationCreateInfo alloc_info)
     {
         Delete();
 
@@ -37,19 +35,35 @@ namespace GE
         GE_VK_ASSERT(
             vmaCreateImage(VulkanCore::GetAllocator(), &image_info, &alloc_info, &m_image, &m_allocation, nullptr));
 
-        view_info.image = m_image;
-        GE_VK_ASSERT(vkCreateImageView(VulkanCore::GetDevice(), &view_info, nullptr, &m_imageView));
-
         m_alloced = true;
     }
 
-    void GpuImage::Upload(void* data, size_t& size)
+    void GpuImage::AddImageView(VkImageViewCreateInfo info)
     {
-        GE_CORE_ASSERT(false, "[GpuImage::Upload] has not been implemented");
+        VkImageView view;
+        info.image = m_image;
+        GE_VK_ASSERT(vkCreateImageView(VulkanCore::GetDevice(), &info, nullptr, &view));
+        m_imageViews[__HashViewInfo(info)] = view;
     }
 
-    void GpuImage::Download(void* data, size_t& size)
+    size_t GpuImage::__HashViewInfo(VkImageViewCreateInfo info)
     {
-        GE_CORE_ASSERT(false, "[GpuImage::Download] has not been implemented");
+        // TODO: improve efficiency
+
+        // sync invariant values
+        info.pNext = nullptr;
+        info.image = nullptr;
+
+        size_t  hash    = info.flags;          // initialize with flags
+        auto    hash_fn = std::hash<uint64>(); // hash 8 bytes at once
+        uint64* vals    = reinterpret_cast<uint64*>(&info);
+
+        for (uint i = offsetof(VkImageViewCreateInfo, viewType) / sizeof(uint64);  // start from viewType
+             i * sizeof(uint64) + sizeof(uint64) <= sizeof(VkImageViewCreateInfo); // ensure at least one more uint64
+             i++)
+        {
+            hash = hash ^ hash_fn(vals[i]);
+        }
+        return hash;
     }
 } // namespace GE

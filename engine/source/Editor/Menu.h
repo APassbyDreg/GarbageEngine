@@ -121,6 +121,7 @@ namespace GE
                     std::string workspace = m_fileDialogInstance.GetCurrentPath();
                     Application::GetInstance().SetWorkDirectory(workspace);
                     GE_CORE_INFO("Opening workspace: {}", workspace);
+                    m_pressedItem = MenuItem::None;
                 }
                 m_fileDialogInstance.Close();
             }
@@ -140,6 +141,7 @@ namespace GE
                     auto scene = Application::GetInstance().GetActiveScene();
                     scene->Load(filepath);
                     GE_CORE_INFO("Open Scene: {0}", filepath);
+                    m_pressedItem = MenuItem::None;
                 }
                 m_fileDialogInstance.Close();
             }
@@ -156,6 +158,7 @@ namespace GE
 
             MeshManager::SaveAll();
             MaterialManager::SaveAll();
+            m_pressedItem = MenuItem::None;
         }
 
         inline void HandleSaveAs()
@@ -172,6 +175,7 @@ namespace GE
                     scene->Save(path, true);
                     Application::GetInstance().SetWorkDirectory(root);
                     GE_CORE_INFO("Saving to: {}", path.string());
+                    m_pressedItem = MenuItem::None;
                 }
                 m_fileDialogInstance.Close();
             }

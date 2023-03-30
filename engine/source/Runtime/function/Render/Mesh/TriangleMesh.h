@@ -94,8 +94,6 @@ namespace GE
 
         ~TriangleMeshData()
         {
-            GE_CORE_INFO(
-                "Deconstucted TriangleMeshData with {} vertices and {} indices", GetVertexCount(), GetIndexCount());
         }
 
         inline uint32_t GetTriangleCount() const { return m_indices.size() / 3; }
@@ -122,7 +120,7 @@ namespace GE
 
         void Inspect() override;
         void Deserialize(const json& data) override;
-        json Serialize() override;
+        json Serialize() const override;
 
         Bounds3f& BBox() override;
 

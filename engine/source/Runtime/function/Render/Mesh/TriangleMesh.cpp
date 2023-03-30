@@ -235,7 +235,7 @@ namespace GE
         }
     }
 
-    json TriangleMesh::Serialize()
+    json TriangleMesh::Serialize() const
     {
         json data;
         data["alias"] = m_alias;

@@ -33,16 +33,23 @@ namespace GE
         vertex_cnt = *((uint64*)(data + c_vertexCountOffset));
         index_cnt  = *((uint64*)(data + c_indexCountOffset));
         m_bbox     = *((Bounds3f*)(data + c_bboxOffset));
-        // convert to mesh
+        // convert to mesh (alligned load)
         if (m_version == 0)
         {
             uint64 vertex_size = vertex_cnt * sizeof(Vertex);
             uint64 index_size  = index_cnt * sizeof(uint32_t);
 
-            byte* vertex_start = data + c_vertexOffset;
-            m_data.m_vertices    = std::vector<Vertex>((Vertex*)vertex_start, (Vertex*)(vertex_start + vertex_size));
-            byte* index_start  = vertex_start + vertex_size;
-            m_data.m_indices     = std::vector<uint32_t>((uint32_t*)index_start, (uint32_t*)(index_start + index_size));
+            Vertex*   vertex_data = new Vertex[vertex_cnt];
+            uint32_t* index_data  = new uint32_t[index_cnt];
+
+            memcpy(vertex_data, data + c_vertexOffset, vertex_size);
+            memcpy(index_data, data + c_vertexOffset + vertex_size, index_size);
+
+            m_data.m_vertices = std::vector<Vertex>(vertex_data, vertex_data + vertex_cnt);
+            m_data.m_indices  = std::vector<uint32_t>(index_data, index_data + index_cnt);
+
+            delete[] vertex_data;
+            delete[] index_data;
         }
 
         // clean up

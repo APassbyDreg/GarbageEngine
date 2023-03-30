@@ -3,11 +3,49 @@
 #include "GE_pch.h"
 
 #include "VulkanCommon.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
     namespace VkInit
     {
+        inline VkSamplerCreateInfo
+        GetSamplerCreateInfo(VkFilter             mag_filter               = VK_FILTER_NEAREST,
+                             VkFilter             min_filter               = VK_FILTER_NEAREST,
+                             VkSamplerAddressMode address_mode_u           = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                             VkSamplerAddressMode address_mode_v           = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                             VkSamplerAddressMode address_mode_w           = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                             VkSamplerMipmapMode  mipmap_mode              = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+                             float                mip_lod_bias             = 0,
+                             bool                 anisotropy_enable        = false,
+                             float                max_anisotropy           = 0,
+                             bool                 compare_enable           = false,
+                             VkCompareOp          compare_op               = VK_COMPARE_OP_NEVER,
+                             float                min_lod                  = 0,
+                             float                max_lod                  = 0,
+                             VkBorderColor        border_color             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+                             bool                 unnormalized_coordinates = false)
+        {
+            VkSamplerCreateInfo info     = {};
+            info.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+            info.magFilter               = mag_filter;
+            info.minFilter               = min_filter;
+            info.mipmapMode              = mipmap_mode;
+            info.addressModeU            = address_mode_u;
+            info.addressModeV            = address_mode_v;
+            info.addressModeW            = address_mode_w;
+            info.mipLodBias              = mip_lod_bias;
+            info.anisotropyEnable        = anisotropy_enable;
+            info.maxAnisotropy           = max_anisotropy;
+            info.compareEnable           = compare_enable;
+            info.compareOp               = compare_op;
+            info.minLod                  = min_lod;
+            info.maxLod                  = max_lod;
+            info.borderColor             = border_color;
+            info.unnormalizedCoordinates = unnormalized_coordinates;
+            return info;
+        }
+
         inline VkFramebufferCreateInfo GetFramebufferCreateInfo(VkRenderPass                    renderpass,
                                                                 VkExtent2D                      size,
                                                                 const std::vector<VkImageView>& attachments,

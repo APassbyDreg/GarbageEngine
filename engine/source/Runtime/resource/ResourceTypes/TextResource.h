@@ -11,7 +11,7 @@ namespace GE
     public:
         GE_RESOURCE_COMMON(TextResource, ResourceType::TEXT);
 
-        void Invalid() override
+        inline void Invalid() override
         {
             if (m_valid)
             {
@@ -19,7 +19,7 @@ namespace GE
                 m_data  = "";
             }
         }
-        void SaveData(const std::string& data) override
+        inline void SaveData(const std::string& data) override
         {
             m_data  = data;
             m_valid = true;

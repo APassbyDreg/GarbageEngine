@@ -1,0 +1,11 @@
+#include "Common/Pipeline/FragmentInputs.gsh"
+
+[[vk::binding(0, 3)]][[vk::combinedImageSampler]]
+Texture2D tex;
+[[vk::binding(0, 3)]][[vk::combinedImageSampler]]
+SamplerState texSampler;
+
+float4 FSMain(FragmentInputs i) : SV_TARGET
+{
+    return tex.Sample(texSampler, i.uv);
+}

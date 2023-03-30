@@ -47,7 +47,7 @@ namespace GE
         }
     }
 
-    json ForwardPhongMaterial::Serialize()
+    json ForwardPhongMaterial::Serialize() const
     {
         json data;
         data["kd"] = JsonUtils::DumpFloat3(m_params.kd);

@@ -2,6 +2,7 @@
 
 #include "GE_pch.h"
 
+#include "Runtime/core/Base/Serializable.h"
 #include "Runtime/core/Math/Bounds.h"
 #include "Runtime/core/Math/Math.h"
 
@@ -57,7 +58,7 @@ public: \
         } \
     }
 
-    class Mesh
+    class Mesh : public Serializable<json>
     {
     public:
         const uint c_meshDataDescriptorID     = 2;
@@ -83,9 +84,6 @@ public: \
         virtual void        Inspect()       = 0;
 
         virtual Bounds3f& BBox() = 0;
-
-        virtual void Deserialize(const json& data) = 0;
-        virtual json Serialize()                   = 0;
 
         inline void Save()
         {

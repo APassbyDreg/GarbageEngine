@@ -37,7 +37,7 @@ namespace GE
                 Initialize();
         }
 
-        void Invalid() override
+        inline void Invalid() override
         {
             if (m_valid)
             {
@@ -45,7 +45,8 @@ namespace GE
                 m_data  = {};
             }
         }
-        void SaveData(const json& data) override
+
+        inline void SaveData(const json& data) override
         {
             m_data  = data;
             m_valid = true;

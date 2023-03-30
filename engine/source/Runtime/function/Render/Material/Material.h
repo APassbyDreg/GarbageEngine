@@ -4,6 +4,7 @@
 
 #include "imgui.h"
 
+#include "Runtime/core/Base/Serializable.h"
 #include "Runtime/core/Base/Singleton.h"
 #include "Runtime/core/Base/WithIdentifier.h"
 
@@ -74,7 +75,7 @@ public: \
         } \
     }
 
-    class Material
+    class Material : public Serializable<json>
     {
         friend class MaterialManager;
 
@@ -108,9 +109,6 @@ public: \
         virtual std::string GetType() const = 0;
         virtual std::string GetMode() const = 0;
         virtual void        Inspect()       = 0;
-
-        virtual void Deserialize(const json& data) = 0;
-        virtual json Serialize()                   = 0;
 
     protected:
         int                           m_id    = -1;

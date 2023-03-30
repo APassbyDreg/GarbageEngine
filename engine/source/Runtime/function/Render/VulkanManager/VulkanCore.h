@@ -11,6 +11,7 @@
 #include "Runtime/core/Base/Singleton.h"
 #include "Runtime/core/Log/LogSystem.h"
 #include "Runtime/core/Math/Math.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -243,6 +244,14 @@ namespace GE
             VkFramebuffer framebuffer;
             GE_VK_ASSERT(vkCreateFramebuffer(GetDevice(), &info, nullptr, &framebuffer));
             return framebuffer;
+        }
+
+        /* ----------------------------- sampler ---------------------------- */
+        static inline VkSampler CreateSampler(VkSamplerCreateInfo info)
+        {
+            VkSampler sampler;
+            GE_VK_ASSERT(vkCreateSampler(GetDevice(), &info, nullptr, &sampler));
+            return sampler;
         }
 
         /* -------------------------- destroy stack ------------------------- */

@@ -5,6 +5,7 @@
 #include "VulkanCore.h"
 
 #include "RenderUtils/Transfer.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GE
 {
@@ -25,7 +26,11 @@ namespace GE
                                           VkImage                 image,
                                           VkImageLayout           oldLayout,
                                           VkImageLayout           newLayout,
-                                          VkImageSubresourceRange range)
+                                          VkImageSubresourceRange range,
+                                          VkAccessFlags           srcAccessMask = 0,
+                                          VkAccessFlags           dstAccessMask = 0,
+                                          VkPipelineStageFlags    srcStageMask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                                          VkPipelineStageFlags    dstStageMask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
         {
             VkImageMemoryBarrier barrier {};
             barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -35,18 +40,9 @@ namespace GE
             barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
             barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
             barrier.subresourceRange    = range;
-            barrier.srcAccessMask       = 0; // TODO
-            barrier.dstAccessMask       = 0; // TODO
-            vkCmdPipelineBarrier(cmd,
-                                 VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-                                 VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-                                 0,
-                                 0,
-                                 nullptr,
-                                 0,
-                                 nullptr,
-                                 1,
-                                 &barrier);
+            barrier.srcAccessMask       = srcAccessMask;
+            barrier.dstAccessMask       = dstAccessMask;
+            vkCmdPipelineBarrier(cmd, srcStageMask, dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &barrier);
         }
 
         static void BeginOneTimeSubmitCmdBuffer(VkCommandBuffer cmd)

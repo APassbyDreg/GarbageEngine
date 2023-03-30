@@ -73,8 +73,8 @@ namespace GE
                 continue;
             }
             auto info = VkInit::GetDescriptorSetLayoutCreateInfo(m_descriptorSetLayoutBindings[i]);
-            m_pipelineSpecificDescriptorSetLayouts.emplace_back(info);
-            m_descriptorSetLayout[i] = m_pipelineSpecificDescriptorSetLayouts.back();
+            m_pipelineSpecificDescriptorSetLayouts.push_back(std::make_unique<DescriptorSetLayout>(info));
+            m_descriptorSetLayout[i] = *m_pipelineSpecificDescriptorSetLayouts.back();
         }
         for (int i = 0; i < m_descriptorSetLayout.size(); i++)
         {

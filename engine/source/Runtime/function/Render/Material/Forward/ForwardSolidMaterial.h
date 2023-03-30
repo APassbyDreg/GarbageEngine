@@ -16,7 +16,7 @@ namespace GE
         bool IsOpaque() const override;
 
         void Deserialize(const json& data) override;
-        json Serialize() override;
+        json Serialize() const override;
         void Inspect() override;
 
         void RunShadingPass(MaterialRenderPassData data) override;

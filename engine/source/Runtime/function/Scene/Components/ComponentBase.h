@@ -5,6 +5,7 @@
 #include "imgui.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 
+#include "Runtime/core/Base/Serializable.h"
 #include "Runtime/core/Base/WatchedValue.h"
 #include "Runtime/core/ECS.h"
 #include "Runtime/core/Log/LogSystem.h"
@@ -45,14 +46,12 @@ public: \
 
 #define LABEL_WITH_NAME(text) (std::string(text) + "##Component_" + GetName()).c_str()
 
-    class ComponentBase
+    class ComponentBase : public Serializable<json>
     {
     public:
         ComponentBase(std::shared_ptr<Entity> e) : m_entity(e) {}
 
         virtual void        Inspect()                     = 0;
-        virtual void        Deserialize(const json& data) = 0;
-        virtual json        Serialize() const             = 0;
         virtual std::string GetName() const               = 0;
 
         inline std::shared_ptr<Entity> GetEntity() { return m_entity; }

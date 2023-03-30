@@ -140,8 +140,12 @@ namespace GE
         auto&& depth_imgs = m_resourceManager.GetFramewiseImage("DepthRT");
         for (uint frame_id = 0; frame_id < m_frameCnt; frame_id++)
         {
-            std::vector<VkImageView> views            = {color_imgs[frame_id]->GetImageView(),
-                                                         depth_imgs[frame_id]->GetImageView()};
+            auto&& color_view_info =
+                VkInit::GetVkImageViewCreateInfo(color_imgs[frame_id]->GetImageInfo(), VK_IMAGE_ASPECT_COLOR_BIT);
+            auto&& depth_view_info =
+                VkInit::GetVkImageViewCreateInfo(depth_imgs[frame_id]->GetImageInfo(), VK_IMAGE_ASPECT_DEPTH_BIT);
+            std::vector<VkImageView> views            = {color_imgs[frame_id]->GetImageView(color_view_info),
+                                                         depth_imgs[frame_id]->GetImageView(depth_view_info)};
             VkFramebufferCreateInfo  framebuffer_info = {};
             framebuffer_info.sType                    = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebuffer_info.renderPass               = GetRenderPass();
