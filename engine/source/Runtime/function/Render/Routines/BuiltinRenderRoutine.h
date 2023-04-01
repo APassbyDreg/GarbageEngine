@@ -11,6 +11,7 @@
 #include "../RenderResource.h"
 
 #include "../RenderPass/AABBCullPass.h"
+#include "../RenderPass/ColorMappingPass.h"
 #include "../RenderPass/ForwardShadingPass.h"
 
 #include "../Shared/ViewUniform.h"
@@ -70,6 +71,7 @@ namespace GE
 
         /* ----------------------------- passes ----------------------------- */
         OpaqueForwardShadingPass m_opaqueForwardShadingPass {m_renderResourceManager};
+        ColorMappingPass         m_colorMappingPass {m_renderResourceManager};
 
         /* ---------------------------- managers ---------------------------- */
         PerSceneDataManager m_perSceneDataManager {m_renderResourceManager};

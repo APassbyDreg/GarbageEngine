@@ -154,7 +154,7 @@ namespace GE
             framebuffer_info.width                    = width;
             framebuffer_info.height                   = height;
             framebuffer_info.layers                   = 1;
-            m_frameBuffers.emplace_back(std::make_shared<FrameBuffer>(framebuffer_info));
+            m_frameBuffers.push_back(std::make_shared<FrameBuffer>(framebuffer_info));
         }
     }
 

@@ -37,33 +37,46 @@ namespace GE
             // recreate frame image
             auto&&                  color_images = m_renderResourceManager.GetFramewiseImage("ColorRT");
             auto&&                  depth_images = m_renderResourceManager.GetFramewiseImage("DepthRT");
+            auto&&                  output_images = m_renderResourceManager.GetFramewiseImage("OutputRT");
             VmaAllocationCreateInfo alloc_info   = {};
             alloc_info.usage                     = VMA_MEMORY_USAGE_GPU_ONLY;
-            alloc_info.requiredFlags             = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+            alloc_info.requiredFlags              = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
             VkImageUsageFlags color_image_usage =
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-            VkImageCreateInfo color_image_info = VkInit::GetVkImageCreateInfo(
+            auto color_image_info = VkInit::GetVkImageCreateInfo(
                 VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, {width, height, 1}, color_image_usage);
-            VkImageViewCreateInfo color_view_info =
-                VkInit::GetVkImageViewCreateInfo(color_image_info, VK_IMAGE_ASPECT_COLOR_BIT);
+            auto color_view_info = VkInit::GetVkImageViewCreateInfo(color_image_info, VK_IMAGE_ASPECT_COLOR_BIT);
+
             VkImageUsageFlags depth_image_usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
                                                   VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-            VkImageCreateInfo depth_image_info = VkInit::GetVkImageCreateInfo(
+            auto depth_image_info = VkInit::GetVkImageCreateInfo(
                 VK_IMAGE_TYPE_2D, VK_FORMAT_D32_SFLOAT, {width, height, 1}, depth_image_usage);
-            VkImageViewCreateInfo depth_view_info =
-                VkInit::GetVkImageViewCreateInfo(depth_image_info, VK_IMAGE_ASPECT_DEPTH_BIT);
+            auto depth_view_info = VkInit::GetVkImageViewCreateInfo(depth_image_info, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+            VkImageUsageFlags output_image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+            auto              output_image_info  = VkInit::GetVkImageCreateInfo(
+                VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, {width, height, 1}, color_image_usage);
+            auto output_view_info = VkInit::GetVkImageViewCreateInfo(output_image_info, VK_IMAGE_ASPECT_COLOR_BIT);
+
             for (size_t i = 0; i < m_frameCnt; i++)
             {
                 color_images[i]->Delete();
                 color_images[i]->Alloc(color_image_info, alloc_info);
                 color_images[i]->AddImageView(color_view_info);
+
                 depth_images[i]->Delete();
                 depth_images[i]->Alloc(depth_image_info, alloc_info);
                 depth_images[i]->AddImageView(depth_view_info);
+
+                output_images[i]->Delete();
+                output_images[i]->Alloc(color_image_info, alloc_info);
+                output_images[i]->AddImageView(color_view_info);
             }
 
             // resize all passes
             m_opaqueForwardShadingPass.Resize(width, height);
+            m_colorMappingPass.Resize(width, height);
         }
     }
 
@@ -79,6 +92,7 @@ namespace GE
         /* ------------------------- render targets ------------------------- */
         m_renderResourceManager.ReservePerFrameImage("ColorRT");
         m_renderResourceManager.ReservePerFrameImage("DepthRT");
+        m_renderResourceManager.ReservePerFrameImage("OutputRT");
 
         /* ------------------------ per-scene uniform ----------------------- */
         m_perSceneDataManager.Init(n_frames);
@@ -96,6 +110,7 @@ namespace GE
 
         /* ----------------------- init render passes ----------------------- */
         m_opaqueForwardShadingPass.Init(n_frames);
+        m_colorMappingPass.Init(n_frames);
 
         /* -------------------------- initial size -------------------------- */
         Resize(1280, 720);
@@ -195,14 +210,12 @@ namespace GE
             m_opaqueForwardShadingPass.Run(run_data, pass_data);
         }
 
-        // transition output
+        // color mapping pass
+        float gamma = sc->GetSetting("TestSceneSetting")["Gamma"].get<float>();
         {
-            auto output = m_renderResourceManager.GetPerFrameImage(frame_index, "ColorRT");
-            RenderUtils::TransitionImageLayout(cmd,
-                                               output->GetImage(),
-                                               VK_IMAGE_LAYOUT_GENERAL,
-                                               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                               RenderUtils::AllImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
+            RenderPassRunData    run_data  = {frame_index, cmd};
+            ColorMappingPassData pass_data = {1.0f / gamma};
+            m_colorMappingPass.Run(run_data, pass_data);
         }
 
         // submit
@@ -239,7 +252,7 @@ namespace GE
 
     VkImageView BuiltinRenderRoutine::GetOutputImageView(uint frame_idx)
     {
-        auto&& img              = m_renderResourceManager.GetPerFrameImage(frame_idx, "ColorRT");
+        auto&& img              = m_renderResourceManager.GetPerFrameImage(frame_idx, "OutputRT");
         auto&& output_view_info = VkInit::GetVkImageViewCreateInfo(img->GetImageInfo(), VK_IMAGE_ASPECT_COLOR_BIT);
         return img->GetImageView(output_view_info, true);
     }

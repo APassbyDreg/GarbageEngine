@@ -91,8 +91,7 @@ namespace GE
     {
         {
             fs::path     path     = fs::path(Config::shader_dir) / "Passes/Mesh/TriangleMesh.gsf";
-            HLSLCompiler compiler = {
-                ShaderType::VERTEX, {}, {std::format("MAX_INSTANCE_COUNT={}", c_maxInstancePerDraw)}};
+            HLSLCompiler compiler = {ShaderType::VERTEX, {}, {}};
             pipeline.AddShaderModule(compiler.Compile(path.string(), "VSMain"));
         }
         {

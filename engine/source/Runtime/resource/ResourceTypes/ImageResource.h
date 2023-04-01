@@ -49,7 +49,7 @@ namespace GE
         inline VkImageCreateInfo GetImageCreateInfo() const
         {
             return VkInit::GetVkImageCreateInfo(VK_IMAGE_TYPE_2D,
-                                                VK_FORMAT_R8G8B8A8_SRGB,
+                                                VK_FORMAT_R8G8B8A8_UNORM,
                                                 {GetWidth(), GetHeight(), 1},
                                                 VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
         }

@@ -7,6 +7,14 @@
 
 namespace GE
 {
+    struct VertexInputDescription
+    {
+        std::vector<VkVertexInputBindingDescription>   bindings;
+        std::vector<VkVertexInputAttributeDescription> attributes;
+
+        VkPipelineVertexInputStateCreateFlags flags = 0;
+    };
+
     namespace VkInit
     {
         inline VkSamplerCreateInfo
@@ -176,13 +184,13 @@ namespace GE
 
         inline VkAttachmentDescription
         GetAttachmentDescription(VkFormat              format         = VK_FORMAT_R8G8B8A8_UNORM,
-                                 VkSampleCountFlagBits samples        = VK_SAMPLE_COUNT_1_BIT,
+                                 VkImageLayout         initialLayout  = VK_IMAGE_LAYOUT_GENERAL,
+                                 VkImageLayout         finalLayout    = VK_IMAGE_LAYOUT_GENERAL,
                                  VkAttachmentLoadOp    loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD,
                                  VkAttachmentStoreOp   storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
                                  VkAttachmentLoadOp    stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_LOAD,
                                  VkAttachmentStoreOp   stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
-                                 VkImageLayout         initialLayout  = VK_IMAGE_LAYOUT_GENERAL,
-                                 VkImageLayout         finalLayout    = VK_IMAGE_LAYOUT_GENERAL)
+                                 VkSampleCountFlagBits samples        = VK_SAMPLE_COUNT_1_BIT)
         {
             VkAttachmentDescription attachment = {};
             attachment.format                  = format;

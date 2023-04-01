@@ -1,0 +1,17 @@
+#include "Common/Quad.gsh"
+
+[[vk::push_constant]] struct PushConstants {
+    float inv_gamma;
+} pc;
+
+
+[[vk::binding(0, 0)]][[vk::combinedImageSampler]]
+Texture2D tex;
+[[vk::binding(0, 0)]][[vk::combinedImageSampler]]
+SamplerState texSampler;
+
+
+float4 FSMain(QuadFragInputs i) : SV_Target
+{
+    return pow(tex.Sample(texSampler, i.texcoord), pc.inv_gamma);
+}
