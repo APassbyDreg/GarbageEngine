@@ -254,12 +254,6 @@ namespace GE
             return sampler;
         }
 
-        /* -------------------------- destroy stack ------------------------- */
-        static inline void PushDestroyAction(std::function<void()> action)
-        {
-            GetInstance().m_destroyActionStack.push_back(action);
-        }
-
     private:
         inline VulkanCore& ensure_ready()
         {
