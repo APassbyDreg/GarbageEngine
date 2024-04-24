@@ -10,16 +10,26 @@ namespace GE
 {
     json MaterialComponent::Serialize() const
     {
-        auto&& val = m_core.GetValue();
-        json   data;
-        data["material"] = val->GetPath().string();
-        data["type"]     = val->GetType();
-        data["mode"]     = val->GetMode();
-        return data;
+        if (m_core.GetValue() != nullptr)
+        {
+            auto&& val = m_core.GetValue();
+            json   data;
+            data["material"] = val->GetPath().string();
+            data["type"]     = val->GetType();
+            data["mode"]     = val->GetMode();
+            return data;
+        }
+        else
+        {
+            return {};
+        }
     }
 
     void MaterialComponent::Deserialize(const json& data)
     {
+        if (!data.contains("material"))
+            return;
+
         std::string path     = data["material"].get<std::string>();
         std::string type     = data["type"].get<std::string>();
         std::string mode     = data["mode"].get<std::string>();

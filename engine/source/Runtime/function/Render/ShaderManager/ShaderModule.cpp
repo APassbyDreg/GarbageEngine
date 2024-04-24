@@ -2,8 +2,7 @@
 
 namespace GE
 {
-    ShaderModule::ShaderModule(std::vector<uint32_t>& spv, ShaderType type, const std::string& entry) :
-        m_spvSource(spv), m_entry(entry), m_spvCompiler(m_spvSource)
+    ShaderModule::ShaderModule(std::vector<uint32_t>&& spv, ShaderType type, const std::string& entry) : m_entry(entry)
     {
         /* ------------------------ create VK module ------------------------ */
         VkShaderModuleCreateInfo create_info = {};
@@ -17,8 +16,9 @@ namespace GE
             static_cast<VkShaderStageFlagBits>(type), m_module, m_entry.c_str());
 
         /* --------------------- create reflection data --------------------- */
-        auto active    = m_spvCompiler.get_active_interface_variables();
-        auto resources = m_spvCompiler.get_shader_resources(active);
+        m_spvCompiler  = std::make_unique<spirv_cross::Compiler>(std::move(spv));
+        auto active    = m_spvCompiler->get_active_interface_variables();
+        auto resources = m_spvCompiler->get_shader_resources(active);
         for (auto&& resource : resources.uniform_buffers)
         {
             m_reflectionData[resource.name] = {ShaderResourceType::UNIFORM_BUFFER, resource.id};

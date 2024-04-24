@@ -158,6 +158,6 @@ namespace GE
                        result.GetErrorMessage());
         auto spv = std::vector<uint32_t>(result.cbegin(), result.cend());
 
-        return std::make_unique<ShaderModule>(spv, m_type);
+        return std::make_unique<ShaderModule>(std::move(spv), m_type);
     }
 } // namespace GE
