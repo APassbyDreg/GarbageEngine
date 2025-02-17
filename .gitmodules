@@ -33,3 +33,5 @@
 [submodule "engine/3rdparty/imgui_plugins/ImGuizmo"]
 	path = engine/3rdparty/imgui_plugins/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "engine\\3rdparty\\imgui_plugins\\ImGuiFileDialog"]
+	url = https://github.com/APassbyDreg/ImGuiFileDialog.git

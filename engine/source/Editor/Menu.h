@@ -24,6 +24,7 @@ namespace GE
             OpenScene,
             Save,
             SaveAs,
+            Test,
             None
         };
 
@@ -58,6 +59,13 @@ namespace GE
                     fs::path workdir = app.GetWorkDirectory();
                     m_fileDialogInstance.OpenDialog(
                         "ChooseDirDlgKey", "Choose Directory to Save To", nullptr, workdir.string().c_str());
+                }
+                if (ImGui::MenuItem("Test"))
+                {
+                    m_pressedItem    = MenuItem::Test;
+                    fs::path workdir = app.GetWorkDirectory();
+                    m_fileDialogInstance.OpenDialog(
+                        "ChooseFileDlgKey", "Choose File", ".json,.*", workdir.string().c_str());
                 }
                 ImGui::EndMenu();
             }
@@ -101,6 +109,19 @@ namespace GE
             HandleOpenWorkspace();
             HandleSave();
             HandleSaveAs();
+            if (m_pressedItem == MenuItem::Test)
+            {
+                if (m_fileDialogInstance.Display("ChooseFileDlgKey"))
+                {
+                    if (m_fileDialogInstance.IsOk())
+                    {
+                        std::string filepath = m_fileDialogInstance.GetFilePathName();
+                        GE_APP_TRACE(filepath);
+                        m_pressedItem = MenuItem::None;
+                    }
+                    m_fileDialogInstance.Close();
+                }
+            }
 
             ImGui::EndMainMenuBar();
         }

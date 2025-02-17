@@ -3,6 +3,7 @@
 #include "GE_pch.h"
 
 // #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_ENABLE_EXPERIMENTAL
 
 #include "glm/exponential.hpp"
 #include "glm/glm.hpp"

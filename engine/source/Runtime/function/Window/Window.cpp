@@ -6,6 +6,8 @@
 #include "Runtime/function/Message/MessageSystem.h"
 #include "Runtime/function/Render/VulkanManager/VulkanCore.h"
 
+#include "ImGuizmo/ImGuizmo.h"
+
 namespace GE
 {
     bool Window::s_glfwInitialized = false;
@@ -27,6 +29,7 @@ namespace GE
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
 
         m_imguiContext = ImGui::GetCurrentContext();
 
