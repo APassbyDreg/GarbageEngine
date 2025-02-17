@@ -80,7 +80,7 @@ namespace GE
         };
 
     public:
-        ShaderModule(std::vector<uint32_t>& spv, ShaderType type, const std::string& entry = "main");
+        ShaderModule(std::vector<uint32_t>&& spv, ShaderType type, const std::string& entry = "main");
         ~ShaderModule();
 
         inline VkShaderModule GetShaderModule()
@@ -94,20 +94,14 @@ namespace GE
             return m_stage;
         }
 
-        inline uint32_t GetDecoration(std::string name, spv::Decoration decoration)
-        {
-            return m_spvCompiler.get_decoration(m_reflectionData[name].id, decoration);
-        }
-
     private:
         bool                            m_ready = false;
         std::string                     m_entry = "main";
         VkShaderModule                  m_module;
         VkPipelineShaderStageCreateInfo m_stage;
 
-        std::vector<uint32_t>                     m_spvSource;
         std::map<std::string, ShaderResourceInfo> m_reflectionData;
-        spirv_cross::Compiler                     m_spvCompiler;
+        std::unique_ptr<spirv_cross::Compiler>    m_spvCompiler = nullptr;
     };
 
 } // namespace GE

@@ -108,10 +108,8 @@ namespace GE
             VKB_CHECK_RETURN(builder.build(), m_vkbInstance);
             m_instance = m_vkbInstance.instance;
             m_destroyActionStack.push_back([&]() { vkb::destroy_instance(m_vkbInstance); });
-#ifdef GE_DEBUG
-            m_debugMessenger = m_vkbInstance.debug_messenger;
-            m_destroyActionStack.push_back([&]() { vkb::destroy_debug_utils_messenger(m_instance, m_debugMessenger); });
-#endif
+
+            // NOTE: debug messenger is destroyed in destroy_instance
         }
 
         // Create Surface
@@ -146,8 +144,8 @@ namespace GE
 
             try
             {
-                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute, false), m_computeQueue);
-                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute, false),
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute), m_computeQueue);
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute),
                                  m_computeQueueFamilyIndex);
                 m_supportStatus.hasComputeQueue = true;
             }

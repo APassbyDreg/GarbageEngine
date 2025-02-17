@@ -7,7 +7,6 @@
 #include "ShaderManager/ShaderModule.h"
 #include "VulkanManager/DescriptorSetLayout.h"
 #include "VulkanManager/VulkanCore.h"
-#include <memory>
 
 namespace GE
 {

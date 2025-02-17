@@ -13,14 +13,24 @@ namespace GE
     json MeshComponent::Serialize() const
     {
         auto&& val = m_core.GetValue();
-        json   data;
-        data["type"] = val->GetType();
-        data["mesh"] = val->GetPath().string();
-        return data;
+        if (val == nullptr)
+        {
+            return {};
+        }
+        else
+        {
+            json data;
+            data["type"] = val->GetType();
+            data["mesh"] = val->GetPath().string();
+            return data;
+        }
     }
 
     void MeshComponent::Deserialize(const json& data)
     {
+        if (!data.contains("mesh"))
+            return;
+
         std::string path = data["mesh"].get<std::string>();
         std::string type = data["type"].get<std::string>();
         auto&&      mesh = MeshManager::LoadMesh(path);

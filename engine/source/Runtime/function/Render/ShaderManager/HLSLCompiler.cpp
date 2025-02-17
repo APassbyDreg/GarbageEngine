@@ -67,7 +67,7 @@ namespace GE
         std::vector<uint32_t> shader_binary = std::vector<uint32_t>(binary_size);
         memcpy(shader_binary.data(), pShader->GetBufferPointer(), pShader->GetBufferSize());
 
-        return std::make_unique<ShaderModule>(shader_binary, m_type, entry);
+        return std::make_unique<ShaderModule>(std::move(shader_binary), m_type, entry);
     }
 
     static std::wstring __to_wstring(std::string s) { return std::wstring(s.begin(), s.end()); }
