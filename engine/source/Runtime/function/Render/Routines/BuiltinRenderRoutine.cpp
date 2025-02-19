@@ -56,7 +56,7 @@ namespace GE
 
             VkImageUsageFlags output_image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
             auto              output_image_info  = VkInit::GetVkImageCreateInfo(
-                VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, {width, height, 1}, color_image_usage);
+                VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, {width, height, 1}, output_image_usage);
             auto output_view_info = VkInit::GetVkImageViewCreateInfo(output_image_info, VK_IMAGE_ASPECT_COLOR_BIT);
 
             for (size_t i = 0; i < m_frameCnt; i++)
@@ -70,8 +70,8 @@ namespace GE
                 depth_images[i]->AddImageView(depth_view_info);
 
                 output_images[i]->Delete();
-                output_images[i]->Alloc(color_image_info, alloc_info);
-                output_images[i]->AddImageView(color_view_info);
+                output_images[i]->Alloc(output_image_info, alloc_info);
+                output_images[i]->AddImageView(output_view_info);
             }
 
             // resize all passes

@@ -8,8 +8,6 @@
 
 namespace GE
 {
-#define REGISTER_SCENE_SETTING(name)
-
     class SceneSettingsFactory : public Singleton<SceneSettingsFactory>
     {
         using SettingsFactoryFunc     = std::function<std::shared_ptr<SettingsBase>(const json&)>;

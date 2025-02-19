@@ -144,8 +144,8 @@ namespace GE
 
             try
             {
-                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute), m_computeQueue);
-                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute),
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::compute, false), m_computeQueue);
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::compute, false),
                                  m_computeQueueFamilyIndex);
                 m_supportStatus.hasComputeQueue = true;
             }
@@ -156,8 +156,8 @@ namespace GE
 
             try
             {
-                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::transfer), m_transferQueue);
-                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::transfer), m_transferQueueFamilyIndex);
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue(vkb::QueueType::transfer, false), m_transferQueue);
+                VKB_CHECK_RETURN(m_vkbDevice.get_queue_index(vkb::QueueType::transfer, false), m_transferQueueFamilyIndex);
                 m_supportStatus.hasTransferQueue = true;
             }
             catch (const std::exception& e)

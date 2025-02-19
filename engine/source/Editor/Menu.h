@@ -116,7 +116,7 @@ namespace GE
                     if (m_fileDialogInstance.IsOk())
                     {
                         std::string filepath = m_fileDialogInstance.GetFilePathName();
-                        GE_APP_TRACE(filepath);
+                        GE_APP_TRACE("Opening {}", filepath);
                         m_pressedItem = MenuItem::None;
                     }
                     m_fileDialogInstance.Close();

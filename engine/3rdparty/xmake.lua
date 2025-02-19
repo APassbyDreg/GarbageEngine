@@ -13,12 +13,6 @@ function GE_link_spdlog()
 end
 
 
--------------------------------- glm --------------------------------
-function GE_link_glm() 
-    add_includedirs(rel_local_path("glm"))
-end
-
-
 -------------------------------- glfw --------------------------------
 function GE_link_glfw() 
     add_includedirs(rel_local_path("glfw/include"))
@@ -34,7 +28,6 @@ function GE_link_vulkan()
     local vk_dir = os.getenv("VULKAN_SDK")
     add_includedirs(path.join(vk_dir, "Include"))
     add_links(path.join(vk_dir, "Lib/vulkan-1"))
-    add_links(path.join(vk_dir, "Lib/dxcompiler"))
     if is_mode("debug") then 
         add_links(path.join(vk_dir, "Lib/shaderc_combinedd"))
     else
@@ -42,30 +35,6 @@ function GE_link_vulkan()
     end
 end
 
-
--------------------------------- spirv cross
---------------------------------
-package("GE_spirv_cross")
-    add_deps("cmake")
-    set_sourcedir(rel_local_path("spirv-cross"))
-    on_install(
-        function (package)
-            local configs = {}
-            table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:debug() and "Debug" or "Release"))
-            table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
-            import("package.tools.cmake").install(package, configs)
-        end
-    )
-    on_test(
-        function (package)
-        end
-    )
-package_end()
-
-function GE_link_spirv_cross()
-    add_includedirs(rel_local_path("spirv-cross"))
-    add_packages("GE_spirv_cross")
-end
 
 -------------------------------- imgui --------------------------------
 function GE_link_imgui() 
@@ -81,7 +50,8 @@ end
 -------------------------------- imgui plugins --------------------------------
 function GE_link_imguiplugins() 
     add_includedirs(rel_local_path("imgui_plugins"))
-    add_files(rel_local_path("imgui_plugins/**.cpp"))
+    add_files(rel_local_path("imgui_plugins/ImGuiFileDialog/**.cpp"))
+    add_files(rel_local_path("imgui_plugins/ImGuizmo/*.cpp"))
 end
 
 
@@ -127,7 +97,6 @@ end
 function GE_link_3rdparty()
     GE_link_vulkan()
     GE_link_glfw()
-    GE_link_glm()
     GE_link_spdlog()
     GE_link_imgui()
     GE_link_imguiplugins()
@@ -139,11 +108,13 @@ function GE_link_3rdparty()
     GE_link_objloader()
 
     add_packages("openssl")
-    add_packages("GE_spirv_cross")
+    add_packages("directxshadercompiler")
+    add_packages("spirv-cross")
 end
 
 
 function GE_load_3rdparty()
     add_requires("openssl")
-    add_requires("GE_spirv_cross")
+    add_requires("directxshadercompiler")
+    add_requires("spirv-cross")
 end

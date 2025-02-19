@@ -89,7 +89,11 @@ namespace GE
         VkQueue  vk_graphics_queue = VulkanCore::GetGraphicsQueue();
         VkQueue  vk_compute_queue  = VulkanCore::GetComputeQueue();
 
-        VkSemaphore viewport_complete_semaphore = m_renderFinishedSemaphores[m_imguiWindow.FrameIndex];
+        {
+            vkQueueWaitIdle(VulkanCore::GetGraphicsQueue());
+            // VulkanCore::WaitForFence(m_imguiWindow.Frames[0].Fence, false, 1e8);
+            // VulkanCore::WaitForFence(m_imguiWindow.Frames[1].Fence, false, 1e8);
+        }
         VkSemaphore image_acquired_semaphore =
             m_imguiWindow.FrameSemaphores[m_imguiWindow.SemaphoreIndex].ImageAcquiredSemaphore;
         VkSemaphore render_complete_semaphore =
@@ -108,7 +112,8 @@ namespace GE
         GE_VK_ASSERT(res);
 
         ImGui_ImplVulkanH_Frame* fd = &m_imguiWindow.Frames[m_imguiWindow.FrameIndex];
-        VulkanCore::WaitForFence(fd->Fence);
+        VulkanCore::WaitForFence(fd->Fence, true, 1e8);
+        VkSemaphore viewport_complete_semaphore = m_renderFinishedSemaphores[m_imguiWindow.FrameIndex];
 
         /* -------------------------- renderer pass ------------------------- */
         switch (m_usingRenderRoutine)

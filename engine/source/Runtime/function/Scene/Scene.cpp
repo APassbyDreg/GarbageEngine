@@ -33,6 +33,7 @@ namespace GE
     {
         m_CameraManager.Destroy();
         m_MeshManager.Destroy();
+        m_LightManager.Destroy();
     }
 
     std::shared_ptr<Entity> Scene::CreateEntity(uint eid, std::string tagname, int layer, int tag)

@@ -18,9 +18,12 @@ namespace GE
 
         inline void Inspect() override
         {
-            ImGui::DragInt(LABEL_WITH_NAME("Render Routine"), &render_routine, 1, 0, 0);
-            ImGui::DragFloat3(LABEL_WITH_NAME("Clear Color"), (float*)&clear_color, 0.01, 0.0, 1.0);
-            ImGui::DragFloat(LABEL_WITH_NAME("Gamma"), &gamma, 0.01, 0.1, 10.0);
+          ImGui::DragInt(SETTINGS_LABEL_WITH_NAME("Render Routine"),
+                         &render_routine, 1, 0, 0);
+          ImGui::DragFloat3(SETTINGS_LABEL_WITH_NAME("Clear Color"),
+                            (float *)&clear_color, 0.01, 0.0, 1.0);
+          ImGui::DragFloat(SETTINGS_LABEL_WITH_NAME("Gamma"), &gamma, 0.01, 0.1,
+                           10.0);
         }
 
         inline json Serialize() const override
