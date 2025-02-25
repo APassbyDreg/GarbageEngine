@@ -10,7 +10,7 @@
 namespace GE
 {
 
-    inline std::string vkErrorString(VkResult errorCode)
+    inline std::string vkResultString(VkResult errorCode)
     {
         switch (errorCode)
         {
@@ -56,6 +56,8 @@ namespace GE
             STR(OPERATION_NOT_DEFERRED_KHR);
             STR(ERROR_COMPRESSION_EXHAUSTED_EXT);
 #undef STR
+            case VK_SUCCESS:
+                return "SUCCESS";
             default:
                 return "UNKNOWN_ERROR";
         }
@@ -65,14 +67,14 @@ namespace GE
     {
         if (res != VK_SUCCESS)
         {
-            GE_CORE_CRITICAL("Vulkan call failed with code {0}", vkErrorString(res));
+            GE_CORE_CRITICAL("Vulkan call failed with code {0}", vkResultString(res));
         }
     }
     inline bool __vk_check_fn_noexit(VkResult res)
     {
         if (res != VK_SUCCESS)
         {
-            GE_CORE_ERROR("Vulkan call failed with code {0}", vkErrorString(res));
+            GE_CORE_ERROR("Vulkan call failed with code {0}", vkResultString(res));
             return false;
         }
         return true;

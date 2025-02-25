@@ -105,6 +105,8 @@ namespace GE
         VkSampler                                 m_viewportSampler;
         std::vector<std::vector<VkDescriptorSet>> m_viewportDescriptorSets;
         std::vector<VkSemaphore>                  m_renderFinishedSemaphores;
+        std::vector<VkFence>                      m_imageAcquiredFences;            // NOTE: used to fix semaphore wait issue
+        std::vector<bool>                         m_imageAcquiredSemaphoreInUse;    // NOTE: used to fix semaphore wait issue
         ImVec2                                    m_viewportSize = {1280, 720};
 
         uint64 m_frameIdx = 0;

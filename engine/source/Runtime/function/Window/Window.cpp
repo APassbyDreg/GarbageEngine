@@ -33,7 +33,7 @@ namespace GE
 
         m_imguiContext = ImGui::GetCurrentContext();
 
-        ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+        ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 
         {
             ImGui::Begin("Viewport");
@@ -51,7 +51,7 @@ namespace GE
             if (m_frameIdx >= m_imguiWindow.ImageCount)
             {
                 // only draw when we have gone through all frames for at least once
-                ImGui::Image(m_viewportDescriptorSets[curr_routine_idx][m_imguiWindow.FrameIndex], m_viewportSize);
+                ImGui::Image((ImTextureID)m_viewportDescriptorSets[curr_routine_idx][m_imguiWindow.FrameIndex], m_viewportSize);
             }
             ImGui::End();
         }
@@ -85,15 +85,13 @@ namespace GE
 
     void Window::__imgui_render_frame(ImDrawData* draw_data)
     {
-        VkDevice vk_device         = VulkanCore::GetDevice();
-        VkQueue  vk_graphics_queue = VulkanCore::GetGraphicsQueue();
-        VkQueue  vk_compute_queue  = VulkanCore::GetComputeQueue();
-
+        if (m_imageAcquiredSemaphoreInUse[m_imguiWindow.SemaphoreIndex])
         {
-            vkQueueWaitIdle(VulkanCore::GetGraphicsQueue());
-            // VulkanCore::WaitForFence(m_imguiWindow.Frames[0].Fence, false, 1e8);
-            // VulkanCore::WaitForFence(m_imguiWindow.Frames[1].Fence, false, 1e8);
+            VulkanCore::WaitForFence(m_imageAcquiredFences[m_imguiWindow.SemaphoreIndex], false, 1e8);
+            m_imageAcquiredSemaphoreInUse[m_imguiWindow.SemaphoreIndex] = false;
         }
+
+        VkDevice vk_device         = VulkanCore::GetDevice();
         VkSemaphore image_acquired_semaphore =
             m_imguiWindow.FrameSemaphores[m_imguiWindow.SemaphoreIndex].ImageAcquiredSemaphore;
         VkSemaphore render_complete_semaphore =
@@ -104,12 +102,14 @@ namespace GE
                                              image_acquired_semaphore,
                                              VK_NULL_HANDLE,
                                              &m_imguiWindow.FrameIndex);
+        // GE_CORE_INFO("vkAcquireNextImageKHR with semaphore {}, res = {}", (void*)image_acquired_semaphore, vkResultString(res));
         if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
-        {
             m_needRebuildSwapChain = true;
+        if (res == VK_ERROR_OUT_OF_DATE_KHR)
             return;
-        }
-        GE_VK_ASSERT(res);
+        if (res != VK_SUBOPTIMAL_KHR)
+            GE_VK_ASSERT(res);
+            
 
         ImGui_ImplVulkanH_Frame* fd = &m_imguiWindow.Frames[m_imguiWindow.FrameIndex];
         VulkanCore::WaitForFence(fd->Fence, true, 1e8);
@@ -122,12 +122,13 @@ namespace GE
                 m_renderRoutine0.DrawFrame(m_imguiWindow.FrameIndex,
                                            {image_acquired_semaphore},
                                            {viewport_complete_semaphore},
-                                           VK_NULL_HANDLE);
+                                           m_imageAcquiredFences[m_imguiWindow.SemaphoreIndex]);
                 break;
             case 1:
             default:
                 GE_CORE_ERROR("Invalid Render Routine {}, valid range is [0, 1]", m_usingRenderRoutine);
         }
+        m_imageAcquiredSemaphoreInUse[m_imguiWindow.SemaphoreIndex] = true;
 
         /* --------------------------- imgui pass --------------------------- */
         {
@@ -200,11 +201,11 @@ namespace GE
 
         VkResult res = vkQueuePresentKHR(vk_graphics_queue, &info);
         if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
-        {
             m_needRebuildSwapChain = true;
+        if (res == VK_ERROR_OUT_OF_DATE_KHR)
             return;
-        }
-        GE_VK_ASSERT(res);
+        if (res != VK_SUBOPTIMAL_KHR)
+            GE_VK_ASSERT(res);
 
         m_imguiWindow.SemaphoreIndex =
             (m_imguiWindow.SemaphoreIndex + 1) % m_imguiWindow.ImageCount; // Now we can use the next set of semaphores
@@ -474,7 +475,8 @@ namespace GE
             init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
             init_info.Allocator                 = nullptr;
             init_info.CheckVkResultFn           = __vk_check_fn;
-            ImGui_ImplVulkan_Init(&init_info, m_imguiWindow.RenderPass);
+            init_info.RenderPass                = m_imguiWindow.RenderPass;
+            ImGui_ImplVulkan_Init(&init_info);
         }
 
         // Upload Fonts
@@ -490,18 +492,7 @@ namespace GE
 
             GE_VK_ASSERT(vkBeginCommandBuffer(command_buffer, &begin_info));
 
-            ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-
-            VkSubmitInfo end_info       = {};
-            end_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            end_info.commandBufferCount = 1;
-            end_info.pCommandBuffers    = &command_buffer;
-
-            GE_VK_ASSERT(vkEndCommandBuffer(command_buffer));
-            GE_VK_ASSERT(vkQueueSubmit(vk_graphics_queue, 1, &end_info, VK_NULL_HANDLE));
-            GE_VK_ASSERT(vkDeviceWaitIdle(vk_device));
-
-            ImGui_ImplVulkan_DestroyFontUploadObjects();
+            ImGui_ImplVulkan_CreateFontsTexture();
         }
     }
 
@@ -540,8 +531,9 @@ namespace GE
         // setup semaphores
         for (size_t i = 0; i < m_imguiWindow.ImageCount; i++)
         {
-            auto semaphore = VulkanCore::CreateSemaphore();
-            m_renderFinishedSemaphores.push_back(semaphore);
+            m_renderFinishedSemaphores.emplace_back(VulkanCore::CreateSemaphore());
+            m_imageAcquiredFences.emplace_back(VulkanCore::CreateFence());
+            m_imageAcquiredSemaphoreInUse.push_back(false);
         }
 
         // viewport sampler & image
@@ -575,10 +567,13 @@ namespace GE
 
         // semaphores
         for (auto&& s : m_renderFinishedSemaphores)
-        {
             vkDestroySemaphore(VulkanCore::GetDevice(), s, nullptr);
-        }
         m_renderFinishedSemaphores.clear();
+
+        // fences
+        for (auto&& f : m_imageAcquiredFences)
+            vkDestroyFence(VulkanCore::GetDevice(), f, nullptr);
+        m_imageAcquiredFences.clear();
 
         // imgui
         __cleanup_imgui();
