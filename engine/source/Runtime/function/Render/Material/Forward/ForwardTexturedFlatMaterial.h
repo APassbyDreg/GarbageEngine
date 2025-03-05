@@ -18,6 +18,7 @@ namespace GE
 
     public:
         ForwardTexturedFlatMaterial(int id, fs::path path, float4 color) : ForwardMaterial(id, path) {}
+        virtual ~ForwardTexturedFlatMaterial() { Deactivate(); };
 
         bool IsOpaque() const override;
 

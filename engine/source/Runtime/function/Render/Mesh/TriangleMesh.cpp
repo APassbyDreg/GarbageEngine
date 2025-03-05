@@ -19,10 +19,10 @@ namespace GE
 
         m_tLastUsed = Time::CurrentTime();
 
-        if (!m_updateJob.IsRunning())
-        {
-            m_updateJob.Run(std::bind(&TriangleMesh::Update, this), c_updateInterval);
-        }
+        // if (!m_updateJob.IsRunning())
+        // {
+        //     m_updateJob.Run(std::bind(&TriangleMesh::Update, this), c_updateInterval);
+        // }
 
         if (!m_uploaded)
         {

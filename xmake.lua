@@ -1,4 +1,4 @@
-add_rules("mode.debug", "mode.release")
+add_rules("mode.debug", "mode.release", "mode.profile")
 
 set_project("GarbageEngine")
 
@@ -7,12 +7,13 @@ GE_load_3rdparty()
 
 
 function GE_add_predefined_macros() 
-    is_mode("debug")
+    if is_mode("debug") then
         add_defines("GE_DEBUG")
-    
-    is_plat("windows")
-        add_defines("GE_PLATFORM_WINDOWS")
+    end
 
+    if is_plat("windows") then
+        add_defines("GE_PLATFORM_WINDOWS")
+    end
     -- add_defines("GE_ENABLE_TESTING")
 end
 
@@ -20,6 +21,9 @@ end
 target("runtime")
     set_languages("c++20")
     set_kind("static")
+
+    -- set_warnings("all", "extra")
+    -- add_cxxflags("/W4")
 
     -- defines
     GE_add_predefined_macros()

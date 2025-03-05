@@ -19,10 +19,11 @@ namespace GE
 
         inline void Destroy()
         {
-            GE_CORE_ASSERT(VulkanCore::IsAlive(), "Sampler {} should be destroyed before VulkanCore", (void*)sampler);
             if (sampler != VK_NULL_HANDLE)
             {
+                GE_CORE_ASSERT(VulkanCore::IsAlive(), "Sampler {} should be destroyed before VulkanCore", (void*)sampler);
                 vkDestroySampler(VulkanCore::GetDevice(), sampler, nullptr);
+                sampler = VK_NULL_HANDLE;
             }
         }
 
